@@ -410,13 +410,3 @@ class MainWindow(QMainWindow):
 
         # Asetetaan oletussivuksi Ostolistat (index 0)
         self.stacked_widget.setCurrentIndex(0)
-        
-
-def main():
-    app = QApplication(sys.argv)
-    window = MainWindow()
-    window.show()
-    sys.exit(app.exec())
-
-if __name__ == "__main__":
-    main()
