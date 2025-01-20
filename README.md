@@ -15,7 +15,7 @@ controllers.py
 - Sisältää kontrollerit eri osa-alueille esim. reseptit, tuotteet ja ostoslistat
 
 views.py
-- Sisältää UI-koodin
+- Sisältää UI:n koodin
 
 app.py
 - Juoksutettava koodi
