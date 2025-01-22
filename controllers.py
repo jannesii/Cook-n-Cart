@@ -53,4 +53,10 @@ class RecipeController:
             ingredients.append(ingredient)
         return ingredients
 
-    # Lisää muita metodit, kuten päivitys ja poisto
+class ShoppingListController:
+    def __init__(self):
+        self.db = DatabaseManager.get_instance()
+        
+class ProductController:
+    def __init__(self):
+        self.db = DatabaseManager.get_instance()
