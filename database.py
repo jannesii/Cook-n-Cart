@@ -56,4 +56,31 @@ class DatabaseManager:
         """
         self.execute_query(query, (recipe_id, ingredient.product_id, ingredient.quantity))
 
+    def add_product(self, product: Product):
+        query = """
+        INSERT INTO products (name, unit, price_per_unit, manufacturer, image_url, category)
+        VALUES (?, ?, ?, ?, ?, ?)
+        """
+        self.execute_query(query, (product.name, product.unit, product.price_per_unit, product.manufacturer, product.image_url, product.category))
+    
+    def add_shoppinglist(self, shoppinglist: ShoppingList):
+        query = """
+        INSERT INTO shopping_lists (title, total_sum, purchased_count)
+        VALUES (?, ?, ?)
+        """
+        cursor = self.execute_query(query, (shoppinglist.title, shoppinglist.total_sum, shoppinglist.purchased_count))
+        list_id = cursor.lastrowid
+        for items in shoppinglist.items:
+            self.add_shopping_list_items(list_id, items)
+        return list_id
+
+    
+    def add_shopping_list_items(self, shoppingList_id: int, shoppingListitems: ShoppingListItem):
+        query = """
+        INSERT INTO shopping_list_items (shopping_list_id, product_id, quantity, is_purchased)
+        VALUES (?, ?, ?, ?)
+        """
+        self.execute_query(query, (shoppingList_id, shoppingListitems.product_id, shoppingListitems.quantity, shoppingListitems.is_purchased))
+        
+    
     # Lisää muita CRUD-metodeja tarpeen mukaan
