@@ -39,10 +39,10 @@ class DatabaseManager:
 
     def add_recipe(self, recipe: Recipe):
         query = """
-        INSERT INTO recipes (name, instructions)
-        VALUES (?, ?)
+        INSERT INTO recipes (name, instructions, tags)
+        VALUES (?, ?, ?)
         """
-        cursor = self.execute_query(query, (recipe.name, recipe.instructions,))
+        cursor = self.execute_query(query, (recipe.name, recipe.instructions,recipe.tags))
         recipe_id = cursor.lastrowid
         # Lisää ainesosat
         for ingredient in recipe.ingredients:
