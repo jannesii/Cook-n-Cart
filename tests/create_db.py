@@ -1,9 +1,10 @@
 import sqlite3
 import os
 
+
 def create_database(db_path):
     # Varmista, että tietokannan hakemisto on olemassa
-    #os.makedirs(os.path.dirname(db_path), exist_ok=True)
+    # os.makedirs(os.path.dirname(db_path), exist_ok=True)
 
     # Tarkista, onko tietokanta jo olemassa
     db_exists = os.path.exists(db_path)
@@ -17,26 +18,25 @@ def create_database(db_path):
 
     # Taulujen luominen
     create_tables = """
-    CREATE TABLE  recipes (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        instructions TEXT NOT NULL,
-        image_url TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-
     CREATE TABLE  products (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         unit TEXT NOT NULL,
         price_per_unit REAL,
-        manufacturer TEXT,
-        image_url TEXT,
         category TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
+    
+    
+    CREATE TABLE  recipes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        instructions TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
 
     CREATE TABLE  recipe_ingredients (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -75,7 +75,7 @@ def create_database(db_path):
 
     cursor.executescript(create_tables)
 
-    # Triggereiden luominen ilman 
+    # Triggereiden luominen ilman
     create_triggers = """
     -- Trigger: Kun is_purchased muuttuu 0 -> 1
     CREATE TRIGGER trg_item_purchased
@@ -123,7 +123,7 @@ def create_database(db_path):
     """
 
     try:
-        #cursor.executescript(create_triggers)
+        # cursor.executescript(create_triggers)
         print("Triggereiden luominen onnistui.")
     except sqlite3.OperationalError as e:
         print(f"Virhe triggereiden luomisessa: {e}")
@@ -148,9 +148,11 @@ def create_database(db_path):
     else:
         print(f"Tietokanta '{db_path}' päivitettiin onnistuneesti.")
 
+
 if __name__ == "__main__":
     # Määritä tietokannan polku
-    database_path = "cook_and_cart.db"
+    database = "cook_and_cart.db"
+    database_path = os.path.join(os.getcwd(), "utils", database)
 
     # Luo tietokanta ja tarvittavat taulut
     create_database(database_path)
