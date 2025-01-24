@@ -12,8 +12,6 @@ class Product:
     name: str
     unit: str
     price_per_unit: float
-    manufacturer: str
-    image_url: str
     category: str
     created_at: datetime
     updated_at: datetime
@@ -24,7 +22,6 @@ class Recipe:
     id: int
     name: str
     instructions: str
-    image_url: str
     created_at: datetime
     updated_at: datetime
     ingredients: List['RecipeIngredient']
