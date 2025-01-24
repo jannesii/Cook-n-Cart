@@ -224,17 +224,9 @@ class ProductsPage(QWidget):
         scroll_content = QWidget()
         scroll_layout = QVBoxLayout(scroll_content)
         
-        tuotteet = controllers.ProductController().get_all_products()
-        # Create a dictionary with id as the key
-        products_dict: Dict[int, models.Product] = {product.id: product for product in tuotteet}
         
         
-        products = [
-            "Maito", "Kanamuna", "Lohi", "Kanan rintafile",
-            "Paprika", "Kurkku", "Jäävuorisalaatti",
-            "Tomaatti", "Peruna", "Spaghetti",
-            "Basilika", "Ruokakerma"
-        ]
+        products = self.get_product_dict()
         
         for product in products:
             btn = QPushButton(product)
@@ -255,6 +247,13 @@ class ProductsPage(QWidget):
         scroll_area.setWidget(scroll_content)
         
         main_layout.addWidget(scroll_area, 1)
+
+        ## Tuotteiden haku databasesta.
+    def get_product_dict(self):
+        tuotteet = controllers.ProductController().get_all_products()
+        # Create a dictionary with id as the key
+        self.products_dict: Dict[int, models.Product] = {product.id: product for product in tuotteet}
+        return self.products_dict
 
 
 class AsetuksetPage(QWidget):
