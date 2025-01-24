@@ -22,6 +22,7 @@ class Recipe:
     id: int
     name: str
     instructions: str
+    tags: str
     created_at: datetime
     updated_at: datetime
     ingredients: List['RecipeIngredient']
