@@ -69,8 +69,9 @@ class ProductController:
                 product = Product(
                     id=row['id'],
                     name=row['name'],
-                    description=row['description'],
-                    price=row['price'],
+                    unit=row['unit'],
+                    price_per_unit=row['price_per_unit'],
+                    category=row['category'],
                     created_at=row['created_at'],
                     updated_at=row['updated_at']
                 )

@@ -223,7 +223,7 @@ class ProductsPage(QWidget):
         scroll_layout = QVBoxLayout(scroll_content)
         
         tuotteet = controllers.ProductController().get_all_products()
-        print(tuotteet)
+        
         products = [
             "Maito", "Kanamuna", "Lohi", "Kanan rintafile",
             "Paprika", "Kurkku", "Jäävuorisalaatti",
