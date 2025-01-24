@@ -3,12 +3,11 @@
 import sqlite3
 from models import Recipe, Product, RecipeIngredient, ShoppingList, ShoppingListItem
 from typing import List
-import os
 
 class DatabaseManager:
     _instance = None
 
-    def __init__(self, db_path= os.path.join(os.getcwd(), "utils", "cook_and_cart.db")):
+    def __init__(self, db_path='recipes.db'):
         if DatabaseManager._instance is not None:
             raise Exception("This class is a singleton!")
         else:
@@ -84,6 +83,29 @@ class DatabaseManager:
 
     
     #Get methods 
+    def get_recipe_by_id(self, recipe_id: int) -> Recipe:
+        query = "SELECT * FROM recipes WHERE id = ?"
+        row = self.fetchone(query, (recipe_id,))
+        if row:
+            return Recipe(**dict(row))
+        return None
+        
+    def get_all_recipes(self) -> List[Recipe]:
+        query = "SELECT * FROM recipes"
+        rows = self.fetchall(query)
+        return [Recipe(**dict(row)) for row in rows]
+    
+    def get_product_by_id(self, product_id: int) -> Product:
+        query = "SELECT * FROM products WHERE id = ?"
+        row = self.fetchone(query, (product_id,))
+        if row:
+            return Product(**dict(row))
+        return None
+
+    def get_all_shopping_lists(self) -> List[ShoppingList]:
+        query = "SELECT * FROM shopping_lists"
+        rows = self.fetchall(query)
+        return [ShoppingList(**dict(row)) for row in rows]
 
     #Update methods
 
