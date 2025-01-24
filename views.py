@@ -5,8 +5,9 @@ from PySide6.QtWidgets import (
     QScrollArea, QStackedWidget, QComboBox, QFrame
 )
 from PySide6.QtCore import Qt
-import controllers
-import models
+from controllers import ProductController as PC
+from controllers import ShoppingListController as SLC
+from controllers import RecipeController as RC
 from typing import Dict
 
 TURKOOSI = "#00B0F0"
@@ -226,7 +227,7 @@ class ProductsPage(QWidget):
         
         
         
-        products = self.get_product_dict()
+        products = PC.get_all_products_as_dict()
         
         for product in products:
             btn = QPushButton(product)
@@ -248,12 +249,6 @@ class ProductsPage(QWidget):
         
         main_layout.addWidget(scroll_area, 1)
 
-        ## Tuotteiden haku databasesta.
-    def get_product_dict(self):
-        tuotteet = controllers.ProductController().get_all_products()
-        # Create a dictionary with id as the key
-        self.products_dict: Dict[int, models.Product] = {product.id: product for product in tuotteet}
-        return self.products_dict
 
 
 class AsetuksetPage(QWidget):

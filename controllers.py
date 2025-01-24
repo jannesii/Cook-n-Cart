@@ -2,7 +2,7 @@
 
 from models import Recipe, RecipeIngredient, Product, ShoppingList, ShoppingListItem
 from database import DatabaseManager
-from typing import List
+from typing import List, Dict
 
 class RecipeController:
     def __init__(self):
@@ -77,6 +77,12 @@ class ProductController:
                 )
                 products.append(product)
             return products
+        
+        def get_all_products_as_dict(self):
+            tuotteet = self.get_all_products()
+            # Create a dictionary with id as the key
+            products_dict: Dict[int, Product] = {product.id: product for product in tuotteet}
+            return products_dict
 
         def create_product(self, name: str, description: str, price: float):
             product = Product(
