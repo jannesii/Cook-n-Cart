@@ -43,7 +43,7 @@ class DatabaseManager:
         INSERT INTO recipes (name, instructions, tags)
         VALUES (?, ?, ?)
         """
-        cursor = self.execute_query(query, (recipe.name, recipe.instructions,recipe.tags))
+        cursor = self.execute_query(query, (recipe.name, recipe.instructions, recipe.tags))
         recipe_id = cursor.lastrowid
         # Lisää ainesosat
         for ingredient in recipe.ingredients:
@@ -102,6 +102,11 @@ class DatabaseManager:
         if row:
             return Product(**dict(row))
         return None
+    
+    def get_all_products(self) -> List[Product]:
+        query = "SELECT * FROM products"
+        rows = self.fetchall(query)
+        return [Product(**dict(row)) for row in rows]
 
     def get_all_shopping_lists(self) -> List[ShoppingList]:
         query = "SELECT * FROM shopping_lists"
@@ -109,7 +114,21 @@ class DatabaseManager:
         return [ShoppingList(**dict(row)) for row in rows]
 
     #Update methods
-
+    def update_recipe(self, recipe_id: int, recipe:Recipe):
+        query = """
+        UPDATE recipes
+        SET name = ?, instructions = ?
+        WHERE id = ?
+        """
+        self.execute_query(query, (recipe.name, recipe.instructions, recipe_id))
+    
+    def update_product(self, product_id: int, product:Product):
+        query = """
+        UPDATE products
+        SET name = ?, unit = ?, price_per_unit = ?, category = ?
+        WHERE id = ?
+        """
+        self.execute_query(query, (product.name, product.unit, product.price_per_unit, product.category, product_id))
     #Delete methods
      
     
