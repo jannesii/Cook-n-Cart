@@ -8,6 +8,7 @@ from PySide6.QtCore import Qt
 from controllers import ProductController as PC
 from controllers import ShoppingListController as SLC
 from controllers import RecipeController as RC
+from models import Recipe, RecipeIngredient, Product, ShoppingList, ShoppingListItem
 from typing import Dict
 
 TURKOOSI = "#00B0F0"
@@ -86,6 +87,36 @@ class OstolistatPage(QWidget):
         
         main_layout.addWidget(scroll_area, 1)
 
+from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton
+
+class RecipeDetailDialog(QDialog):
+    def __init__(self, recipe: Recipe, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle(f"Resepti: {recipe.name}")
+        self.setFixedSize(300, 200)  # Voit säätää kokoa tarpeen mukaan
+
+        layout = QVBoxLayout()
+
+        # Lisää reseptin tiedot
+        name_label = QLabel(f"Nimi: {recipe.name}")
+        instructions_label = QLabel(f"Valmistusohje: {recipe.instructions}")
+        tags_label = QLabel(f"Tagit: {recipe.tags}")
+        created_at_label = QLabel(f"Luo: {recipe.created_at}")
+        updated_at_label = QLabel(f"Päivitetty: {recipe.updated_at}")
+        recipe_ingredients_label = QLabel(f"Ainesosat: {recipe.ingredients}")
+
+        layout.addWidget(name_label)
+        layout.addWidget(instructions_label)
+        layout.addWidget(tags_label)
+        layout.addWidget(created_at_label)
+        layout.addWidget(updated_at_label)
+
+        # Lisää sulje-nappi
+        close_btn = QPushButton("Sulje")
+        close_btn.clicked.connect(self.accept)  # Sulkee dialogin
+        layout.addWidget(close_btn)
+
+        self.setLayout(layout)
 
 class ReseptitPage(QWidget):
     """
@@ -160,6 +191,7 @@ class ReseptitPage(QWidget):
                     text-align: left;
                 }}
             """)
+            btn.clicked.connect(lambda checked, r=recipe: self.open_recipe_dialog(r))
             scroll_layout.addWidget(btn)
         
         scroll_layout.addStretch()
@@ -169,6 +201,10 @@ class ReseptitPage(QWidget):
 
     def update_recipes_dict(self):
         self.recipes_dict = self.RecipeController.get_all_recipes_as_dict()
+        
+    def open_recipe_dialog(self, recipe: Recipe):
+        dialog = RecipeDetailDialog(recipe, self)
+        dialog.exec_()  # Modalinen dialogi
 
 class ProductsPage(QWidget):
     """
