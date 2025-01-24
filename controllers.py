@@ -36,6 +36,11 @@ class RecipeController:
             )
             recipes.append(recipe)
         return recipes
+    
+    def get_all_recipes_as_dict(self) -> Dict[int, Recipe]:
+        recipes = self.get_all_recipes()
+        recipes_dict: Dict[int, Recipe] = {recipe.id: recipe for recipe in recipes}
+        return recipes_dict
 
     def get_ingredients_by_recipe_id(self, recipe_id: int) -> List[RecipeIngredient]:
         query = "SELECT * FROM recipe_ingredients WHERE recipe_id = ?"
@@ -57,6 +62,29 @@ class ShoppingListController:
     def __init__(self):
         self.db = DatabaseManager.get_instance()
         
+    def get_all_shopping_lists(self) -> List[ShoppingList]:
+        query = "SELECT * FROM shopping_lists"
+        rows = self.db.fetchall(query)
+        shopping_lists = []
+        for row in rows:
+            shopping_list = ShoppingList(
+                id=row['id'],
+                title=row['title'],
+                total_sum=row['total_sum'],
+                purchased_count=row['purchased_count'],
+                created_at=row['created_at'],
+                updated_at=row['updated_at'],
+            )
+            shopping_lists.append(shopping_list)
+        return shopping_lists
+    
+    def get_all_shopping_lists_as_dict(self) -> List[Dict]:
+        shopping_lists = self.get_all_shopping_lists()
+        shopping_lists_dict: Dict[int, ShoppingList] = {shopping_list.id: shopping_list for shopping_list in shopping_lists}
+        return shopping_lists_dict
+        
+        
+    
 class ProductController:
         def __init__(self):
             self.db = DatabaseManager.get_instance()
