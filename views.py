@@ -1,18 +1,36 @@
 import sys
 from PySide6.QtWidgets import (
-    QApplication, QMainWindow, QWidget,
+    QMainWindow, QWidget,
     QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QScrollArea, QStackedWidget, QComboBox, QFrame
+    QScrollArea, QStackedWidget, QComboBox, QFrame, QDialog
 )
 from PySide6.QtCore import Qt
+from datetime import datetime
+
 from controllers import ProductController as PC
 from controllers import ShoppingListController as SLC
 from controllers import RecipeController as RC
 from models import Recipe, RecipeIngredient, Product, ShoppingList, ShoppingListItem
+from add_recipe_widget import AddRecipeWidget
 from typing import Dict
 
 TURKOOSI = "#00B0F0"
 HARMAA = "#808080"
+
+RecipeController = RC()
+ProductController = PC()
+ShoppingListController = SLC()
+
+
+def format_datetime_or_string(value):
+    if isinstance(value, datetime):
+        return value.strftime('%Y-%m-%d %H:%M:%S')
+    elif isinstance(value, str):
+        # Optionally parse or just return the raw string
+        return value
+    else:
+        return "N/A"
+
 
 class OstolistatPage(QWidget):
     """
@@ -20,16 +38,17 @@ class OstolistatPage(QWidget):
       - Yläpalkki: "Ostoslistat" -otsikko vasemmalla, "Uusi ostolista" -nappi oikealla
       - Keskialue: esim. "Ruokaostokset 0/16", "Motonet 0/5", "Biltema 0/11" -napit
     """
+
     def __init__(self, parent=None):
         super().__init__(parent)
-        
+
         main_layout = QVBoxLayout(self)
-        
+
         # -- Yläpalkki --
         top_bar_layout = QHBoxLayout()
         label = QLabel("Ostoslistat")
         label.setStyleSheet("font-weight: bold; font-size: 18px;")
-        
+
         # Esimerkin "Uusi ostolista" -nappi
         new_list_btn = QPushButton("Uusi ostolista")
         new_list_btn.setStyleSheet(f"""
@@ -40,32 +59,32 @@ class OstolistatPage(QWidget):
                 border-radius: 5px;
             }}
         """)
-        
+
         top_bar_layout.addWidget(label)
         top_bar_layout.addStretch()
         top_bar_layout.addWidget(new_list_btn)
-        
+
         # Värjätään yläpalkin tausta harmaaksi asettamalla QFrame
         top_bar_frame = QFrame()
         top_bar_frame.setLayout(top_bar_layout)
         top_bar_frame.setStyleSheet(f"background-color: {HARMAA};")
-        
+
         main_layout.addWidget(top_bar_frame, 0)  # yläpalkki
-        
+
         # -- Scrollattava keskialue, jos listoja on paljon --
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
-        
+
         scroll_content = QWidget()
         scroll_layout = QVBoxLayout(scroll_content)
-        
+
         # Esimerkkilistat
         shopping_lists = [
             "Ruokaostokset \n0/16",
             "Motonet \n0/5",
             "Biltema \n0/11"
         ]
-        
+
         for item in shopping_lists:
             btn = QPushButton(item)
             btn.setStyleSheet(f"""
@@ -80,104 +99,189 @@ class OstolistatPage(QWidget):
                 }}
             """)
             scroll_layout.addWidget(btn)
-        
+
         scroll_layout.addStretch()
-        
+
         scroll_area.setWidget(scroll_content)
-        
+
         main_layout.addWidget(scroll_area, 1)
 
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton
 
-class RecipeDetailDialog(QDialog):
-    def __init__(self, recipe: Recipe, parent=None):
+class RecipeDetailWidget(QWidget):
+    def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle(f"Resepti: {recipe.name}")
-        self.setFixedSize(300, 200)  # Voit säätää kokoa tarpeen mukaan
 
-        layout = QVBoxLayout()
+        self.recipe = None  # We'll store the current recipe here
 
-        # Lisää reseptin tiedot
-        name_label = QLabel(f"Nimi: {recipe.name}")
-        instructions_label = QLabel(f"Valmistusohje: {recipe.instructions}")
-        tags_label = QLabel(f"Tagit: {recipe.tags}")
-        created_at_label = QLabel(f"Luo: {recipe.created_at}")
-        updated_at_label = QLabel(f"Päivitetty: {recipe.updated_at}")
-        recipe_ingredients_label = QLabel(f"Ainesosat: {recipe.ingredients}")
+        self.layout = QVBoxLayout(self)
 
-        layout.addWidget(name_label)
-        layout.addWidget(instructions_label)
-        layout.addWidget(tags_label)
-        layout.addWidget(created_at_label)
-        layout.addWidget(updated_at_label)
+        # placeholders
+        self.name_label = QLabel()
+        self.instructions_label = QLabel()
+        self.tags_label = QLabel()
+        self.ingredients_label = QLabel()
+        self.created_at_label = QLabel()
+        self.updated_at_label = QLabel()
 
-        # Lisää sulje-nappi
-        close_btn = QPushButton("Sulje")
-        close_btn.clicked.connect(self.accept)  # Sulkee dialogin
-        layout.addWidget(close_btn)
+        # Let text wrap
+        for lbl in [
+            self.name_label, self.instructions_label,
+            self.tags_label, self.ingredients_label,
+            self.created_at_label, self.updated_at_label
+        ]:
+            lbl.setWordWrap(True)
+            self.layout.addWidget(lbl)
 
-        self.setLayout(layout)
+        # "Back" button
+        self.back_btn = QPushButton("Takaisin")
+        self.back_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {TURKOOSI};
+                color: black;
+                font-weight: bold;
+                border-radius: 5px;
+                padding: 10px;
+            }}
+            QPushButton:hover {{
+                background-color: #009ACD;
+            }}
+        """)
+
+        # This button will be wired up in ReseptitPage to switch pages
+        self.layout.addWidget(self.back_btn, alignment=Qt.AlignRight)
+
+    def set_recipe(self, recipe):
+        """
+        Update the labels to show the selected recipe details.
+        """
+        self.recipe = recipe
+        if recipe:
+            self.name_label.setText(f"<b>Nimi:</b> {recipe.name}")
+            self.instructions_label.setText(
+                f"<b>Valmistusohje:</b> {recipe.instructions}")
+            self.tags_label.setText(f"<b>Tagit:</b> {recipe.tags}")
+            self.ingredients_label.setText(
+                f"<b>Ainesosat:</b> {recipe.ingredients}")
+            self.created_at_label.setText(
+                f"<b>Luotu:</b> {format_datetime_or_string(recipe.created_at)}")
+            self.updated_at_label.setText(
+                f"<b>Päivitetty:</b> {format_datetime_or_string(recipe.updated_at)}")
+        else:
+            # Clear fields if no recipe
+            self.name_label.setText("")
+            self.instructions_label.setText("")
+            self.tags_label.setText("")
+            self.ingredients_label.setText("")
+            self.created_at_label.setText("")
+            self.updated_at_label.setText("")
+
 
 class ReseptitPage(QWidget):
     """
     Reseptit-sivu:
-      - Yläpalkki: "Reseptit" -otsikko vasemmalla, "Hae reseptejä" ja "Uusi resepti" -napit oikealla
-      - Keskialue: isoja nappeja, esim. "Karjalanpaisti", "Pasta bolognese", "Tikka masala"
+      - QStackedWidget with:
+         Page 0: "Reseptilista" with "Hae reseptejä" and "Uusi resepti" at the top
+         Page 1: Detailed recipe view (RecipeDetailWidget)
     """
+
     def __init__(self, parent=None):
         super().__init__(parent)
-        
+
+        self.recipes_dict = {}
+
+        # Main layout for the entire ReseptitPage
         main_layout = QVBoxLayout(self)
-        
-        self.RecipeController = RC()
+
+        # Create the QStackedWidget
+        self.stacked = QStackedWidget()
+
+        # Page 0 (list view)
+        self.page_list = QWidget()
+        self.page_list.setLayout(self._create_list_layout())
+
+        # Page 1 (detail view)
+        self.page_detail = RecipeDetailWidget()
+
+        # Hook the "Back" button
+        self.page_detail.back_btn.clicked.connect(self.back_to_list)
+
+        self.page_add_recipe = AddRecipeWidget(
+            recipe_controller=RecipeController,
+            product_controller=ProductController,
+            parent=self
+        )
+
+        # Add both pages to the QStackedWidget
+        self.stacked.addWidget(self.page_list)   # index 0
+        self.stacked.addWidget(self.page_detail)  # index 1
+        self.stacked.addWidget(self.page_add_recipe)  # index 2
+
+        # Start with the list page
+        self.stacked.setCurrentIndex(0)
+
+        main_layout.addWidget(self.stacked, 1)
+
+    def _create_list_layout(self):
+        """
+        Creates and returns the layout for the "list" page (page_list).
+        """
+        layout = QVBoxLayout()
+
         # -- Yläpalkki --
         top_bar_layout = QHBoxLayout()
         label = QLabel("Reseptit")
         label.setStyleSheet("font-weight: bold; font-size: 18px;")
-        
+
         search_btn = QPushButton("Hae reseptejä")
         new_btn = QPushButton("Uusi resepti")
-        
-        # Voit halutessasi säätää esim. samaa tyyliä kuin ostolistasivulla
+        new_btn.clicked.connect(self.open_add_recipe_page)
+
         search_btn.setStyleSheet(f"""
             QPushButton {{
                 background-color: {TURKOOSI};
                 color: black;
                 font-weight: bold;
                 border-radius: 5px;
+                padding: 5px 10px;
+            }}
+            QPushButton:hover {{
+                background-color: #009ACD;
             }}
         """)
-        
+
         new_btn.setStyleSheet(f"""
             QPushButton {{
                 background-color: {TURKOOSI};
                 color: black;
                 font-weight: bold;
                 border-radius: 5px;
+                padding: 5px 10px;
+            }}
+            QPushButton:hover {{
+                background-color: #009ACD;
             }}
         """)
-        
+
         top_bar_layout.addWidget(label)
         top_bar_layout.addStretch()
         top_bar_layout.addWidget(search_btn)
         top_bar_layout.addWidget(new_btn)
-        
+
         top_bar_frame = QFrame()
         top_bar_frame.setLayout(top_bar_layout)
         top_bar_frame.setStyleSheet(f"background-color: {HARMAA};")
-        
-        main_layout.addWidget(top_bar_frame, 0)
-        
-        # -- Scrollattava keskialue (reseptien lista) --
+
+        layout.addWidget(top_bar_frame, 0)
+
+        # -- Scroll area for recipes --
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
-        
+
         scroll_content = QWidget()
         scroll_layout = QVBoxLayout(scroll_content)
-        
+
         self.update_recipes_dict()
-        
-        
+
         for recipe_id, recipe in self.recipes_dict.items():
             btn = QPushButton(f"{recipe_id}: {recipe.name}")
             btn.setStyleSheet(f"""
@@ -190,21 +294,45 @@ class ReseptitPage(QWidget):
                     padding: 10px;
                     text-align: left;
                 }}
+                QPushButton:hover {{
+                    background-color: #009ACD;
+                }}
             """)
-            btn.clicked.connect(lambda checked, r=recipe: self.open_recipe_dialog(r))
+            # Instead of QDialog, we’ll show the details page:
+            btn.clicked.connect(lambda checked=False,
+                                r=recipe: self.display_recipe_detail(r))
             scroll_layout.addWidget(btn)
-        
+
         scroll_layout.addStretch()
         scroll_area.setWidget(scroll_content)
-        
-        main_layout.addWidget(scroll_area, 1)
+
+        layout.addWidget(scroll_area, 1)
+
+        return layout
 
     def update_recipes_dict(self):
-        self.recipes_dict = self.RecipeController.get_all_recipes_as_dict()
-        
-    def open_recipe_dialog(self, recipe: Recipe):
-        dialog = RecipeDetailDialog(recipe, self)
-        dialog.exec_()  # Modalinen dialogi
+        self.recipes_dict = RecipeController.get_all_recipes()
+
+    def display_recipe_detail(self, recipe: Recipe):
+        """
+        Fills in the detail page with the given recipe and switches the stacked widget.
+        """
+        self.page_detail.set_recipe(recipe)
+        # Switch to page index 1 (detail view)
+        self.stacked.setCurrentIndex(1)
+    
+    def open_add_recipe_page(self):
+        # Make sure the add-recipe form is cleared or set to default
+        self.page_add_recipe.setFieldsToDefaults()
+        # Switch the stacked widget to index 2
+        self.stacked.setCurrentIndex(2)
+
+    def back_to_list(self):
+        """
+        Switches back to the recipe list page.
+        """
+        self.stacked.setCurrentIndex(0)
+
 
 class ProductsPage(QWidget):
     """
@@ -212,23 +340,23 @@ class ProductsPage(QWidget):
       - Yläpalkki: 'Tuotteet' -otsikko vasemmalla, 'Hae tuotetta' ja 'Uusi tuote' -napit oikealla
       - Keskialue: Scrollattava lista tuotteista
     """
+
     def __init__(self, parent=None):
         super().__init__(parent)
 
         main_layout = QVBoxLayout(self)
-        
-        self.ProductController = PC()
+
         self.update_products_dict()
-        
+
         # -- Yläpalkki --
         top_bar_layout = QHBoxLayout()
-        
+
         self.title_label = QLabel("Tuotteet")
         self.title_label.setStyleSheet("font-weight: bold; font-size: 18px;")
-        
+
         self.search_button = QPushButton("Hae tuotetta")
         self.new_button = QPushButton("Uusi tuote")
-        
+
         self.search_button.setStyleSheet(f"""
             QPushButton {{
                 background-color: {TURKOOSI};
@@ -245,27 +373,25 @@ class ProductsPage(QWidget):
                 border-radius: 5px;
             }}
         """)
-        
+
         top_bar_layout.addWidget(self.title_label)
         top_bar_layout.addStretch()
         top_bar_layout.addWidget(self.search_button)
         top_bar_layout.addWidget(self.new_button)
-        
+
         top_bar_frame = QFrame()
         top_bar_frame.setLayout(top_bar_layout)
         top_bar_frame.setStyleSheet(f"background-color: {HARMAA};")
-        
+
         main_layout.addWidget(top_bar_frame, 0)
-        
+
         # -- Scrollattava lista keskellä --
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
-        
+
         scroll_content = QWidget()
         scroll_layout = QVBoxLayout(scroll_content)
-        
-        
-        
+
         for product_id, product in self.products_dict.items():
             btn = QPushButton(f"{product_id}: {product.name}")
             btn.setStyleSheet(f"""
@@ -280,14 +406,15 @@ class ProductsPage(QWidget):
                 }}
             """)
             scroll_layout.addWidget(btn)
-        
+
         scroll_layout.addStretch()
         scroll_area.setWidget(scroll_content)
-        
+
         main_layout.addWidget(scroll_area, 1)
 
     def update_products_dict(self):
-        self.products_dict = self.ProductController.get_all_products_as_dict()
+        self.products_dict = ProductController.get_all_products()
+
 
 class AsetuksetPage(QWidget):
     """
@@ -297,28 +424,29 @@ class AsetuksetPage(QWidget):
           1) "Valuutta" - '€'
           2) "Painon yksikkö" - 'kg/l'
     """
+
     def __init__(self, parent=None):
         super().__init__(parent)
 
         main_layout = QVBoxLayout(self)
-        
+
         # -- Yläpalkki --
         top_bar_layout = QHBoxLayout()
         label = QLabel("Asetukset")
         label.setStyleSheet("font-weight: bold; font-size: 18px;")
         top_bar_layout.addWidget(label)
         top_bar_layout.addStretch()
-        
+
         top_bar_frame = QFrame()
         top_bar_frame.setLayout(top_bar_layout)
         top_bar_frame.setStyleSheet(f"background-color: {HARMAA};")
-        
+
         main_layout.addWidget(top_bar_frame, 0)
-        
+
         # -- Keskialue --
         # Tehdään kaksi "riviä", joissa vasemmalla label ja oikealla ComboBox,
         # ja koko rivi on kehystetty kuin nappi (pyöristetty, turkoosi).
-        
+
         # 1) Valuutta
         currency_frame = QFrame()
         currency_frame.setStyleSheet(f"""
@@ -328,10 +456,11 @@ class AsetuksetPage(QWidget):
             }}
         """)
         currency_layout = QHBoxLayout(currency_frame)
-        
+
         currency_label = QLabel("Valuutta")
-        currency_label.setStyleSheet("color: black; font-size: 16px; font-weight: bold;")
-        
+        currency_label.setStyleSheet(
+            "color: black; font-size: 16px; font-weight: bold;")
+
         self.currency_combo = QComboBox()
         # Täytetään muutama valuutta esimerkin vuoksi
         self.currency_combo.addItems(["€", "$", "£", "¥"])
@@ -342,11 +471,11 @@ class AsetuksetPage(QWidget):
                 padding: 2px;
             }
         """)
-        
+
         currency_layout.addWidget(currency_label)
         currency_layout.addStretch()
         currency_layout.addWidget(self.currency_combo)
-        
+
         # 2) Painon yksikkö
         weight_frame = QFrame()
         weight_frame.setStyleSheet(f"""
@@ -356,10 +485,11 @@ class AsetuksetPage(QWidget):
             }}
         """)
         weight_layout = QHBoxLayout(weight_frame)
-        
+
         weight_label = QLabel("Painon yksikkö")
-        weight_label.setStyleSheet("color: black; font-size: 16px; font-weight: bold;")
-        
+        weight_label.setStyleSheet(
+            "color: black; font-size: 16px; font-weight: bold;")
+
         self.weight_combo = QComboBox()
         self.weight_combo.addItems(["kg/l", "lb", "oz"])
         self.weight_combo.setStyleSheet("""
@@ -369,24 +499,24 @@ class AsetuksetPage(QWidget):
                 padding: 2px;
             }
         """)
-        
+
         weight_layout.addWidget(weight_label)
         weight_layout.addStretch()
         weight_layout.addWidget(self.weight_combo)
-        
+
         # Lisätään kehykset pystylayoutiin
         content_layout = QVBoxLayout()
         content_layout.addWidget(currency_frame)
         content_layout.addWidget(weight_frame)
         content_layout.addStretch()
-        
+
         main_layout.addLayout(content_layout, 1)
 
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        
+
         self.setWindowTitle("Esimerkkisovellus")
         self.setMinimumSize(400, 600)
 
@@ -395,11 +525,12 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central_widget)
 
         # Päälayout (pystysuunta): yläosassa sivut (QStackedWidget), alaosassa navigointipalkki
-        main_layout = QVBoxLayout(central_widget)
+        main_layout = QVBoxLayout()
+        central_widget.setLayout(main_layout)
 
         # --- QStackedWidget - sivut ---
         self.stacked_widget = QStackedWidget()
-        
+
         self.ostolistat_page = OstolistatPage()
         self.reseptit_page = ReseptitPage()
         self.products_page = ProductsPage()
@@ -421,10 +552,14 @@ class MainWindow(QMainWindow):
         self.btn_asetukset = QPushButton("Asetukset")
 
         # Kytketään napit vaihtamaan QStackedWidgetin sivua
-        self.btn_ostolistat.clicked.connect(lambda: self.stacked_widget.setCurrentIndex(0))
-        self.btn_reseptit.clicked.connect(lambda: self.stacked_widget.setCurrentIndex(1))
-        self.btn_tuotteet.clicked.connect(lambda: self.stacked_widget.setCurrentIndex(2))
-        self.btn_asetukset.clicked.connect(lambda: self.stacked_widget.setCurrentIndex(3))
+        self.btn_ostolistat.clicked.connect(
+            lambda checked: self.stacked_widget.setCurrentIndex(0))
+        self.btn_reseptit.clicked.connect(
+            lambda checked: self.stacked_widget.setCurrentIndex(1))
+        self.btn_tuotteet.clicked.connect(
+            lambda checked: self.stacked_widget.setCurrentIndex(2))
+        self.btn_asetukset.clicked.connect(
+            lambda checked: self.stacked_widget.setCurrentIndex(3))
 
         # Voit halutessasi säätää alapalkin tyylin
         for btn in [self.btn_ostolistat, self.btn_reseptit, self.btn_tuotteet, self.btn_asetukset]:
