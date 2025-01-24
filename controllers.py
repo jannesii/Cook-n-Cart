@@ -29,7 +29,7 @@ class RecipeController:
                 id=row['id'],
                 name=row['name'],
                 instructions=row['instructions'],
-                image_url=row['image_url'],
+                tags=row['tags'],
                 created_at=row['created_at'],
                 updated_at=row['updated_at'],
                 ingredients=self.get_ingredients_by_recipe_id(row['id'])

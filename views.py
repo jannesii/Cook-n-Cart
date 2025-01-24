@@ -98,6 +98,7 @@ class ReseptitPage(QWidget):
         
         main_layout = QVBoxLayout(self)
         
+        self.RecipeController = RC()
         # -- Yläpalkki --
         top_bar_layout = QHBoxLayout()
         label = QLabel("Reseptit")
@@ -143,14 +144,11 @@ class ReseptitPage(QWidget):
         scroll_content = QWidget()
         scroll_layout = QVBoxLayout(scroll_content)
         
-        recipes = [
-            "Karjalanpaisti",
-            "Pasta bolognese",
-            "Tikka masala"
-        ]
+        self.update_recipes_dict()
         
-        for recipe in recipes:
-            btn = QPushButton(recipe)
+        
+        for recipe_id, recipe in self.recipes_dict.items():
+            btn = QPushButton(f"{recipe_id}: {recipe.name}")
             btn.setStyleSheet(f"""
                 QPushButton {{
                     background-color: {TURKOOSI};
@@ -169,6 +167,8 @@ class ReseptitPage(QWidget):
         
         main_layout.addWidget(scroll_area, 1)
 
+    def update_recipes_dict(self):
+        self.recipes_dict = self.RecipeController.get_all_recipes_as_dict()
 
 class ProductsPage(QWidget):
     """
@@ -180,6 +180,9 @@ class ProductsPage(QWidget):
         super().__init__(parent)
 
         main_layout = QVBoxLayout(self)
+        
+        self.ProductController = PC()
+        self.update_products_dict()
         
         # -- Yläpalkki --
         top_bar_layout = QHBoxLayout()
@@ -227,10 +230,8 @@ class ProductsPage(QWidget):
         
         
         
-        products = PC.get_all_products_as_dict()
-        
-        for product in products:
-            btn = QPushButton(product)
+        for product_id, product in self.products_dict.items():
+            btn = QPushButton(f"{product_id}: {product.name}")
             btn.setStyleSheet(f"""
                 QPushButton {{
                     background-color: {TURKOOSI};
@@ -249,7 +250,8 @@ class ProductsPage(QWidget):
         
         main_layout.addWidget(scroll_area, 1)
 
-
+    def update_products_dict(self):
+        self.products_dict = self.ProductController.get_all_products_as_dict()
 
 class AsetuksetPage(QWidget):
     """
