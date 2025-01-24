@@ -6,6 +6,8 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 import controllers
+import models
+from typing import Dict
 
 TURKOOSI = "#00B0F0"
 HARMAA = "#808080"
@@ -223,6 +225,9 @@ class ProductsPage(QWidget):
         scroll_layout = QVBoxLayout(scroll_content)
         
         tuotteet = controllers.ProductController().get_all_products()
+        # Create a dictionary with id as the key
+        products_dict: Dict[int, models.Product] = {product.id: product for product in tuotteet}
+        
         
         products = [
             "Maito", "Kanamuna", "Lohi", "Kanan rintafile",
