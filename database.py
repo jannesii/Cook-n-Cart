@@ -39,10 +39,10 @@ class DatabaseManager:
 
     def add_recipe(self, recipe: Recipe):
         query = """
-        INSERT INTO recipes (name, instructions, image_url)
-        VALUES (?, ?, ?)
+        INSERT INTO recipes (name, instructions)
+        VALUES (?, ?)
         """
-        cursor = self.execute_query(query, (recipe.name, recipe.instructions, recipe.image_url))
+        cursor = self.execute_query(query, (recipe.name, recipe.instructions,))
         recipe_id = cursor.lastrowid
         # Lisää ainesosat
         for ingredient in recipe.ingredients:
@@ -58,10 +58,10 @@ class DatabaseManager:
 
     def add_product(self, product: Product):
         query = """
-        INSERT INTO products (name, unit, price_per_unit, manufacturer, image_url, category)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO products (name, unit, price_per_unit, category)
+        VALUES (?, ?, ?, ?)
         """
-        self.execute_query(query, (product.name, product.unit, product.price_per_unit, product.manufacturer, product.image_url, product.category))
+        self.execute_query(query, (product.name, product.unit, product.price_per_unit, product.category))
     
     def add_shoppinglist(self, shoppinglist: ShoppingList):
         query = """
@@ -74,13 +74,19 @@ class DatabaseManager:
             self.add_shopping_list_items(list_id, items)
         return list_id
 
-    
     def add_shopping_list_items(self, shoppingList_id: int, shoppingListitems: ShoppingListItem):
         query = """
         INSERT INTO shopping_list_items (shopping_list_id, product_id, quantity, is_purchased)
         VALUES (?, ?, ?, ?)
         """
         self.execute_query(query, (shoppingList_id, shoppingListitems.product_id, shoppingListitems.quantity, shoppingListitems.is_purchased))
-        
+
     
-    # Lisää muita CRUD-metodeja tarpeen mukaan
+    #Get methods 
+
+    #Update methods
+
+    #Delete methods
+     
+    
+
