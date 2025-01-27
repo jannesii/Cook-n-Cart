@@ -4,7 +4,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QScrollArea, QStackedWidget, QComboBox, QFrame, QDialog, QLineEdit, QCompleter, QFormLayout
 )
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QStringListModel
 from datetime import datetime
 
 from controllers import ProductController as PC
@@ -363,9 +363,9 @@ class ProductsPage(QWidget):
         self.page_add_form = QWidget()
         self.page_add_form.setLayout(self._create_add_form_layout())
 
-        self.stacked.addWidget(self.page_list)     # index 0
+        self.stacked.addWidget(self.page_list)      # index 0
         self.stacked.addWidget(self.page_add_form)  # index 1
-        
+
         # Start with the list page
         self.stacked.setCurrentIndex(0)
 
@@ -413,7 +413,8 @@ class ProductsPage(QWidget):
         top_bar_frame = QFrame()
         top_bar_frame.setLayout(top_bar_layout)
         top_bar_frame.setStyleSheet(
-            f"background-color: {HARMAA}; border-radius: 10px;")
+            f"background-color: {HARMAA}; border-radius: 10px;"
+        )
 
         layout.addWidget(top_bar_frame, 0)
 
@@ -431,8 +432,6 @@ class ProductsPage(QWidget):
 
         return layout
 
-
-        
     def _create_add_form_layout(self):
         layout = QVBoxLayout()
 
@@ -441,10 +440,13 @@ class ProductsPage(QWidget):
         self.desc_edit = QLineEdit()
         self.price_edit = QLineEdit()
         self.category_edit = QLineEdit()
-        
+
+        # Fetch all categories and ensure uniqueness
         all_categories = ProductController.get_all_categories()
-        categories_completer = QCompleter(all_categories)
-        categories_completer.setCaseSensitivity(Qt.CaseInsensitive) 
+        unique_categories = sorted(set(all_categories))  # Ensures unique and sorted categories
+
+        categories_completer = QCompleter(unique_categories)
+        categories_completer.setCaseSensitivity(Qt.CaseInsensitive)
         self.category_edit.setCompleter(categories_completer)
 
         form.addRow("Nimi:", self.name_edit)
@@ -459,12 +461,14 @@ class ProductsPage(QWidget):
 
         save_btn = QPushButton("Tallenna tuote")
         save_btn.setStyleSheet(
-            f"background-color: {TURKOOSI}; font-weight: bold;")
+            f"background-color: {TURKOOSI}; font-weight: bold;"
+        )
         save_btn.clicked.connect(self._save_new_product)
 
         back_btn = QPushButton("Takaisin")
         back_btn.setStyleSheet(
-            f"background-color: {HARMAA}; font-weight: bold;")
+            f"background-color: {HARMAA}; font-weight: bold;"
+        )
         back_btn.clicked.connect(self._back_to_product_list)
 
         btn_layout.addWidget(save_btn)
@@ -483,15 +487,28 @@ class ProductsPage(QWidget):
         name = self.name_edit.text().strip()
         desc = self.desc_edit.text().strip()
         price_str = self.price_edit.text().strip().replace(",", ".")
-        price = float(price_str) if price_str else 0.0
+        try:
+            price = float(price_str) if price_str else 0.0
+        except ValueError:
+            price = 0.0  # Default to 0.0 or handle the error as needed
+            # Optionally, you can show an error message here
+
         cat = self.category_edit.text().strip()
 
+        # Add the new product using the ProductController
         ProductController.add_product(
             name=name,
             unit=desc,
             price_per_unit=price,
             category=cat
         )
+
+        # Update the products dictionary and refresh the product list
+        self.update_products_dict()
+        self.populate_product_list()
+
+        # Update the category completer with unique categories
+        self._update_category_completer()
 
         # Clear fields
         self.name_edit.clear()
@@ -501,28 +518,46 @@ class ProductsPage(QWidget):
 
         # Go back to page 0 and refresh the product list
         self._back_to_product_list()
-        #self._refresh_product_list()
+
+    def _update_category_completer(self):
+        """
+        Refresh the category completer to include any new unique categories.
+        """
+        all_categories = ProductController.get_all_categories()
+        unique_categories = sorted(set(all_categories))
+        self.category_edit.completer().setModel(QStringListModel(unique_categories))
 
     def _back_to_product_list(self):
         """
         Switch from add form (page 1) back to list (page 0).
         """
         self.stacked.setCurrentIndex(0)
-        
+
     def display_add_product(self):
         self.stacked.setCurrentIndex(1)
 
     def update_products_dict(self):
+        """
+        Fetch all products from the ProductController and update the local dictionary.
+        """
         self.products_dict = ProductController.get_all_products()
 
     def populate_product_list(self):
+        """
+        Populate the scroll area with buttons representing each product.
+        """
         # Clear the current layout
         for i in reversed(range(self.scroll_layout.count())):
             widget = self.scroll_layout.itemAt(i).widget()
             if widget is not None:
                 widget.deleteLater()
-        
-        sorted_products = sorted(self.products_dict.values(), key=lambda p: p.name.lower())
+
+        # Sort products by name (case-insensitive)
+        sorted_products = sorted(
+            self.products_dict.values(),
+            key=lambda p: p.name.lower()
+        )
+
         # Add products to the layout
         for product in sorted_products:
             btn = QPushButton(f"{product.name}")
@@ -537,18 +572,23 @@ class ProductsPage(QWidget):
                     text-align: left;
                 }}
             """)
+            # Optionally, connect the button to a detailed view or action
+            # btn.clicked.connect(lambda checked, p=product: self.view_product_details(p))
             self.scroll_layout.addWidget(btn)
+
         self.scroll_layout.addStretch()
 
     def filter_products(self):
+        """
+        Filter the product buttons based on the search text.
+        """
         search_text = self.search_bar.text().lower()
-        for i in range(self.scroll_layout.count() - 1):
+        for i in range(self.scroll_layout.count() - 1):  # Exclude the stretch
             item = self.scroll_layout.itemAt(i).widget()
             if search_text in item.text().lower():
                 item.show()
             else:
                 item.hide()
-
 
 class AsetuksetPage(QWidget):
     """
