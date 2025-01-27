@@ -2,7 +2,7 @@ import sys
 from PySide6.QtWidgets import (
     QMainWindow, QWidget,
     QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QScrollArea, QStackedWidget, QComboBox, QFrame, QDialog, QLineEdit
+    QScrollArea, QStackedWidget, QComboBox, QFrame, QDialog, QLineEdit, QCompleter, QFormLayout
 )
 from PySide6.QtCore import Qt
 from datetime import datetime
@@ -68,7 +68,8 @@ class OstolistatPage(QWidget):
         # Värjätään yläpalkin tausta harmaaksi asettamalla QFrame
         top_bar_frame = QFrame()
         top_bar_frame.setLayout(top_bar_layout)
-        top_bar_frame.setStyleSheet(f"background-color: {HARMAA}; border-radius: 10px;")
+        top_bar_frame.setStyleSheet(
+            f"background-color: {HARMAA}; border-radius: 10px;")
 
         main_layout.addWidget(top_bar_frame, 0)  # yläpalkki
 
@@ -212,8 +213,6 @@ class ReseptitPage(QWidget):
             parent=self
         )
         self.page_add_recipe.cancel_btn.clicked.connect(self.back_to_list)
-        
-        
 
         # Add both pages to the QStackedWidget
         self.stacked.addWidget(self.page_list)   # index 0
@@ -273,7 +272,8 @@ class ReseptitPage(QWidget):
 
         top_bar_frame = QFrame()
         top_bar_frame.setLayout(top_bar_layout)
-        top_bar_frame.setStyleSheet(f"background-color: {HARMAA}; border-radius: 10px;")
+        top_bar_frame.setStyleSheet(
+            f"background-color: {HARMAA}; border-radius: 10px;")
 
         layout.addWidget(top_bar_frame, 0)
 
@@ -324,7 +324,7 @@ class ReseptitPage(QWidget):
         self.page_detail.set_recipe(recipe)
         # Switch to page index 1 (detail view)
         self.stacked.setCurrentIndex(1)
-    
+
     def open_add_recipe_page(self):
         # Make sure the add-recipe form is cleared or set to default
         self.page_add_recipe.setFieldsToDefaults()
@@ -348,10 +348,31 @@ class ProductsPage(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        main_layout = QVBoxLayout(self)
-
+        self.products_dict = {}
         self.update_products_dict()
 
+        main_layout = QVBoxLayout(self)
+
+        self.stacked = QStackedWidget()
+
+        # Page 0 (list view)
+        self.page_list = QWidget()
+        self.page_list.setLayout(self._create_list_layout())
+
+        # Page 1 (add product view)
+        self.page_add_form = QWidget()
+        self.page_add_form.setLayout(self._create_add_form_layout())
+
+        self.stacked.addWidget(self.page_list)     # index 0
+        self.stacked.addWidget(self.page_add_form)  # index 1
+        
+        # Start with the list page
+        self.stacked.setCurrentIndex(0)
+
+        main_layout.addWidget(self.stacked, 1)
+
+    def _create_list_layout(self):
+        layout = QVBoxLayout()
         # -- Yläpalkki --
         top_bar_layout = QHBoxLayout()
 
@@ -363,7 +384,7 @@ class ProductsPage(QWidget):
         self.search_bar.textChanged.connect(self.filter_products)
 
         self.new_button = QPushButton("Uusi tuote")
-        self.new_button.clicked.connect(self.open_add_product_dialog)
+        self.new_button.clicked.connect(self.display_add_product)
 
         self.search_bar.setStyleSheet(f"""
             QLineEdit {{
@@ -391,9 +412,10 @@ class ProductsPage(QWidget):
 
         top_bar_frame = QFrame()
         top_bar_frame.setLayout(top_bar_layout)
-        top_bar_frame.setStyleSheet(f"background-color: {HARMAA}; border-radius: 10px;")
+        top_bar_frame.setStyleSheet(
+            f"background-color: {HARMAA}; border-radius: 10px;")
 
-        main_layout.addWidget(top_bar_frame, 0)
+        layout.addWidget(top_bar_frame, 0)
 
         # -- Scrollattava lista keskellä --
         self.scroll_area = QScrollArea()
@@ -403,9 +425,92 @@ class ProductsPage(QWidget):
         self.scroll_layout = QVBoxLayout(self.scroll_content)
 
         self.scroll_area.setWidget(self.scroll_content)
-        main_layout.addWidget(self.scroll_area, 1)
+        layout.addWidget(self.scroll_area, 1)
 
         self.populate_product_list()
+
+        return layout
+
+
+        
+    def _create_add_form_layout(self):
+        layout = QVBoxLayout()
+
+        form = QFormLayout()
+        self.name_edit = QLineEdit()
+        self.desc_edit = QLineEdit()
+        self.price_edit = QLineEdit()
+        self.category_edit = QLineEdit()
+        
+        all_categories = ProductController.get_all_categories()
+        categories_completer = QCompleter(all_categories)
+        categories_completer.setCaseSensitivity(Qt.CaseInsensitive) 
+        self.category_edit.setCompleter(categories_completer)
+
+        form.addRow("Nimi:", self.name_edit)
+        form.addRow("Yksikkö:", self.desc_edit)
+        form.addRow("Hinta:", self.price_edit)
+        form.addRow("Kategoria:", self.category_edit)
+
+        layout.addLayout(form)
+
+        # Save/Cancel
+        btn_layout = QHBoxLayout()
+
+        save_btn = QPushButton("Tallenna tuote")
+        save_btn.setStyleSheet(
+            f"background-color: {TURKOOSI}; font-weight: bold;")
+        save_btn.clicked.connect(self._save_new_product)
+
+        back_btn = QPushButton("Takaisin")
+        back_btn.setStyleSheet(
+            f"background-color: {HARMAA}; font-weight: bold;")
+        back_btn.clicked.connect(self._back_to_product_list)
+
+        btn_layout.addWidget(save_btn)
+        btn_layout.addWidget(back_btn)
+
+        layout.addLayout(btn_layout)
+
+        layout.addStretch()
+        return layout
+
+    def _save_new_product(self):
+        """
+        Call product_controller.add_product(...) with data from the form,
+        then go back to product list page and refresh.
+        """
+        name = self.name_edit.text().strip()
+        desc = self.desc_edit.text().strip()
+        price_str = self.price_edit.text().strip().replace(",", ".")
+        price = float(price_str) if price_str else 0.0
+        cat = self.category_edit.text().strip()
+
+        ProductController.add_product(
+            name=name,
+            unit=desc,
+            price_per_unit=price,
+            category=cat
+        )
+
+        # Clear fields
+        self.name_edit.clear()
+        self.desc_edit.clear()
+        self.price_edit.clear()
+        self.category_edit.clear()
+
+        # Go back to page 0 and refresh the product list
+        self._back_to_product_list()
+        #self._refresh_product_list()
+
+    def _back_to_product_list(self):
+        """
+        Switch from add form (page 1) back to list (page 0).
+        """
+        self.stacked.setCurrentIndex(0)
+        
+    def display_add_product(self):
+        self.stacked.setCurrentIndex(1)
 
     def update_products_dict(self):
         self.products_dict = ProductController.get_all_products()
@@ -416,10 +521,11 @@ class ProductsPage(QWidget):
             widget = self.scroll_layout.itemAt(i).widget()
             if widget is not None:
                 widget.deleteLater()
-
+        
+        sorted_products = sorted(self.products_dict.values(), key=lambda p: p.name.lower())
         # Add products to the layout
-        for product_id, product in self.products_dict.items():
-            btn = QPushButton(f"{product_id}: {product.name}")
+        for product in sorted_products:
+            btn = QPushButton(f"{product.name}")
             btn.setStyleSheet(f"""
                 QPushButton {{
                     background-color: {TURKOOSI};
@@ -442,51 +548,6 @@ class ProductsPage(QWidget):
                 item.show()
             else:
                 item.hide()
-
-    def open_add_product_dialog(self):
-        dialog = AddProductDialog(self)
-        if dialog.exec():
-            self.update_products_dict()
-            self.populate_product_list()
-
-
-class AddProductDialog(QDialog):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("Lisää tuote")
-        self.setMinimumSize(300, 200)
-
-        layout = QVBoxLayout(self)
-
-        self.name_edit = QLineEdit()
-        self.name_edit.setPlaceholderText("Nimi")
-
-        self.unit_edit = QLineEdit()
-        self.unit_edit.setPlaceholderText("Yksikkö")
-
-        self.price_edit = QLineEdit()
-        self.price_edit.setPlaceholderText("Hinta per yksikkö")
-
-        self.category_edit = QLineEdit()
-        self.category_edit.setPlaceholderText("Kategoria")
-
-        save_button = QPushButton("Tallenna")
-        save_button.clicked.connect(self.save_product)
-
-        layout.addWidget(self.name_edit)
-        layout.addWidget(self.unit_edit)
-        layout.addWidget(self.price_edit)
-        layout.addWidget(self.category_edit)
-        layout.addWidget(save_button)
-
-    def save_product(self):
-        name = self.name_edit.text().strip()
-        unit = self.unit_edit.text().strip()
-        price = float(self.price_edit.text().strip())
-        category = self.category_edit.text().strip()
-
-        ProductController.add_product(name, unit, price, category)
-        self.accept()
 
 
 class AsetuksetPage(QWidget):
@@ -512,7 +573,8 @@ class AsetuksetPage(QWidget):
 
         top_bar_frame = QFrame()
         top_bar_frame.setLayout(top_bar_layout)
-        top_bar_frame.setStyleSheet(f"background-color: {HARMAA}; border-radius: 10px;")
+        top_bar_frame.setStyleSheet(
+            f"background-color: {HARMAA}; border-radius: 10px;")
 
         main_layout.addWidget(top_bar_frame, 0)
 
