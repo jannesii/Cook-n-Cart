@@ -103,8 +103,7 @@ class AddRecipeWidget(QWidget):
         self.cancel_btn = QPushButton("Peruuta")
         self.cancel_btn.setStyleSheet(
             f"background-color: {HARMAA}; font-weight: bold;")
-        # We'll rely on a parent-level callback to go back to list, so we emit a signal or call a method:
-        self.cancel_btn.clicked.connect(self._cancel)
+
 
         buttons_layout.addWidget(self.save_btn)
         buttons_layout.addWidget(self.cancel_btn)
@@ -180,13 +179,6 @@ class AddRecipeWidget(QWidget):
             # If your ReseptitPage has a method like that.
             self.parent().back_to_list()
 
-    def _cancel(self):
-        """
-        Discard changes and go back to the list or however you want to handle.
-        """
-        self._clear_fields()
-        if hasattr(self.parent(), "back_to_list"):
-            self.parent().back_to_list()
 
     def _clear_fields(self):
         self.name_edit.clear()

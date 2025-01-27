@@ -2,7 +2,7 @@ import sys
 from PySide6.QtWidgets import (
     QMainWindow, QWidget,
     QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QScrollArea, QStackedWidget, QComboBox, QFrame, QDialog, QLineEdit 
+    QScrollArea, QStackedWidget, QComboBox, QFrame, QDialog, QLineEdit
 )
 from PySide6.QtCore import Qt
 from datetime import datetime
@@ -57,6 +57,7 @@ class OstolistatPage(QWidget):
                 color: black;
                 font-weight: bold;
                 border-radius: 5px;
+                padding: 5px 10px;
             }}
         """)
 
@@ -67,7 +68,7 @@ class OstolistatPage(QWidget):
         # Värjätään yläpalkin tausta harmaaksi asettamalla QFrame
         top_bar_frame = QFrame()
         top_bar_frame.setLayout(top_bar_layout)
-        top_bar_frame.setStyleSheet(f"background-color: {HARMAA};")
+        top_bar_frame.setStyleSheet(f"background-color: {HARMAA}; border-radius: 10px;")
 
         main_layout.addWidget(top_bar_frame, 0)  # yläpalkki
 
@@ -210,6 +211,9 @@ class ReseptitPage(QWidget):
             product_controller=ProductController,
             parent=self
         )
+        self.page_add_recipe.cancel_btn.clicked.connect(self.back_to_list)
+        
+        
 
         # Add both pages to the QStackedWidget
         self.stacked.addWidget(self.page_list)   # index 0
@@ -269,7 +273,7 @@ class ReseptitPage(QWidget):
 
         top_bar_frame = QFrame()
         top_bar_frame.setLayout(top_bar_layout)
-        top_bar_frame.setStyleSheet(f"background-color: {HARMAA};")
+        top_bar_frame.setStyleSheet(f"background-color: {HARMAA}; border-radius: 10px;")
 
         layout.addWidget(top_bar_frame, 0)
 
@@ -376,6 +380,7 @@ class ProductsPage(QWidget):
                 color: black;
                 font-weight: bold;
                 border-radius: 5px;
+                padding: 5px 10px;
             }}
         """)
 
@@ -386,7 +391,7 @@ class ProductsPage(QWidget):
 
         top_bar_frame = QFrame()
         top_bar_frame.setLayout(top_bar_layout)
-        top_bar_frame.setStyleSheet(f"background-color: {HARMAA};")
+        top_bar_frame.setStyleSheet(f"background-color: {HARMAA}; border-radius: 10px;")
 
         main_layout.addWidget(top_bar_frame, 0)
 
@@ -507,7 +512,7 @@ class AsetuksetPage(QWidget):
 
         top_bar_frame = QFrame()
         top_bar_frame.setLayout(top_bar_layout)
-        top_bar_frame.setStyleSheet(f"background-color: {HARMAA};")
+        top_bar_frame.setStyleSheet(f"background-color: {HARMAA}; border-radius: 10px;")
 
         main_layout.addWidget(top_bar_frame, 0)
 
@@ -638,6 +643,7 @@ class MainWindow(QMainWindow):
                     font-weight: bold;
                     border: none;
                     padding: 8px;
+                    border-radius: 5px;
                 }}
                 QPushButton:pressed {{
                     background-color: #707070; /* tummempi harmaa klikatessa */

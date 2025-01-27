@@ -35,7 +35,7 @@ class AddProductsWidget(QWidget):
         self.selected_products = []
 
         # Outer layout
-        self.layout = QVBoxLayout(self)
+        self.outer_layout = QVBoxLayout(self)
 
         # Stacked widget: 2 pages
         self.stacked = QStackedWidget()
@@ -52,7 +52,7 @@ class AddProductsWidget(QWidget):
         self.stacked.addWidget(self.page_add_form)  # index 1
         self.stacked.setCurrentIndex(0)
 
-        self.layout.addWidget(self.stacked)
+        self.outer_layout.addWidget(self.stacked)
 
     def _create_list_layout(self):
         layout = QVBoxLayout()
@@ -130,6 +130,8 @@ class AddProductsWidget(QWidget):
             product_obj = item.data(Qt.UserRole)
             if product_obj in self.selected_products:
                 item.setCheckState(Qt.Checked)
+                
+        self.product_list.sortItems(Qt.AscendingOrder)
 
     def _finish_selection(self):
         """
