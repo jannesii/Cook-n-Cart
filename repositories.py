@@ -49,7 +49,8 @@ class RecipeRepository:
         rows = self.db.fetchall(query)
         tags = []
         for row in rows:
-            tags.append(row['tags'])
+            if row['tags']:
+                tags.extend([tag.strip() for tag in row['tags'].split(',') if tag.strip()])
         return tags
 
     def get_ingredients_by_recipe_id(self, recipe_id: int) -> List[RecipeIngredient]:
@@ -68,7 +69,7 @@ class RecipeRepository:
             ingredients.append(ingredient)
         return ingredients
 
-    def add_recipe(self, recipe: Recipe):
+    def add_recipe(self, recipe: Recipe) -> int:
         query = """
         INSERT INTO recipes (name, instructions, tags)
         VALUES (?, ?, ?)
@@ -76,9 +77,6 @@ class RecipeRepository:
         cursor = self.db.execute_query(
             query, (recipe.name, recipe.instructions, recipe.tags))
         recipe_id = cursor.lastrowid
-        # Lisää ainesosat
-        for ingredient in recipe.ingredients:
-            self.add_recipe_ingredient(recipe_id, ingredient)
         return recipe_id
 
     def add_recipe_ingredient(self, recipe_id: int, ingredient: RecipeIngredient):
@@ -89,19 +87,9 @@ class RecipeRepository:
         self.db.execute_query(
             query, (recipe_id, ingredient.product_id, ingredient.quantity))
 
-    def update_recipe(self, recipe_id: int, recipe: Recipe):
-        query = """
-        UPDATE recipes
-        SET name = ?, instructions = ?, image_url = ?
-        WHERE id = ?
-        """
-        self.db.execute_query(
-            query, (recipe.name, recipe.instructions, recipe.image_url, recipe_id))
-        # Update ingredients
-        self.db.execute_query(
-            "DELETE FROM recipe_ingredients WHERE recipe_id = ?", (recipe_id,))
-        for ingredient in recipe.ingredients:
-            self.add_recipe_ingredient(recipe_id, ingredient)
+    def remove_ingredients_from_recipe(self, recipe_id: int):
+        query = "DELETE FROM recipe_ingredients WHERE recipe_id = ?"
+        self.db.execute_query(query, (recipe_id,))
 
 
 class ProductRepository:

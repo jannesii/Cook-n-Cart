@@ -1,7 +1,7 @@
 # models.py
 
-from dataclasses import dataclass
-from typing import List
+from dataclasses import dataclass, field
+from typing import List, Optional
 from datetime import datetime
 
 
@@ -29,12 +29,12 @@ class Recipe:
 
 @dataclass
 class RecipeIngredient:
-    id: int
-    recipe_id: int
-    product_id: int
-    quantity: float
-    created_at: datetime
-    updated_at: datetime
+    id: Optional[int] = field(default=None)
+    recipe_id: Optional[int] = field(default=None)
+    product_id: int = field(default=0)
+    quantity: float = field(default=1.0)
+    created_at: Optional[datetime] = field(default=None)
+    updated_at: Optional[datetime] = field(default=None)
 
 
 @dataclass
