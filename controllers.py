@@ -1,14 +1,25 @@
 # controllers.py
 
 from models import Recipe, RecipeIngredient, Product, ShoppingList, ShoppingListItem
-from database import DatabaseManager
+from repositories import RecipeRepository, ProductRepository, ShoppingListRepository
 from typing import List, Dict
 
 
 class RecipeController:
     def __init__(self):
-        self.db = DatabaseManager.get_instance()
-        print(self.db.get_product_by_id(1))
+        self.repo = RecipeRepository()
+
+    def get_all_recipes(self) -> Dict[int, Recipe]:
+        return self.repo.get_all_recipes()
+
+    def get_recipe_by_id(self, recipe_id: int) -> Recipe:
+        return self.repo.get_recipe_by_id(recipe_id)
+
+    def get_all_tags(self) -> List[str]:
+        return self.repo.get_all_tags()
+
+    def get_ingredients_by_recipe_id(self, recipe_id: int) -> List[RecipeIngredient]:
+        return self.repo.get_ingredients_by_recipe_id(recipe_id)
 
     def add_recipe(self, name: str, instructions: str, tags: str, ingredients: List[dict]):
         recipe = Recipe(
@@ -20,10 +31,10 @@ class RecipeController:
             updated_at=None,
             ingredients=[RecipeIngredient(**ing) for ing in ingredients]
         )
-        return self.db.add_recipe(recipe)
+        return self.repo.add_recipe(recipe)
 
     def update_recipe(self, recipe_id: int, name: str = None, instructions: str = None, ingredients: List[dict] = None):
-        recipe = self.db.get_recipe_by_id(recipe_id)
+        recipe = self.repo.get_recipe_by_id(recipe_id)
         if not recipe:
             raise ValueError("Recipe not found")
 
@@ -35,26 +46,20 @@ class RecipeController:
             recipe.ingredients = [RecipeIngredient(
                 **ing) for ing in ingredients]
 
-        self.db.update_recipe(recipe_id, recipe)
+        self.repo.update_recipe(recipe_id, recipe)
         return recipe
-
-    def get_all_recipes(self) -> Dict[int, Recipe]:
-        return self.db.get_all_recipes()
-    
-    def get_recipe_by_id(self, recipe_id: int) -> Recipe:
-        return self.db.get_recipe_by_id(recipe_id)
-    
-    def get_all_tags(self) -> List[str]:
-        return self.db.get_all_tags()
-
-    def get_ingredients_by_recipe_id(self, recipe_id: int) -> List[RecipeIngredient]:
-        return self.db.get_ingredients_by_recipe_id(recipe_id)
 
 
 class ShoppingListController:
     def __init__(self):
-        self.db = DatabaseManager.get_instance()
-        
+        self.repo = ShoppingListRepository()
+
+    def get_all_shopping_lists(self) -> Dict[int, ShoppingList]:
+        return self.repo.get_all_shopping_lists()
+
+    def get_shopping_list_by_id(self, shopping_list_id: int) -> ShoppingList:
+        return self.repo.get_shopping_list_by_id(shopping_list_id)
+
     def add_shopping_list(self, title: str, items: List[dict]):
         shopping_list = ShoppingList(
             id=0,  # Tietokanta asettaa tämän automaattisesti
@@ -65,10 +70,10 @@ class ShoppingListController:
             updated_at=None,
             items=[ShoppingListItem(**item) for item in items]
         )
-        return self.db.add_shopping_list(shopping_list)
-    
+        return self.repo.add_shopping_list(shopping_list)
+
     def update_shopping_list(self, shopping_list_id: int, title: str = None, items: List[dict] = None):
-        shopping_list = self.db.get_shopping_list_by_id(shopping_list_id)
+        shopping_list = self.repo.get_shopping_list_by_id(shopping_list_id)
         if not shopping_list:
             raise ValueError("Shopping list not found")
 
@@ -78,24 +83,22 @@ class ShoppingListController:
             shopping_list.items = [ShoppingListItem(
                 **item) for item in items]
 
-        self.db.update_shopping_list(shopping_list_id, shopping_list)
+        self.repo.update_shopping_list(shopping_list_id, shopping_list)
         return shopping_list
-
-    def get_all_shopping_lists(self) -> Dict[int, ShoppingList]:
-        return self.db.get_all_shopping_lists()
-    
-    def get_shopping_list_by_id(self, shopping_list_id: int) -> ShoppingList:
-        return self.db.get_shopping_list_by_id(shopping_list_id)
-    
-    def get_items_by_shopping_list_id(self, shopping_list_id: int) -> List[ShoppingListItem]:
-        return self.db.get_products_by_shoplist_id(shopping_list_id)
 
 
 class ProductController:
     def __init__(self):
-        self.db = DatabaseManager.get_instance()
+        self.repo = ProductRepository()
 
-        
+    def get_all_products(self) -> Dict[int, Product]:
+        return self.repo.get_all_products()
+
+    def get_all_categories(self) -> List[str]:
+        return self.repo.get_all_categories()
+
+    def get_items_by_shopping_list_id(self, shopping_list_id: int) -> List[ShoppingListItem]:
+        return self.repo.get_products_by_shoplist_id(shopping_list_id)
 
     def add_product(self, name: str, unit: str, price_per_unit: float, category: str):
         product = Product(
@@ -107,16 +110,10 @@ class ProductController:
             created_at=None,
             updated_at=None
         )
-        return self.db.add_product(product)
-    
-    def get_all_products(self) -> Dict[int, Product]:
-        return self.db.get_all_products()
-    
-    def get_all_categories(self) -> List[str]:
-        return self.db.get_all_categories()
+        return self.repo.add_product(product)
 
     def update_product(self, product_id: int, name: str = None, description: str = None, price_per_unit: float = None, category: str = None):
-        product = self.db.get_product_by_id(product_id)
+        product = self.repo.get_product_by_id(product_id)
         if not product:
             raise ValueError("Product not found")
 
@@ -129,8 +126,8 @@ class ProductController:
         if category:
             product.category = category
 
-        self.db.update_product(product_id, product)
+        self.repo.update_product(product_id, product)
         return product
 
     def delete_product(self, product_id: int):
-        self.db.delete_product(product_id)
+        self.repo.delete_product(product_id)
