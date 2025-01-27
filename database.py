@@ -5,6 +5,7 @@ from models import Recipe, Product, RecipeIngredient, ShoppingList, ShoppingList
 from typing import List, Dict
 import os
 
+
 class DatabaseManager:
     _instance = None
 
@@ -43,7 +44,8 @@ class DatabaseManager:
         INSERT INTO recipes (name, instructions, tags)
         VALUES (?, ?, ?)
         """
-        cursor = self.execute_query(query, (recipe.name, recipe.instructions, recipe.tags))
+        cursor = self.execute_query(
+            query, (recipe.name, recipe.instructions, recipe.tags))
         recipe_id = cursor.lastrowid
         # Lisää ainesosat
         for ingredient in recipe.ingredients:
@@ -55,21 +57,24 @@ class DatabaseManager:
         INSERT INTO recipe_ingredients (recipe_id, product_id, quantity)
         VALUES (?, ?, ?)
         """
-        self.execute_query(query, (recipe_id, ingredient.product_id, ingredient.quantity))
+        self.execute_query(
+            query, (recipe_id, ingredient.product_id, ingredient.quantity))
 
     def add_product(self, product: Product):
         query = """
         INSERT INTO products (name, unit, price_per_unit, category)
         VALUES (?, ?, ?, ?)
         """
-        self.execute_query(query, (product.name, product.unit, product.price_per_unit, product.category))
-    
+        self.execute_query(query, (product.name, product.unit,
+                           product.price_per_unit, product.category))
+
     def add_shopping_list(self, shoppinglist: ShoppingList):
         query = """
         INSERT INTO shopping_lists (title, total_sum, purchased_count)
         VALUES (?, ?, ?)
         """
-        cursor = self.execute_query(query, (shoppinglist.title, shoppinglist.total_sum, shoppinglist.purchased_count))
+        cursor = self.execute_query(
+            query, (shoppinglist.title, shoppinglist.total_sum, shoppinglist.purchased_count))
         list_id = cursor.lastrowid
         for items in shoppinglist.items:
             self.add_shopping_list_items(list_id, items)
@@ -80,10 +85,13 @@ class DatabaseManager:
         INSERT INTO shopping_list_items (shopping_list_id, product_id, quantity, is_purchased)
         VALUES (?, ?, ?, ?)
         """
-        self.execute_query(query, (shoppingList_id, shoppingListitems.product_id, shoppingListitems.quantity, shoppingListitems.is_purchased))
+        self.execute_query(query, (shoppingList_id, shoppingListitems.product_id,
+                           shoppingListitems.quantity, shoppingListitems.is_purchased))
 
-    
-    #Get methods 
+    """---------------------------------------------------------------------------------------------------------------------
+        GET METHODS
+    ---------------------------------------------------------------------------------------------------------------------"""
+
     def get_recipe_by_id(self, recipe_id: int) -> Recipe:
         query = "SELECT * FROM recipes WHERE id = ?"
         row = self.fetchone(query, (recipe_id,))
@@ -99,7 +107,7 @@ class DatabaseManager:
             )
             return recipe
         return None
-    
+
     def get_ingredients_by_recipe_id(self, recipe_id: int) -> List[RecipeIngredient]:
         query = "SELECT * FROM recipe_ingredients WHERE recipe_id = ?"
         rows = self.fetchall(query, (recipe_id,))
@@ -115,7 +123,7 @@ class DatabaseManager:
             )
             ingredients.append(ingredient)
         return ingredients
-    
+
     def get_all_tags(self) -> List[str]:
         query = "SELECT tags FROM recipes"
         rows = self.fetchall(query)
@@ -123,7 +131,7 @@ class DatabaseManager:
         for row in rows:
             tags.append(row['tags'])
         return tags
-    
+
     def get_all_categories(self) -> List[str]:
         query = "SELECT category FROM products"
         rows = self.fetchall(query)
@@ -131,7 +139,7 @@ class DatabaseManager:
         for row in rows:
             categories.append(row['category'])
         return categories
-        
+
     def get_all_recipes(self) -> Dict[int, Recipe]:
         query = "SELECT * FROM recipes"
         rows = self.fetchall(query)
@@ -147,9 +155,10 @@ class DatabaseManager:
                 ingredients=self.get_ingredients_by_recipe_id(row['id'])
             )
             recipes.append(recipe)
-        recipes_dict: Dict[int, Recipe] = {recipe.id: recipe for recipe in recipes}
+        recipes_dict: Dict[int, Recipe] = {
+            recipe.id: recipe for recipe in recipes}
         return recipes_dict
-    
+
     def get_all_products(self) -> Dict[int, Product]:
         query = "SELECT * FROM products"
         rows = self.fetchall(query)
@@ -169,7 +178,7 @@ class DatabaseManager:
         products_dict: Dict[int, Product] = {
             product.id: product for product in products}
         return products_dict
-    
+
     def get_product_by_id(self, product_id: int) -> Product:
         query = "SELECT * FROM products WHERE id = ?"
         row = self.fetchone(query, (product_id,))
@@ -185,7 +194,7 @@ class DatabaseManager:
             )
             return product
         return None
-    
+
     def get_products_by_shoplist_id(self, shopping_list_id: int) -> List[ShoppingListItem]:
         query = "SELECT * FROM shopping_list_items WHERE shopping_list_id = ?"
         rows = self.fetchall(query, (shopping_list_id,))
@@ -217,9 +226,10 @@ class DatabaseManager:
                 updated_at=row['updated_at'],
             )
             shopping_lists.append(shopping_list)
-        shopping_lists_dict: Dict[int, ShoppingList] = {shopping_list.id: shopping_list for shopping_list in shopping_lists}
+        shopping_lists_dict: Dict[int, ShoppingList] = {
+            shopping_list.id: shopping_list for shopping_list in shopping_lists}
         return shopping_lists_dict
-    
+
     def get_shopping_list_by_id(self, shopping_list_id: int) -> ShoppingList:
         query = "SELECT * FROM shopping_lists WHERE id = ?"
         row = self.fetchone(query, (shopping_list_id,))
@@ -235,44 +245,47 @@ class DatabaseManager:
             )
             return shopping_list
         return None
-    
-    
 
-    #Update methods
+    """---------------------------------------------------------------------------------------------------------------------
+        UPDATE METHODS
+    ---------------------------------------------------------------------------------------------------------------------"""
+
     def update_recipe(self, recipe_id: int, recipe: Recipe):
         query = """
         UPDATE recipes
         SET name = ?, instructions = ?, image_url = ?
         WHERE id = ?
         """
-        self.execute_query(query, (recipe.name, recipe.instructions, recipe.image_url, recipe_id))
+        self.execute_query(
+            query, (recipe.name, recipe.instructions, recipe.image_url, recipe_id))
         # Update ingredients
-        self.execute_query("DELETE FROM recipe_ingredients WHERE recipe_id = ?", (recipe_id,))
+        self.execute_query(
+            "DELETE FROM recipe_ingredients WHERE recipe_id = ?", (recipe_id,))
         for ingredient in recipe.ingredients:
             self.add_recipe_ingredient(recipe_id, ingredient)
-    
-    def update_product(self, product_id: int, product:Product):
+
+    def update_product(self, product_id: int, product: Product):
         query = """
         UPDATE products
         SET name = ?, unit = ?, price_per_unit = ?, category = ?
         WHERE id = ?
         """
-        self.execute_query(query, (product.name, product.unit, product.price_per_unit, product.category, product_id))
-    
+        self.execute_query(query, (product.name, product.unit,
+                           product.price_per_unit, product.category, product_id))
+
     def update_shopping_list(self, shopping_list_id: int, shopping_list: ShoppingList):
         query = """
         UPDATE shopping_lists
         SET title = ?, total_sum = ?, purchased_count = ?
         WHERE id = ?
         """
-        self.execute_query(query, (shopping_list.title, shopping_list.total_sum, shopping_list.purchased_count, shopping_list_id))
-        self.execute_query("DELETE FROM shopping_list_items WHERE shopping_list_id = ?", (shopping_list_id,))
+        self.execute_query(query, (shopping_list.title, shopping_list.total_sum,
+                           shopping_list.purchased_count, shopping_list_id))
+        self.execute_query(
+            "DELETE FROM shopping_list_items WHERE shopping_list_id = ?", (shopping_list_id,))
         for items in shopping_list.items:
             self.add_shopping_list_items(shopping_list_id, items)
-            
-    #Delete methods
-     
+
     def delete_product(self, product_id: int):
         query = "DELETE FROM products WHERE id = ?"
         self.execute_query(query, (product_id,))
-
