@@ -59,17 +59,17 @@ class AddProductsWidget(QWidget):
 
         # 1) Search bar with autocomplete
         search_layout = QHBoxLayout()
-        self.search_edit = QLineEdit()
-        self.search_edit.setPlaceholderText("Etsi tuotetta...")
+        self.search_bar = QLineEdit()
+        self.search_bar.setPlaceholderText("Hae Tuotteita")
 
         # returns dict {id: Product}
         all_products = self.product_controller.get_all_products()
         product_names = [p.name for p in all_products.values()]
         completer = QCompleter(product_names)
         completer.setCaseSensitivity(Qt.CaseInsensitive) 
-        self.search_edit.setCompleter(completer)
+        self.search_bar.setCompleter(completer)
 
-        search_layout.addWidget(self.search_edit)
+        search_layout.addWidget(self.search_bar)
 
         layout.addLayout(search_layout)
 

@@ -2,7 +2,7 @@ import sys
 from PySide6.QtWidgets import (
     QMainWindow, QWidget,
     QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QScrollArea, QStackedWidget, QComboBox, QFrame, QDialog
+    QScrollArea, QStackedWidget, QComboBox, QFrame, QDialog, QLineEdit 
 )
 from PySide6.QtCore import Qt
 from datetime import datetime
@@ -354,15 +354,20 @@ class ProductsPage(QWidget):
         self.title_label = QLabel("Tuotteet")
         self.title_label.setStyleSheet("font-weight: bold; font-size: 18px;")
 
-        self.search_button = QPushButton("Hae tuotetta")
-        self.new_button = QPushButton("Uusi tuote")
+        self.search_bar = QLineEdit()
+        self.search_bar.setPlaceholderText("Hae tuotetta")
+        self.search_bar.textChanged.connect(self.filter_products)
 
-        self.search_button.setStyleSheet(f"""
-            QPushButton {{
+        self.new_button = QPushButton("Uusi tuote")
+        self.new_button.clicked.connect(self.open_add_product_dialog)
+
+        self.search_bar.setStyleSheet(f"""
+            QLineEdit {{
                 background-color: {TURKOOSI};
                 color: black;
                 font-weight: bold;
                 border-radius: 5px;
+                padding: 5px;
             }}
         """)
         self.new_button.setStyleSheet(f"""
@@ -376,7 +381,7 @@ class ProductsPage(QWidget):
 
         top_bar_layout.addWidget(self.title_label)
         top_bar_layout.addStretch()
-        top_bar_layout.addWidget(self.search_button)
+        top_bar_layout.addWidget(self.search_bar)
         top_bar_layout.addWidget(self.new_button)
 
         top_bar_frame = QFrame()
@@ -386,12 +391,28 @@ class ProductsPage(QWidget):
         main_layout.addWidget(top_bar_frame, 0)
 
         # -- Scrollattava lista keskellä --
-        scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
 
-        scroll_content = QWidget()
-        scroll_layout = QVBoxLayout(scroll_content)
+        self.scroll_content = QWidget()
+        self.scroll_layout = QVBoxLayout(self.scroll_content)
 
+        self.scroll_area.setWidget(self.scroll_content)
+        main_layout.addWidget(self.scroll_area, 1)
+
+        self.populate_product_list()
+
+    def update_products_dict(self):
+        self.products_dict = ProductController.get_all_products()
+
+    def populate_product_list(self):
+        # Clear the current layout
+        for i in reversed(range(self.scroll_layout.count())):
+            widget = self.scroll_layout.itemAt(i).widget()
+            if widget is not None:
+                widget.deleteLater()
+
+        # Add products to the layout
         for product_id, product in self.products_dict.items():
             btn = QPushButton(f"{product_id}: {product.name}")
             btn.setStyleSheet(f"""
@@ -405,15 +426,62 @@ class ProductsPage(QWidget):
                     text-align: left;
                 }}
             """)
-            scroll_layout.addWidget(btn)
+            self.scroll_layout.addWidget(btn)
+        self.scroll_layout.addStretch()
 
-        scroll_layout.addStretch()
-        scroll_area.setWidget(scroll_content)
+    def filter_products(self):
+        search_text = self.search_bar.text().lower()
+        for i in range(self.scroll_layout.count() - 1):
+            item = self.scroll_layout.itemAt(i).widget()
+            if search_text in item.text().lower():
+                item.show()
+            else:
+                item.hide()
 
-        main_layout.addWidget(scroll_area, 1)
+    def open_add_product_dialog(self):
+        dialog = AddProductDialog(self)
+        if dialog.exec():
+            self.update_products_dict()
+            self.populate_product_list()
 
-    def update_products_dict(self):
-        self.products_dict = ProductController.get_all_products()
+
+class AddProductDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Lisää tuote")
+        self.setMinimumSize(300, 200)
+
+        layout = QVBoxLayout(self)
+
+        self.name_edit = QLineEdit()
+        self.name_edit.setPlaceholderText("Nimi")
+
+        self.unit_edit = QLineEdit()
+        self.unit_edit.setPlaceholderText("Yksikkö")
+
+        self.price_edit = QLineEdit()
+        self.price_edit.setPlaceholderText("Hinta per yksikkö")
+
+        self.category_edit = QLineEdit()
+        self.category_edit.setPlaceholderText("Kategoria")
+
+        save_button = QPushButton("Tallenna")
+        save_button.clicked.connect(self.save_product)
+
+        layout.addWidget(self.name_edit)
+        layout.addWidget(self.unit_edit)
+        layout.addWidget(self.price_edit)
+        layout.addWidget(self.category_edit)
+        layout.addWidget(save_button)
+
+    def save_product(self):
+        name = self.name_edit.text().strip()
+        unit = self.unit_edit.text().strip()
+        price = float(self.price_edit.text().strip())
+        category = self.category_edit.text().strip()
+
+        ProductController.add_product(name, unit, price, category)
+        self.accept()
 
 
 class AsetuksetPage(QWidget):
