@@ -1,4 +1,4 @@
-# products_page.py
+# tuotteet_page.py
 
 import sys
 from PySide6.QtWidgets import (

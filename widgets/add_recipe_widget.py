@@ -43,7 +43,7 @@ class AddRecipeWidget(QWidget):
         self.form_page.setLayout(self._create_form_layout())
 
         # Create page 1 (the AddProductsWidget), define it after the form
-        from add_products_widget import AddProductsWidget  # Ensure this import works correctly
+        from widgets.add_products_widget import AddProductsWidget  # Ensure this import works correctly
         self.products_page = AddProductsWidget(
             product_controller=self.product_controller,
             parent=self
