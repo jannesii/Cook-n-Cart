@@ -14,6 +14,7 @@ for root, _, files in os.walk(root_dir):
     for file in files:
         if file.endswith(".py") and not file.startswith("all_code_combined"):
             python_files.append(os.path.join(root, file))
+            print(f"File read: {file}")
 
 # Count lines and copy content
 total_lines = 0
@@ -26,10 +27,11 @@ for file in python_files:
         all_code += f"\n# File: {file}\n" + "".join(lines)
 
 # Print the total line count
-print(f"Total number of lines: {total_lines}")
+print(f"\nTotal number of lines: {total_lines}")
 
 # Save all code to a single file (optional)
-#with open(r"tests\\all_code_combined.py", "w", encoding="utf-8") as f:
-#    f.write(all_code)
-#
-#print("All code copied to 'all_code_combined.py'.")
+if False: # Change to True to enable
+    with open(r"tests\\all_code_combined.py", "w", encoding="utf-8") as f:
+        f.write(all_code)
+
+    print("All code copied to 'all_code_combined.py'.")
