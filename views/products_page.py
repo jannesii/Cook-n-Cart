@@ -19,7 +19,7 @@ RecipeController = RC()
 ProductController = PC()
 ShoppingListController = SLC()
 
-class ProductsPage(QWidget):
+class TuotteetPage(QWidget):
     """
     Tuotteet-näkymä:
       - Yläpalkki: 'Tuotteet' -otsikko vasemmalla, 'Hae tuotetta' ja 'Uusi tuote' -napit oikealla

@@ -6,7 +6,7 @@ from PySide6.QtWidgets import (
 )
 from ostoslistat_page import OstolistatPage
 from reseptit_page import ReseptitPage
-from products_page import ProductsPage
+from products_page import TuotteetPage
 from asetukset_page import AsetuksetPage
 
 
@@ -34,7 +34,7 @@ class MainWindow(QMainWindow):
 
         self.ostolistat_page = OstolistatPage()
         self.reseptit_page = ReseptitPage()
-        self.products_page = ProductsPage()
+        self.products_page = TuotteetPage()
         self.asetukset_page = AsetuksetPage()
 
         self.stacked_widget.addWidget(self.ostolistat_page)  # index 0
