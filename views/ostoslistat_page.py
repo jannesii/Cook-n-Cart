@@ -1,3 +1,4 @@
+# ostoslistat_page.py
 
 from PySide6.QtWidgets import (
     QWidget,QVBoxLayout, QHBoxLayout, QLabel, 

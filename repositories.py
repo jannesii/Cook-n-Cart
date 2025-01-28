@@ -1,4 +1,5 @@
 # repositories.py
+
 from database import DatabaseManager
 from models import Recipe, Product, RecipeIngredient, ShoppingList, ShoppingListItem
 from typing import List, Dict
@@ -50,7 +51,8 @@ class RecipeRepository:
         tags = []
         for row in rows:
             if row['tags']:
-                tags.extend([tag.strip() for tag in row['tags'].split(',') if tag.strip()])
+                tags.extend([tag.strip()
+                            for tag in row['tags'].split(',') if tag.strip()])
         return tags
 
     def get_ingredients_by_recipe_id(self, recipe_id: int) -> List[RecipeIngredient]:
@@ -163,7 +165,7 @@ class ProductRepository:
         VALUES (?, ?, ?, ?)
         """
         self.db.execute_query(query, (product.name, product.unit,
-                           product.price_per_unit, product.category))
+                                      product.price_per_unit, product.category))
 
     def update_product(self, product_id: int, product: Product):
         query = """
@@ -172,7 +174,7 @@ class ProductRepository:
         WHERE id = ?
         """
         self.db.execute_query(query, (product.name, product.unit,
-                           product.price_per_unit, product.category, product_id))
+                                      product.price_per_unit, product.category, product_id))
 
     def delete_product(self, product_id: int):
         query = "DELETE FROM products WHERE id = ?"
@@ -235,7 +237,7 @@ class ShoppingListRepository:
         VALUES (?, ?, ?, ?)
         """
         self.db.execute_query(query, (shoppingList_id, shoppingListitems.product_id,
-                           shoppingListitems.quantity, shoppingListitems.is_purchased))
+                                      shoppingListitems.quantity, shoppingListitems.is_purchased))
 
     def update_shopping_list(self, shopping_list_id: int, shopping_list: ShoppingList):
         query = """
@@ -244,7 +246,7 @@ class ShoppingListRepository:
         WHERE id = ?
         """
         self.db.execute_query(query, (shopping_list.title, shopping_list.total_sum,
-                           shopping_list.purchased_count, shopping_list_id))
+                                      shopping_list.purchased_count, shopping_list_id))
         self.db.execute_query(
             "DELETE FROM shopping_list_items WHERE shopping_list_id = ?", (shopping_list_id,))
         for items in shopping_list.items:

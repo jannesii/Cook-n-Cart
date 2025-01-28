@@ -1,3 +1,5 @@
+# recipe_detail_widget.py
+
 import sys
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, 
