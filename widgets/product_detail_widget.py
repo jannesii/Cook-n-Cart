@@ -1,6 +1,11 @@
 # product_detal_widget.py
 
 import sys
+import json
+with open('utils/config.json') as f:
+    data = json.load(f)
+    currency = data['settings']['currency']
+
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, 
     QPushButton,
@@ -60,10 +65,17 @@ class ProductDetailWidget (QWidget):
         self.setLayout(self.layout)
 
     def set_product(self, product):
+        
+        currency = data['settings']['currency']
+        if currency == '$':
+            multiplier = 1.18
+        else:
+            multiplier = 1
+
         self.product = product
         if product:
             self.name_label.setText(f"Nimi: {product.name}")
-            self.price_label.setText(f"Hinta: {product.price_per_unit}")
+            self.price_label.setText(f"Hinta: {product.price_per_unit * multiplier} {currency}")
             self.category_label.setText(f"Kategoria: {product.category}")
             self.tags_label.setText(f"unit: {product.unit}")
             self.created_at_label.setText(f"Luotu: {product.created_at}")
