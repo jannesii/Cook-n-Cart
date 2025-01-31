@@ -79,9 +79,9 @@ class RecipeDetailWidget(QWidget):
             self.ingredients_label.setText(
                 f"<b>Ainesosat:</b> {recipe.ingredients}")
             self.created_at_label.setText(
-                f"<b>Luotu:</b> {self.format_datetime_or_string(recipe.created_at)}")
+                f"<b>Luotu:</b> {self.recipe.created_at}")
             self.updated_at_label.setText(
-                f"<b>Päivitetty:</b> {self.format_datetime_or_string(recipe.updated_at)}")
+                f"<b>Päivitetty:</b> {self.recipe.updated_at}")
         else:
             # Clear fields if no recipe
             self.name_label.setText("")

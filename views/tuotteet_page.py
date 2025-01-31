@@ -299,7 +299,7 @@ class TuotteetPage(QWidget):
         self.stacked.setCurrentIndex(2)
 
     def back_to_list(self):
-        self.parent().setCurrentIndex(0)
+        self.stacked.setCurrentIndex(0)
 
     def _clear_layout(self, layout):
         """
