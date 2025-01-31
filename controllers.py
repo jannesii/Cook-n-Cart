@@ -1,9 +1,9 @@
 # controllers.py
-
+import json
 from models import Recipe, RecipeIngredient, Product, ShoppingList, ShoppingListItem
 from repositories import RecipeRepository, ProductRepository, ShoppingListRepository
 from typing import List, Dict
-
+CONFIG_FILE = "utils/config.json"
 
 class RecipeController:
     def __init__(self):
@@ -76,6 +76,39 @@ class RecipeController:
 class ShoppingListController:
     def __init__(self):
         self.repo = ShoppingListRepository()
+        self.weight_unit, self.volume_unit = self.load_units()
+
+    def load_units(self):
+        """ Lataa asetetut yksiköt config.json-tiedostosta. """
+        try:
+            with open(CONFIG_FILE, "r", encoding="utf-8") as file:
+                settings = json.load(file).get("settings", {})
+                return settings.get("weight_unit", "kg"), settings.get("volume_unit", "l")
+        except (FileNotFoundError, json.JSONDecodeError):
+            return "kg", "l"  # Oletusyksiköt
+
+    def save_units(self):
+        # Tallentaa yksikköasetukset config.json-tiedostoon
+        try:
+            with open(CONFIG_FILE, "r", encoding="utf-8") as file:
+                config = json.load(file)
+        except (FileNotFoundError, json.JSONDecodeError):
+            config = {}
+
+        config["settings"] = config.get("settings", {})
+        config["settings"]["weight_unit"] = self.weight_unit
+        config["settings"]["volume_unit"] = self.volume_unit
+
+        with open(CONFIG_FILE, "w", encoding="utf-8") as file:
+            json.dump(config, file, indent=4)
+
+    def update_weight_unit(self, new_unit: str):
+        self.weight_unit = new_unit
+        self.save_units()
+
+    def update_volume_unit(self, new_unit: str):
+        self.volume_unit = new_unit
+        self.save_units()
 
     def get_all_shopping_lists(self) -> Dict[int, ShoppingList]:
         return self.repo.get_all_shopping_lists()
@@ -137,6 +170,38 @@ class ShoppingListController:
 class ProductController:
     def __init__(self):
         self.repo = ProductRepository()
+        self.weight_unit, self.volume_unit = self.load_units()
+
+    def load_units(self):
+        try:
+            with open(CONFIG_FILE, "r", encoding="utf-8") as file:
+                settings = json.load(file).get("settings", {})
+                return settings.get("weight_unit", "kg"), settings.get("volume_unit", "l")
+        except (FileNotFoundError, json.JSONDecodeError):
+            return "kg", "l"  # Oletusyksiköt
+
+    def save_units(self):
+        # Tallentaa yksikköasetukset config.json-tiedostoon
+        try:
+            with open(CONFIG_FILE, "r", encoding="utf-8") as file:
+                config = json.load(file)
+        except (FileNotFoundError, json.JSONDecodeError):
+            config = {}
+
+        config["settings"] = config.get("settings", {})
+        config["settings"]["weight_unit"] = self.weight_unit
+        config["settings"]["volume_unit"] = self.volume_unit
+
+        with open(CONFIG_FILE, "w", encoding="utf-8") as file:
+            json.dump(config, file, indent=4)
+
+    def update_weight_unit(self, new_unit: str):
+        self.weight_unit = new_unit
+        self.save_units()   
+
+    def update_volume_unit(self, new_unit: str):
+        self.volume_unit = new_unit
+        self.save_units()
 
     def get_all_products(self) -> Dict[int, Product]:
         return self.repo.get_all_products()

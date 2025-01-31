@@ -24,9 +24,10 @@ class AsetuksetPage(QWidget):
     """
     Asetukset-sivu:
       - Yläpalkki: "Asetukset" -otsikko
-      - Keskialue: 2 "nappiriviä" (tai kehyksiä), joihin on sijoitettu Label + ComboBox:
+      - Keskialue: 3 "nappiriviä" (tai kehyksiä), joihin on sijoitettu Label + ComboBox:
           1) "Valuutta" - '€'
-          2) "Painon yksikkö" - 'kg/l'
+          2) "Painon yksikkö" - 'kg'
+          3) "Nestemäärän yksikkö" - 'l'
     """
 
     def __init__(self, parent=None):
@@ -49,7 +50,7 @@ class AsetuksetPage(QWidget):
         main_layout.addWidget(top_bar_frame, 0)
 
         # -- Keskialue --
-        # Tehdään kaksi "riviä", joissa vasemmalla label ja oikealla ComboBox,
+        # Tehdään kolme "riviä", joissa vasemmalla label ja oikealla ComboBox,
         # ja koko rivi on kehystetty kuin nappi (pyöristetty, turkoosi).
 
         # 1) Valuutta
@@ -59,14 +60,15 @@ class AsetuksetPage(QWidget):
                 with open(CONFIG_FILE, "r", encoding="utf-8") as file:
                     return json.load(file).get("settings", {})
             except (FileNotFoundError, json.JSONDecodeError):
-                return {"currency": "€", "unit": "kg/l"}  # Oletusasetukset
+                return {"currency": "€", "weight_unit": "kg", "volume_unit": "l"}  # Oletusasetukset
 
         def save_settings():
             """ Tallentaa asetukset config.json-tiedostoon. """
             settings = {
                 "settings": {
                     "currency": self.currency_combo.currentText(),
-                    "unit": self.weight_combo.currentText()
+                    "weight_unit": self.weight_combo.currentText(),
+                    "volume_unit": self.volume_combo.currentText()
                 }
             }
             with open(CONFIG_FILE, "w", encoding="utf-8") as file:
@@ -88,8 +90,7 @@ class AsetuksetPage(QWidget):
             "color: black; font-size: 16px; font-weight: bold;")
 
         self.currency_combo = QComboBox()
-        # Täytetään muutama valuutta esimerkin vuoksi
-        self.currency_combo.addItems(["€", "$", "£", "¥"])
+        self.currency_combo.addItems(["€", "$", "£"])
         self.currency_combo.setStyleSheet("""
             QComboBox {
                 font-size: 14px;
@@ -120,7 +121,7 @@ class AsetuksetPage(QWidget):
             "color: black; font-size: 16px; font-weight: bold;")
 
         self.weight_combo = QComboBox()
-        self.weight_combo.addItems(["kg/l", "lb", "oz"])
+        self.weight_combo.addItems(["kg", "g", "lb", "oz"])
         self.weight_combo.setStyleSheet("""
             QComboBox {
                 font-size: 14px;
@@ -129,17 +130,65 @@ class AsetuksetPage(QWidget):
             }
         """)
 
-        self.weight_combo.setCurrentText(self.settings.get("unit", "kg/l"))
-        self.weight_combo.currentTextChanged.connect(save_settings)
+        self.weight_combo.setCurrentText(self.settings.get("weight_unit", "kg"))
+        
+        # Päivittää painoyksiköt järjestelmässä
+        def update_weight_unit():
+            save_settings()
+            new_unit = self.weight_combo.currentText()
+            ProductController.update_weight_unit(new_unit)
+            ShoppingListController.update_weight_unit(new_unit)
+
+        self.weight_combo.currentTextChanged.connect(update_weight_unit)
 
         weight_layout.addWidget(weight_label)
         weight_layout.addStretch()
         weight_layout.addWidget(self.weight_combo)
 
+        # 3) Nestemäärän yksikkö
+        volume_frame = QFrame()
+        volume_frame.setStyleSheet(f"""
+            QFrame {{
+                background-color: {TURKOOSI};
+                border-radius: 10px;
+            }}
+        """)
+        volume_layout = QHBoxLayout(volume_frame)
+
+        volume_label = QLabel("Nestemäärän yksikkö")
+        volume_label.setStyleSheet(
+            "color: black; font-size: 16px; font-weight: bold;")
+
+        self.volume_combo = QComboBox()
+        self.volume_combo.addItems(["l", "ml", "gallon", "fl oz"])
+        self.volume_combo.setStyleSheet("""
+            QComboBox {
+                font-size: 14px;
+                font-weight: bold;
+                padding: 2px;
+            }
+        """)
+
+        self.volume_combo.setCurrentText(self.settings.get("volume_unit", "l"))
+        
+        # Päivittää nesteyksiköt järjestelmässä
+        def update_volume_unit():
+            save_settings()
+            new_unit = self.volume_combo.currentText()
+            ProductController.update_volume_unit(new_unit)
+            ShoppingListController.update_volume_unit(new_unit)
+
+        self.volume_combo.currentTextChanged.connect(update_volume_unit)
+
+        volume_layout.addWidget(volume_label)
+        volume_layout.addStretch()
+        volume_layout.addWidget(self.volume_combo)
+
         # Lisätään kehykset pystylayoutiin
         content_layout = QVBoxLayout()
         content_layout.addWidget(currency_frame)
         content_layout.addWidget(weight_frame)
+        content_layout.addWidget(volume_frame)  # Lisää nesteyksikkö
         content_layout.addStretch()
 
         main_layout.addLayout(content_layout, 1)
