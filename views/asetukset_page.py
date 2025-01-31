@@ -1,10 +1,10 @@
 # asetukset_page.py
 
 import sys
+import json
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, 
     QLabel, QComboBox, QFrame, 
-
 )
 
 from controllers import ProductController as PC
@@ -14,6 +14,7 @@ from controllers import RecipeController as RC
 
 TURKOOSI = "#00B0F0"
 HARMAA = "#808080"
+CONFIG_FILE = "utils/config.json"
 
 RecipeController = RC()
 ProductController = PC()
@@ -52,6 +53,27 @@ class AsetuksetPage(QWidget):
         # ja koko rivi on kehystetty kuin nappi (pyöristetty, turkoosi).
 
         # 1) Valuutta
+        def load_settings():
+            """ Lataa asetukset config.json-tiedostosta. """
+            try:
+                with open(CONFIG_FILE, "r", encoding="utf-8") as file:
+                    return json.load(file).get("settings", {})
+            except (FileNotFoundError, json.JSONDecodeError):
+                return {"currency": "€", "unit": "kg/l"}  # Oletusasetukset
+
+        def save_settings():
+            """ Tallentaa asetukset config.json-tiedostoon. """
+            settings = {
+                "settings": {
+                    "currency": self.currency_combo.currentText(),
+                    "unit": self.weight_combo.currentText()
+                }
+            }
+            with open(CONFIG_FILE, "w", encoding="utf-8") as file:
+                json.dump(settings, file, indent=4)
+
+        self.settings = load_settings()
+
         currency_frame = QFrame()
         currency_frame.setStyleSheet(f"""
             QFrame {{
@@ -75,6 +97,9 @@ class AsetuksetPage(QWidget):
                 padding: 2px;
             }
         """)
+
+        self.currency_combo.setCurrentText(self.settings.get("currency", "€"))
+        self.currency_combo.currentTextChanged.connect(save_settings)
 
         currency_layout.addWidget(currency_label)
         currency_layout.addStretch()
@@ -104,6 +129,9 @@ class AsetuksetPage(QWidget):
             }
         """)
 
+        self.weight_combo.setCurrentText(self.settings.get("unit", "kg/l"))
+        self.weight_combo.currentTextChanged.connect(save_settings)
+
         weight_layout.addWidget(weight_label)
         weight_layout.addStretch()
         weight_layout.addWidget(self.weight_combo)
@@ -115,5 +143,3 @@ class AsetuksetPage(QWidget):
         content_layout.addStretch()
 
         main_layout.addLayout(content_layout, 1)
-
-
