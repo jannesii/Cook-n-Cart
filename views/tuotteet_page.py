@@ -11,6 +11,7 @@ from PySide6.QtCore import Qt, QStringListModel
 from controllers import ProductController as PC
 from controllers import ShoppingListController as SLC
 from controllers import RecipeController as RC
+from widgets.product_detail_widget import ProductDetailWidget
 
 TURKOOSI = "#00B0F0"
 HARMAA = "#808080"
@@ -44,9 +45,14 @@ class TuotteetPage(QWidget):
         self.page_add_form = QWidget()
         self.page_add_form.setLayout(self._create_add_form_layout())
 
+        # page 2 (detail view)
+        self.page_detail = ProductDetailWidget()
+        #hook the "Back" button in ProductDetailWidget
+        self.page_detail.back_btn.clicked.connect(self.back_to_list)
+
         self.stacked.addWidget(self.page_list)      # index 0
         self.stacked.addWidget(self.page_add_form)  # index 1
-
+        self.stacked.addWidget(self.page_detail)    # index 2
         # Start with the list page
         self.stacked.setCurrentIndex(0)
 
@@ -275,12 +281,25 @@ class TuotteetPage(QWidget):
                     text-align: left;
                 }}
             """)
+            # Connect the button to a detailed view
+            btn.clicked.connect(lambda checked, p=product: self.show_product_details(p))
+            self.scroll_layout.addWidget(btn)
             # Optionally, connect the button to a detailed view or action
             # btn.clicked.connect(lambda checked, p=product: self.view_product_details(p))
             self.scroll_layout.addWidget(btn)
 
         # Ensure only one stretch is present
         self.scroll_layout.addStretch()
+
+    def show_product_details(self, product):
+        """
+        Switch to the detail page and show the details of the given product.
+        """
+        self.page_detail.set_product(product)
+        self.stacked.setCurrentIndex(2)
+
+    def back_to_list(self):
+        self.parent().setCurrentIndex(0)
 
     def _clear_layout(self, layout):
         """
