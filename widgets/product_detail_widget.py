@@ -30,13 +30,15 @@ class ProductDetailWidget (QWidget):
 
         # placeholders
         self.name_label = QLabel()
+        self.price_label = QLabel()
+        self.category_label = QLabel()
         self.tags_label = QLabel()
         self.created_at_label = QLabel()
         self.updated_at_label = QLabel()
 
         # Let text wrap
         for lbl in [
-            self.name_label, self.tags_label,
+            self.name_label,self.price_label, self.category_label, self.tags_label,
             self.created_at_label, self.updated_at_label
         ]:
             lbl.setWordWrap(True)
@@ -61,7 +63,9 @@ class ProductDetailWidget (QWidget):
         self.product = product
         if product:
             self.name_label.setText(f"Nimi: {product.name}")
-            self.tags_label.setText(f"unit: {product.unit}, price_per_unit: {product.price_per_unit}, category: {product.category}")
+            self.price_label.setText(f"Hinta: {product.price_per_unit}")
+            self.category_label.setText(f"Kategoria: {product.category}")
+            self.tags_label.setText(f"unit: {product.unit}")
             self.created_at_label.setText(f"Luotu: {product.created_at}")
             self.updated_at_label.setText(f"Päivitetty: {product.updated_at}")
         else:
