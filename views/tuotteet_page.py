@@ -282,7 +282,7 @@ class TuotteetPage(QWidget):
                 }}
             """)
             # Connect the button to a detailed view
-            btn.clicked.connect(lambda checked, p=product: self.show_product_details(p))
+            btn.clicked.connect(lambda checked=False, p=product: self.show_product_details(p))
             self.scroll_layout.addWidget(btn)
             # Optionally, connect the button to a detailed view or action
             # btn.clicked.connect(lambda checked, p=product: self.view_product_details(p))
