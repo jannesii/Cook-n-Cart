@@ -76,6 +76,7 @@ class RecipeController:
 class ShoppingListController:
     def __init__(self):
         self.repo = ShoppingListRepository()
+        self.product_repo = ProductRepository()
         self.weight_unit, self.volume_unit = self.load_units()
 
     def load_units(self):
@@ -88,7 +89,7 @@ class ShoppingListController:
             return "kg", "l"  # Oletusyksiköt
 
     def save_units(self):
-        # Tallentaa yksikköasetukset config.json-tiedostoon
+        """ Tallentaa yksikköasetukset config.json-tiedostoon. """
         try:
             with open(CONFIG_FILE, "r", encoding="utf-8") as file:
                 config = json.load(file)
@@ -110,11 +111,41 @@ class ShoppingListController:
         self.volume_unit = new_unit
         self.save_units()
 
+    def convert_to_standard_unit(self, unit: str, quantity: float) -> float:
+        weight_conversion = {"kg": 1, "g": 0.001, "lb": 0.453592, "oz": 0.0283495}
+        volume_conversion = {"l": 1, "ml": 0.001, "fl oz": 0.0295735, "gal": 3.78541}
+
+        if unit in weight_conversion:
+            return quantity * weight_conversion[unit]
+        elif unit in volume_conversion:
+            return quantity * volume_conversion[unit]
+        else:
+            return quantity  # Jos yksikköä ei tunnisteta, palautetaan alkuperäinen arvo
+
+    def calculate_total_cost(self, shopping_list_id: int):
+
+        items = self.repo.get_products_by_shoplist_id(shopping_list_id)
+        total_cost = 0.0
+
+        for item in items:
+            product = self.product_repo.get_product_by_id(item.product_id)
+            if product:
+                standard_quantity = self.convert_to_standard_unit(product.unit, item.quantity)
+                total_cost += product.price_per_unit * standard_quantity
+
+        total_cost = round(total_cost, 2)
+        self.repo.update_total_sum(shopping_list_id, total_cost)
+
+        return total_cost
+
     def get_all_shopping_lists(self) -> Dict[int, ShoppingList]:
         return self.repo.get_all_shopping_lists()
 
     def get_shopping_list_by_id(self, shopping_list_id: int) -> ShoppingList:
-        return self.repo.get_shopping_list_by_id(shopping_list_id)
+        shopping_list = self.repo.get_shopping_list_by_id(shopping_list_id)
+        if shopping_list:
+            shopping_list.total_sum = self.calculate_total_cost(shopping_list_id)
+        return shopping_list
 
     def add_shopping_list(self, title: str, items: List[dict]):
         shopping_list = ShoppingList(
@@ -128,19 +159,21 @@ class ShoppingListController:
         )
         shopping_list = self.repo.add_shopping_list(shopping_list)
 
-        # Add items to the shopping list
+        # Lisää tuotteet ostoslistaan
         shopping_list_items = []
         for item in items:
             shopping_list_item = ShoppingListItem(
                 product_id=item['product_id'],
                 quantity=item['quantity'],
                 is_purchased=item.get('is_purchased', False)
-                # id, shopping_list_id, created_at, updated_at are handled by the database
             )
             shopping_list_items.append(shopping_list_item)
 
         self.repo.add_items_to_shopping_list(shopping_list.id, shopping_list_items)
         shopping_list.items = self.repo.get_items_by_shopping_list_id(shopping_list.id)
+
+        # Päivitetään hinta
+        shopping_list.total_sum = self.calculate_total_cost(shopping_list.id)
 
         return shopping_list
 
@@ -152,9 +185,10 @@ class ShoppingListController:
         if title:
             shopping_list.title = title
         if items:
-            # Remove existing items
+            # Poistetaan vanhat tuotteet
             self.repo.remove_items_from_shopping_list(shopping_list_id)
-            # Add new items
+
+            # Lisätään uudet tuotteet
             for item in items:
                 shopping_list_item = ShoppingListItem(
                     product_id=item['product_id'],
@@ -163,9 +197,11 @@ class ShoppingListController:
                 )
                 self.repo.add_item_to_shopping_list(shopping_list_id, shopping_list_item)
 
+        # Päivitetään hinta
+        shopping_list.total_sum = self.calculate_total_cost(shopping_list_id)
+
         self.repo.update_shopping_list(shopping_list_id, shopping_list)
         return shopping_list
-
 
 class ProductController:
     def __init__(self):
@@ -173,6 +209,7 @@ class ProductController:
         self.weight_unit, self.volume_unit = self.load_units()
 
     def load_units(self):
+        """ Lataa asetetut yksiköt config.json-tiedostosta. """
         try:
             with open(CONFIG_FILE, "r", encoding="utf-8") as file:
                 settings = json.load(file).get("settings", {})
@@ -181,7 +218,7 @@ class ProductController:
             return "kg", "l"  # Oletusyksiköt
 
     def save_units(self):
-        # Tallentaa yksikköasetukset config.json-tiedostoon
+        """ Tallentaa yksikköasetukset config.json-tiedostoon. """
         try:
             with open(CONFIG_FILE, "r", encoding="utf-8") as file:
                 config = json.load(file)
@@ -211,6 +248,27 @@ class ProductController:
 
     def get_items_by_shopping_list_id(self, shopping_list_id: int) -> List[ShoppingListItem]:
         return self.repo.get_products_by_shoplist_id(shopping_list_id)
+
+    def convert_to_standard_unit(self, unit: str, quantity: float) -> float:
+
+        weight_conversion = {"kg": 1, "g": 0.001, "lb": 0.453592, "oz": 0.0283495}
+        volume_conversion = {"l": 1, "ml": 0.001, "fl oz": 0.0295735, "gal": 3.78541}
+
+        if unit in weight_conversion:
+            return quantity * weight_conversion[unit]
+        elif unit in volume_conversion:
+            return quantity * volume_conversion[unit]
+        else:
+            return quantity  # Jos yksikköä ei tunnisteta, palautetaan alkuperäinen arvo
+
+    def calculate_total_cost(self, product_id: int, quantity: float):
+       
+        product = self.repo.get_product_by_id(product_id)
+        if not product:
+            raise ValueError("Product not found")
+
+        standard_quantity = self.convert_to_standard_unit(product.unit, quantity)
+        return product.price_per_unit * standard_quantity
 
     def add_product(self, name: str, unit: str, price_per_unit: float, category: str):
         product = Product(

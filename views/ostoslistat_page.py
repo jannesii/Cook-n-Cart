@@ -162,7 +162,6 @@ class OstolistatPage(QWidget):
         """
         Opens the add shopping list page.
         """
-        self.page_add_shoplist.setFieldsToDefaults()
         self.stacked.setCurrentIndex(1)
 
     def back_to_list(self):

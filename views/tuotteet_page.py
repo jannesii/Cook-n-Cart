@@ -264,7 +264,15 @@ class TuotteetPage(QWidget):
         Switch to the detail page and show the details of the given product.
         """
         self.page_detail.set_product(product)
+        self.page_detail.back_btn.clicked.connect(self.back_to_list)
+        self.page_detail.remove_btn.clicked.connect(lambda: self.remove_product(product))
         self.stacked.setCurrentIndex(2)
+
+    def remove_product(self, product):
+        ProductController.delete_product(product.id)
+        self.update_products_dict()
+        self.populate_product_list()
+        self.back_to_list()
 
     def back_to_list(self):
         self.stacked.setCurrentIndex(0)
@@ -280,5 +288,3 @@ class TuotteetPage(QWidget):
                 widget.deleteLater()
             elif item.layout():
                 self._clear_layout(item.layout())
-
-

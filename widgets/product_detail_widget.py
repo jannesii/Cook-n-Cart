@@ -53,6 +53,19 @@ class ProductDetailWidget (QWidget):
         self.back_btn = QPushButton("Takaisin")
         self.layout.addWidget(self.back_btn)
 
+        # "Remove" button
+        self.remove_btn = QPushButton("Poista tuote")
+        self.remove_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: red;
+                color: white;
+                font-weight: bold;
+                border-radius: 5px;
+                padding: 10px;
+            }}
+        """)
+        self.layout.addWidget(self.remove_btn)
+
         self.setLayout(self.layout)
 
     def set_product(self, product):
@@ -78,8 +91,3 @@ class ProductDetailWidget (QWidget):
             self.created_at_label.setText("")
             self.updated_at_label.setText("")
 
-
-    def delete_product(self):
-        ProductController.delete(self.product['id'])
-        self.back_to_list()
-        self.parent().update_products_dict()

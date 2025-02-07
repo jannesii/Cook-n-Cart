@@ -184,23 +184,48 @@ class ProductRepository:
 class ShoppingListRepository:
     def __init__(self):
         self.db = DatabaseManager.get_instance()
+        self.product_repo = ProductRepository()
 
     def get_all_shopping_lists(self) -> Dict[int, ShoppingList]:
         query = "SELECT * FROM shopping_lists"
         rows = self.db.fetchall(query)
+
+        if not rows:
+            return {}
+
         shopping_lists = []
+    
         for row in rows:
-            shopping_list = ShoppingList(
-                id=row['id'],
-                title=row['title'],
-                total_sum=row['total_sum'],
-                purchased_count=row['purchased_count'],
-                created_at=row['created_at'],
-                updated_at=row['updated_at'],
-            )
-            shopping_lists.append(shopping_list)
+            # Fetch items for this shopping list
+            items_query = "SELECT * FROM shopping_list_items WHERE shopping_list_id = ?"
+            items_rows = self.db.fetchall(items_query, (row['id'],))
+            items = [
+            ShoppingListItem(
+                id=item_row['id'],
+                shopping_list_id=item_row['shopping_list_id'],
+                product_id=item_row['product_id'],
+                is_purchased=item_row['is_purchased'],
+                created_at=item_row['created_at'],
+                updated_at=item_row['updated_at'],
+            ) for item_row in items_rows
+        ]
+        
+        # Create the ShoppingList object with the items
+        shopping_list = ShoppingList(
+            id=row['id'],
+            title=row['title'],
+            total_sum=row['total_sum'],
+            purchased_count=row['purchased_count'],
+            created_at=row['created_at'],
+            updated_at=row['updated_at'],
+            items=items  # Include the items here
+        )
+        shopping_lists.append(shopping_list)
+    
+    # Convert to a dictionary with the ID as the key
         shopping_lists_dict: Dict[int, ShoppingList] = {
-            shopping_list.id: shopping_list for shopping_list in shopping_lists}
+        shopping_list.id: shopping_list for shopping_list in shopping_lists
+        }
         return shopping_lists_dict
 
     def get_shopping_list_by_id(self, shopping_list_id: int) -> ShoppingList:
@@ -214,7 +239,7 @@ class ShoppingListRepository:
                 purchased_count=row['purchased_count'],
                 created_at=row['created_at'],
                 updated_at=row['updated_at'],
-                items=self.get_products_by_shoplist_id(row['id'])
+                items=self.product_repo.get_products_by_shoplist_id(row['id'])
             )
             return shopping_list
         return None
