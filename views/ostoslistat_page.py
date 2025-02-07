@@ -1,42 +1,110 @@
 # ostoslistat_page.py
 
+import sys
+import json
 from PySide6.QtWidgets import (
-    QWidget,QVBoxLayout, QHBoxLayout, QLabel, 
-    QPushButton, QScrollArea, QFrame, 
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
+    QScrollArea, QStackedWidget, QFrame, QLineEdit, QListWidgetItem
 )
+from widgets.add_shoplist_widget import AddShoplistWidget
+from widgets.shoplist_detail_widget import ShoplistDetailWidget
 
-from controllers import ProductController as PC
-from controllers import ShoppingListController as SLC
-from controllers import RecipeController as RC
+from controllers import ProductController
+from controllers import ShoppingListController
 
 
 TURKOOSI = "#00B0F0"
 HARMAA = "#808080"
 
-RecipeController = RC()
-ProductController = PC()
-ShoppingListController = SLC()
 
 class OstolistatPage(QWidget):
     """
-    Ostolistat-sivu:
-      - Yläpalkki: "Ostoslistat" -otsikko vasemmalla, "Uusi ostolista" -nappi oikealla
-      - Keskialue: esim. "Ruokaostokset 0/16", "Motonet 0/5", "Biltema 0/11" -napit
+    Ostoslistat Page:
+    - StackedWidget with:
+      - Page 0: Shopping list overview with a search bar and "Create New List" button.
+      - Page 1: AddShoplistWidget to create a new shopping list.
+      - Page 2: ShoplistDetailWidget to display details of a selected shopping list.
     """
 
     def __init__(self, parent=None):
         super().__init__(parent)
 
+        # Controllers
+        self.shoplist_controller = ShoppingListController()
+        self.product_controller = ProductController()
+
+        # Shopping lists dictionary
+        self.shopping_lists = {}
+        self.update_shopping_lists()
+
+        # Main layout
         main_layout = QVBoxLayout(self)
 
-        # -- Yläpalkki --
-        top_bar_layout = QHBoxLayout()
-        label = QLabel("Ostoslistat")
-        label.setStyleSheet("font-weight: bold; font-size: 18px;")
+        # Stacked widget
+        self.stacked = QStackedWidget()
 
-        # Esimerkin "Uusi ostolista" -nappi
-        new_list_btn = QPushButton("Uusi ostolista")
-        new_list_btn.setStyleSheet(f"""
+        # Page 0 (list view)
+        self.page_list = QWidget()
+        self.page_list.setLayout(self._create_list_layout())
+
+        # Page 1 (add shopping list view)
+        self.page_add_shoplist = AddShoplistWidget(
+            shoplist_controller=self.shoplist_controller,
+            product_controller=self.product_controller,
+            parent=self
+        )
+        self.page_add_shoplist.shoplist_created.connect(self.on_shoplist_created)
+        self.page_add_shoplist.cancel_btn.clicked.connect(self.back_to_list)
+
+        # Page 2 (detail view)
+        self.page_detail = ShoplistDetailWidget()
+
+        self.page_detail.back_btn.clicked.connect(self.back_to_list)
+
+        # Add pages to the stacked widget
+        self.stacked.addWidget(self.page_list)         # index 0
+        self.stacked.addWidget(self.page_add_shoplist) # index 1
+        self.stacked.addWidget(self.page_detail)       # index 2
+
+        # Default to the shopping list view
+        self.stacked.setCurrentIndex(0)
+
+        # Add the stacked widget to the main layout
+        main_layout.addWidget(self.stacked, 1)
+
+    def _create_list_layout(self):
+        """
+        Creates the layout for the shopping list overview (Page 0).
+        """
+        layout = QVBoxLayout()
+
+        # -- Top Bar --
+        top_bar_layout = QHBoxLayout()
+
+        # Title Label
+        self.title_label = QLabel("Ostoslistat")
+        self.title_label.setStyleSheet("font-weight: bold; font-size: 18px;")
+
+        # Search Bar
+        self.search_bar = QLineEdit()
+        self.search_bar.setPlaceholderText("Hae ostoslistoja")
+        self.search_bar.textChanged.connect(self.filter_shopping_lists)
+
+        # Create New List Button
+        self.new_btn = QPushButton("Luo uusi ostoslista")
+        self.new_btn.clicked.connect(self.open_add_shoplist_page)
+
+        # Styling
+        self.search_bar.setStyleSheet(f"""
+            QLineEdit {{
+                background-color: {TURKOOSI};
+                color: black;
+                font-weight: bold;
+                border-radius: 5px;
+                padding: 5px;
+            }}
+        """)
+        self.new_btn.setStyleSheet(f"""
             QPushButton {{
                 background-color: {TURKOOSI};
                 color: black;
@@ -44,36 +112,59 @@ class OstolistatPage(QWidget):
                 border-radius: 5px;
                 padding: 5px 10px;
             }}
+            QPushButton:hover {{
+                background-color: #009ACD;
+            }}
         """)
 
-        top_bar_layout.addWidget(label)
+        # Assemble Top Bar
+        top_bar_layout.addWidget(self.title_label)
         top_bar_layout.addStretch()
-        top_bar_layout.addWidget(new_list_btn)
+        top_bar_layout.addWidget(self.search_bar)
+        top_bar_layout.addWidget(self.new_btn)
 
-        # Värjätään yläpalkin tausta harmaaksi asettamalla QFrame
         top_bar_frame = QFrame()
         top_bar_frame.setLayout(top_bar_layout)
         top_bar_frame.setStyleSheet(
-            f"background-color: {HARMAA}; border-radius: 10px;")
+            f"background-color: {HARMAA}; border-radius: 10px;"
+        )
 
-        main_layout.addWidget(top_bar_frame, 0)  # yläpalkki
+        layout.addWidget(top_bar_frame, 0)
 
-        # -- Scrollattava keskialue, jos listoja on paljon --
-        scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)
+        # -- Scroll Area for Shopping Lists --
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
 
-        scroll_content = QWidget()
-        scroll_layout = QVBoxLayout(scroll_content)
+        self.scroll_content = QWidget()
+        self.scroll_layout = QVBoxLayout(self.scroll_content)
 
-        # Esimerkkilistat
-        shopping_lists = [
-            "Ruokaostokset \n0/16",
-            "Motonet \n0/5",
-            "Biltema \n0/11"
-        ]
+        self.scroll_area.setWidget(self.scroll_content)
+        layout.addWidget(self.scroll_area, 1)
 
-        for item in shopping_lists:
-            btn = QPushButton(item)
+        # Populate shopping lists
+        self.populate_shopping_list()
+
+        return layout
+
+    def update_shopping_lists(self):
+        """
+        Fetch all shopping lists from the controller and update the dictionary.
+        """
+        self.shopping_lists = self.shoplist_controller.get_all_shopping_lists()
+
+    def populate_shopping_list(self):
+        """
+        Populate the scroll area with buttons for each shopping list.
+        """
+        # Clear the current layout
+        for i in reversed(range(self.scroll_layout.count())):
+            widget = self.scroll_layout.itemAt(i).widget()
+            if widget is not None:
+                widget.deleteLater()
+
+        # Add shopping lists to the layout
+        for shoplist_id, shoplist in self.shopping_lists.items():
+            btn = QPushButton(f"{shoplist.title} - {len(shoplist.items)} tuotetta")
             btn.setStyleSheet(f"""
                 QPushButton {{
                     background-color: {TURKOOSI};
@@ -82,15 +173,55 @@ class OstolistatPage(QWidget):
                     font-weight: bold;
                     border-radius: 10px;
                     padding: 10px;
-                    text-align: left; /* Teksti vasemmalle */
+                    text-align: left;
+                }}
+                QPushButton:hover {{
+                    background-color: #009ACD;
                 }}
             """)
-            scroll_layout.addWidget(btn)
+            # Connect the button to display the shopping list detail
+            btn.clicked.connect(lambda checked=False, id=shoplist_id: self.display_shoplist_detail(id))
+            self.scroll_layout.addWidget(btn)
 
-        scroll_layout.addStretch()
+        self.scroll_layout.addStretch()
 
-        scroll_area.setWidget(scroll_content)
+    def display_shoplist_detail(self, shoplist_id):
+        """
+        Fill in the detail page with the given shopping list and switch to detail view.
+        """
+        shoplist = self.shoplist_controller.get_shopping_list_by_id(shoplist_id)
+        self.page_detail.set_shoplist(shoplist)
+        self.stacked.setCurrentIndex(2)
 
-        main_layout.addWidget(scroll_area, 1)
+    def open_add_shoplist_page(self):
+        """
+        Opens the add shopping list page.
+        """
+        self.page_add_shoplist.setFieldsToDefaults()
+        self.stacked.setCurrentIndex(1)
 
+    def back_to_list(self):
+        """
+        Switch back to the shopping list overview and refresh the data.
+        """
+        self.update_shopping_lists()
+        self.populate_shopping_list()
+        self.stacked.setCurrentIndex(0)
 
+    def on_shoplist_created(self):
+        """
+        Handle the creation of a new shopping list.
+        """
+        self.back_to_list()
+
+    def filter_shopping_lists(self, text):
+        """
+        Filter the shopping list buttons based on search input.
+        """
+        search_text = text.lower()
+        for i in range(self.scroll_layout.count() - 1):  # Exclude the stretch
+            item = self.scroll_layout.itemAt(i).widget()
+            if search_text in item.text().lower():
+                item.show()
+            else:
+                item.hide()
