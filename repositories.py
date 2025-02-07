@@ -189,6 +189,10 @@ class ShoppingListRepository:
     def get_all_shopping_lists(self) -> Dict[int, ShoppingList]:
         query = "SELECT * FROM shopping_lists"
         rows = self.db.fetchall(query)
+
+        if not rows:
+            return {}
+
         shopping_lists = []
     
         for row in rows:
