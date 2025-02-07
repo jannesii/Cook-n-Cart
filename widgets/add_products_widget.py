@@ -82,18 +82,14 @@ class AddProductsWidget(QWidget):
         btn_layout = QHBoxLayout()
 
         add_btn = QPushButton("Lisää tuote (uusi)")
-        add_btn.setStyleSheet(
-            f"background-color: {TURKOOSI}; font-weight: bold;")
+
         add_btn.clicked.connect(self._open_add_product_form)
 
         ok_btn = QPushButton("OK")
-        ok_btn.setStyleSheet(
-            f"background-color: {TURKOOSI}; font-weight: bold;")
         ok_btn.clicked.connect(self._finish_selection)
 
         cancel_btn = QPushButton("Peruuta")
-        cancel_btn.setStyleSheet(
-            f"background-color: {HARMAA}; font-weight: bold;")
+        cancel_btn.setObjectName("gray_button")
         cancel_btn.clicked.connect(self._cancel_selection)
 
         btn_layout.addWidget(add_btn)
@@ -211,13 +207,10 @@ class AddProductsWidget(QWidget):
         btn_layout = QHBoxLayout()
 
         save_btn = QPushButton("Tallenna tuote")
-        save_btn.setStyleSheet(
-            f"background-color: {TURKOOSI}; font-weight: bold;")
         save_btn.clicked.connect(self._save_new_product)
 
         back_btn = QPushButton("Takaisin")
-        back_btn.setStyleSheet(
-            f"background-color: {HARMAA}; font-weight: bold;")
+        back_btn.setObjectName("gray_button")
         back_btn.clicked.connect(self._back_to_product_list)
 
         btn_layout.addWidget(save_btn)

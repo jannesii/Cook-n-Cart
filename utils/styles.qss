@@ -1,0 +1,114 @@
+/* style.qss */
+
+/* Yleinen asetus kaikille widgeteille */
+QWidget {
+    background-color: #f0f0f0;
+    font-family: "Segoe UI", sans-serif;
+}
+
+/* Yhtenäinen nappien tyyli */
+QPushButton {
+    background-color: %%TURKOOSI%%;
+    color: black;
+    font-weight: bold;
+    border: none;
+    padding: 8px;
+    border-radius: 5px;
+}
+
+QPushButton:hover {
+    background-color: %%TURKOOSI_HOVER%%;
+}
+
+QPushButton:pressed {
+    background-color: #707070;
+}
+
+QPushButton#main_list_button {
+    background-color: %%TURKOOSI%%;
+    color: black;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 10px;
+    padding: 10px;
+    text-align: left;
+}
+
+QPushButton:hover#main_list_button {
+    background-color: #009ACD;
+}
+
+QPushButton:pressed#main_list_button {
+    background-color: #707070;
+}
+
+QPushButton#gray_button {
+    background-color: %%HARMAA%%;
+    color: black;
+    font-weight: bold;
+    border: none;
+    padding: 8px;
+    border-radius: 5px;
+}
+
+QPushButton:hover#gray_button {
+    background-color: %%HARMAA_HOVER%%;
+}
+
+QPushButton:pressed#gray_button {
+    background-color: %%TURKOOSI%%;
+}
+
+/* Esimerkki label-tyylistä */
+QLabel {
+    color: #333333;
+    font-size: 16px;
+}
+
+QLabel#top_bar_title_label {
+    color: #333333;
+    background-color: %%HARMAA%%; 
+    font-weight: bold; 
+    font-size: 18px;
+}
+
+QLineEdit#top_bar_search_bar {
+    background-color: %%TURKOOSI%%;
+    color: black;
+    font-weight: bold;
+    border-radius: 5px;
+    padding: 8px;
+}
+
+QFrame#top_bar_frame {
+    background-color: %%HARMAA%%; 
+    border-radius: 10px;
+}
+
+QFrame#asetukset_frame {
+    background-color: %%TURKOOSI%%;
+    border-radius: 10px;
+}
+
+QLabel#asetukset_label {
+    background-color: %%TURKOOSI%%;
+    color: black; 
+    font-size: 16px; 
+    font-weight: bold;
+}
+
+QComboBox#asetukset_combobox {
+    font-size: 14px;
+    font-weight: bold;
+    padding: 2px;   
+    border-radius: 5px;
+}
+
+/* Voit myös määritellä luokkia, esim. kaikille “warning”-teksteille */
+.warningLabel {
+    color: red;
+    font-weight: bold;
+}
+
+
+

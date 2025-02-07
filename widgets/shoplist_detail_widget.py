@@ -47,29 +47,11 @@ class ShoplistDetailWidget(QWidget):
 
         # Add product button
         self.add_product_btn = QPushButton("Lisää tuote")
-        self.add_product_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {TURKOOSI};
-                color: black;
-                font-weight: bold;
-                border-radius: 5px;
-                padding: 10px;
-            }}
-        """)
         self.add_product_btn.clicked.connect(self._open_add_products_widget)
         self.layout.addWidget(self.add_product_btn)
 
         # Back button
         self.back_btn = QPushButton("Takaisin")
-        self.back_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {TURKOOSI};
-                color: black;
-                font-weight: bold;
-                border-radius: 5px;
-                padding: 10px;
-            }}
-        """)
         self.back_btn.clicked.connect(self._go_back)
         self.layout.addWidget(self.back_btn)
 

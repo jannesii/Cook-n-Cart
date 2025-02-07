@@ -83,7 +83,7 @@ class OstolistatPage(QWidget):
 
         # Title Label
         self.title_label = QLabel("Ostoslistat")
-        self.title_label.setStyleSheet("font-weight: bold; font-size: 18px;")
+        self.title_label.setObjectName("top_bar_title_label")
 
         # Search Bar
         self.search_bar = QLineEdit()
@@ -95,27 +95,8 @@ class OstolistatPage(QWidget):
         self.new_btn.clicked.connect(self.open_add_shoplist_page)
 
         # Styling
-        self.search_bar.setStyleSheet(f"""
-            QLineEdit {{
-                background-color: {TURKOOSI};
-                color: black;
-                font-weight: bold;
-                border-radius: 5px;
-                padding: 5px;
-            }}
-        """)
-        self.new_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {TURKOOSI};
-                color: black;
-                font-weight: bold;
-                border-radius: 5px;
-                padding: 5px 10px;
-            }}
-            QPushButton:hover {{
-                background-color: #009ACD;
-            }}
-        """)
+        self.search_bar.setObjectName("top_bar_search_bar")
+
 
         # Assemble Top Bar
         top_bar_layout.addWidget(self.title_label)
@@ -125,10 +106,7 @@ class OstolistatPage(QWidget):
 
         top_bar_frame = QFrame()
         top_bar_frame.setLayout(top_bar_layout)
-        top_bar_frame.setStyleSheet(
-            f"background-color: {HARMAA}; border-radius: 10px;"
-        )
-
+        top_bar_frame.setObjectName("top_bar_frame")
         layout.addWidget(top_bar_frame, 0)
 
         # -- Scroll Area for Shopping Lists --
@@ -165,20 +143,7 @@ class OstolistatPage(QWidget):
         # Add shopping lists to the layout
         for shoplist_id, shoplist in self.shopping_lists.items():
             btn = QPushButton(f"{shoplist.title} - {len(shoplist.items)} tuotetta")
-            btn.setStyleSheet(f"""
-                QPushButton {{
-                    background-color: {TURKOOSI};
-                    color: black;
-                    font-size: 16px;
-                    font-weight: bold;
-                    border-radius: 10px;
-                    padding: 10px;
-                    text-align: left;
-                }}
-                QPushButton:hover {{
-                    background-color: #009ACD;
-                }}
-            """)
+            btn.setObjectName("main_list_button")
             # Connect the button to display the shopping list detail
             btn.clicked.connect(lambda checked=False, id=shoplist_id: self.display_shoplist_detail(id))
             self.scroll_layout.addWidget(btn)

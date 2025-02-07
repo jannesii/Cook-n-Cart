@@ -50,18 +50,6 @@ class RecipeDetailWidget(QWidget):
 
         # "Back" button
         self.back_btn = QPushButton("Takaisin")
-        self.back_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {TURKOOSI};
-                color: black;
-                font-weight: bold;
-                border-radius: 5px;
-                padding: 10px;
-            }}
-            QPushButton:hover {{
-                background-color: #009ACD;
-            }}
-        """)
 
         # This button will be wired up in ReseptitPage to switch pages
         self.layout.addWidget(self.back_btn, alignment=Qt.AlignRight)

@@ -64,7 +64,7 @@ class TuotteetPage(QWidget):
         top_bar_layout = QHBoxLayout()
 
         self.title_label = QLabel("Tuotteet")
-        self.title_label.setStyleSheet("font-weight: bold; font-size: 18px;")
+        self.title_label.setObjectName("top_bar_title_label")
 
         self.search_bar = QLineEdit()
         self.search_bar.setPlaceholderText("Hae tuotetta")
@@ -73,24 +73,8 @@ class TuotteetPage(QWidget):
         self.new_button = QPushButton("Uusi tuote")
         self.new_button.clicked.connect(self.display_add_product)
 
-        self.search_bar.setStyleSheet(f"""
-            QLineEdit {{
-                background-color: {TURKOOSI};
-                color: black;
-                font-weight: bold;
-                border-radius: 5px;
-                padding: 5px;
-            }}
-        """)
-        self.new_button.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {TURKOOSI};
-                color: black;
-                font-weight: bold;
-                border-radius: 5px;
-                padding: 5px 10px;
-            }}
-        """)
+        self.search_bar.setObjectName("top_bar_search_bar")
+
 
         top_bar_layout.addWidget(self.title_label)
         top_bar_layout.addStretch()
@@ -99,9 +83,7 @@ class TuotteetPage(QWidget):
 
         top_bar_frame = QFrame()
         top_bar_frame.setLayout(top_bar_layout)
-        top_bar_frame.setStyleSheet(
-            f"background-color: {HARMAA}; border-radius: 10px;"
-        )
+        top_bar_frame.setObjectName("top_bar_frame")
 
         layout.addWidget(top_bar_frame, 0)
 
@@ -147,15 +129,11 @@ class TuotteetPage(QWidget):
         btn_layout = QHBoxLayout()
 
         save_btn = QPushButton("Tallenna tuote")
-        save_btn.setStyleSheet(
-            f"background-color: {TURKOOSI}; font-weight: bold;"
-        )
+
         save_btn.clicked.connect(self._save_new_product)
 
         back_btn = QPushButton("Takaisin")
-        back_btn.setStyleSheet(
-            f"background-color: {HARMAA}; font-weight: bold;"
-        )
+        back_btn.setObjectName("gray_button")
         back_btn.clicked.connect(self._back_to_product_list)
 
         btn_layout.addWidget(save_btn)
@@ -270,17 +248,7 @@ class TuotteetPage(QWidget):
         # Add products to the layout
         for product in sorted_products:
             btn = QPushButton(f"{product.name}")
-            btn.setStyleSheet(f"""
-                QPushButton {{
-                    background-color: {TURKOOSI};
-                    color: black;
-                    font-size: 16px;
-                    font-weight: bold;
-                    border-radius: 10px;
-                    padding: 10px;
-                    text-align: left;
-                }}
-            """)
+            btn.setObjectName("main_list_button")
             # Connect the button to a detailed view
             btn.clicked.connect(lambda checked=False, p=product: self.show_product_details(p))
             self.scroll_layout.addWidget(btn)

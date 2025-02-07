@@ -51,15 +51,6 @@ class ProductDetailWidget (QWidget):
 
         # "Back" button
         self.back_btn = QPushButton("Takaisin")
-        self.back_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {TURKOOSI};
-                color: black;
-                font-weight: bold;
-                border-radius: 5px;
-                padding: 10px;
-            }}
-        """)
         self.layout.addWidget(self.back_btn)
 
         self.setLayout(self.layout)

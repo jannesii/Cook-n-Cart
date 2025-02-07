@@ -26,5 +26,6 @@ def combine_files(directory, output_file):
     print(f"{output_file} created with {total_lines} total lines.")
 
 # Combine views and widgets separately
-combine_files(views_dir, r"tests\\views_combined.py")
-combine_files(widgets_dir, r"tests\\widgets_combined.py")
+combine_files(views_dir, r"tests\\combined\\views_combined.py")
+combine_files(widgets_dir, r"tests\\combined\\widgets_combined.py")
+combine_files(root_dir, r"tests\\combined\\app_combined.py")

@@ -1,7 +1,7 @@
 # main_window.py
 
 from PySide6.QtWidgets import (
-    QMainWindow, QWidget,QVBoxLayout, 
+    QMainWindow, QWidget, QVBoxLayout,
     QHBoxLayout, QPushButton, QStackedWidget
 )
 from views.ostoslistat_page import OstolistatPage
@@ -18,7 +18,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("Esimerkkisovellus")
+        self.setWindowTitle("Cook and Cart")
         self.setMinimumSize(400, 600)
 
         # Pääwidget QMainWindowille
@@ -64,19 +64,7 @@ class MainWindow(QMainWindow):
 
         # Voit halutessasi säätää alapalkin tyylin
         for btn in [self.btn_ostolistat, self.btn_reseptit, self.btn_tuotteet, self.btn_asetukset]:
-            btn.setStyleSheet(f"""
-                QPushButton {{
-                    background-color: {HARMAA};
-                    color: black;
-                    font-weight: bold;
-                    border: none;
-                    padding: 8px;
-                    border-radius: 5px;
-                }}
-                QPushButton:pressed {{
-                    background-color: #707070; /* tummempi harmaa klikatessa */
-                }}
-            """)
+            btn.setObjectName("gray_button")
 
         bottom_bar_layout.addWidget(self.btn_ostolistat)
         bottom_bar_layout.addWidget(self.btn_reseptit)

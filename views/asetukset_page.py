@@ -38,14 +38,13 @@ class AsetuksetPage(QWidget):
         # -- Yläpalkki --
         top_bar_layout = QHBoxLayout()
         label = QLabel("Asetukset")
-        label.setStyleSheet("font-weight: bold; font-size: 18px;")
+        label.setObjectName("top_bar_title_label")
         top_bar_layout.addWidget(label)
         top_bar_layout.addStretch()
 
         top_bar_frame = QFrame()
         top_bar_frame.setLayout(top_bar_layout)
-        top_bar_frame.setStyleSheet(
-            f"background-color: {HARMAA}; border-radius: 10px;")
+        top_bar_frame.setObjectName("top_bar_frame")
 
         main_layout.addWidget(top_bar_frame, 0)
 
@@ -77,27 +76,16 @@ class AsetuksetPage(QWidget):
         self.settings = load_settings()
 
         currency_frame = QFrame()
-        currency_frame.setStyleSheet(f"""
-            QFrame {{
-                background-color: {TURKOOSI};
-                border-radius: 10px;
-            }}
-        """)
+        currency_frame.setObjectName("asetukset_frame")
         currency_layout = QHBoxLayout(currency_frame)
 
         currency_label = QLabel("Valuutta")
-        currency_label.setStyleSheet(
-            "color: black; font-size: 16px; font-weight: bold;")
+        currency_label.setObjectName("asetukset_label")
 
         self.currency_combo = QComboBox()
         self.currency_combo.addItems(["€", "$", "£"])
-        self.currency_combo.setStyleSheet("""
-            QComboBox {
-                font-size: 14px;
-                font-weight: bold;
-                padding: 2px;
-            }
-        """)
+        self.currency_combo.setObjectName("asetukset_combobox")
+
 
         self.currency_combo.setCurrentText(self.settings.get("currency", "€"))
         self.currency_combo.currentTextChanged.connect(save_settings)
@@ -108,27 +96,15 @@ class AsetuksetPage(QWidget):
 
         # 2) Painon yksikkö
         weight_frame = QFrame()
-        weight_frame.setStyleSheet(f"""
-            QFrame {{
-                background-color: {TURKOOSI};
-                border-radius: 10px;
-            }}
-        """)
+        weight_frame.setObjectName("asetukset_frame")
         weight_layout = QHBoxLayout(weight_frame)
 
         weight_label = QLabel("Painon yksikkö")
-        weight_label.setStyleSheet(
-            "color: black; font-size: 16px; font-weight: bold;")
+        weight_label.setObjectName("asetukset_label")
 
         self.weight_combo = QComboBox()
         self.weight_combo.addItems(["kg", "g", "lb", "oz"])
-        self.weight_combo.setStyleSheet("""
-            QComboBox {
-                font-size: 14px;
-                font-weight: bold;
-                padding: 2px;
-            }
-        """)
+        self.weight_combo.setObjectName("asetukset_combobox")
 
         self.weight_combo.setCurrentText(self.settings.get("weight_unit", "kg"))
         
@@ -147,27 +123,15 @@ class AsetuksetPage(QWidget):
 
         # 3) Nestemäärän yksikkö
         volume_frame = QFrame()
-        volume_frame.setStyleSheet(f"""
-            QFrame {{
-                background-color: {TURKOOSI};
-                border-radius: 10px;
-            }}
-        """)
+        volume_frame.setObjectName("asetukset_frame")
         volume_layout = QHBoxLayout(volume_frame)
 
         volume_label = QLabel("Nestemäärän yksikkö")
-        volume_label.setStyleSheet(
-            "color: black; font-size: 16px; font-weight: bold;")
+        volume_label.setObjectName("asetukset_label")
 
         self.volume_combo = QComboBox()
         self.volume_combo.addItems(["l", "ml", "gallon", "fl oz"])
-        self.volume_combo.setStyleSheet("""
-            QComboBox {
-                font-size: 14px;
-                font-weight: bold;
-                padding: 2px;
-            }
-        """)
+        self.volume_combo.setObjectName("asetukset_combobox")
 
         self.volume_combo.setCurrentText(self.settings.get("volume_unit", "l"))
         

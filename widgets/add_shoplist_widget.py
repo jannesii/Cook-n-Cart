@@ -42,7 +42,7 @@ class AddShoplistWidget(QWidget):
 
         # Cancel button
         self.cancel_btn = QPushButton("Peruuta")
-        self.cancel_btn.setStyleSheet("background-color: red; color: white; font-weight: bold;")
+        self.cancel_btn.setObjectName("gray_button")
         buttons_layout.addWidget(self.cancel_btn)
 
         self.layout.addLayout(buttons_layout)

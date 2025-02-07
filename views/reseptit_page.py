@@ -83,7 +83,7 @@ class ReseptitPage(QWidget):
 
         # Title Label
         self.title_label = QLabel("Reseptit")
-        self.title_label.setStyleSheet("font-weight: bold; font-size: 18px;")
+        self.title_label.setObjectName("top_bar_title_label")
 
         # Search Bar
         self.search_bar = QLineEdit()
@@ -95,29 +95,12 @@ class ReseptitPage(QWidget):
         self.new_btn.clicked.connect(self.open_add_recipe_page)
 
         # Styling for Search Bar
-        self.search_bar.setStyleSheet(f"""
-            QLineEdit {{
-                background-color: {TURKOOSI};
-                color: black;
-                font-weight: bold;
-                border-radius: 5px;
-                padding: 5px;
-            }}
-        """)
+        self.search_bar.setObjectName("top_bar_search_bar")
+
 
         # Styling for New Recipe Button
-        self.new_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {TURKOOSI};
-                color: black;
-                font-weight: bold;
-                border-radius: 5px;
-                padding: 5px 10px;
-            }}
-            QPushButton:hover {{
-                background-color: #009ACD;
-            }}
-        """)
+        self.new_btn.setObjectName("top_bar_new_button")
+
 
         # Assemble Top Bar Layout
         top_bar_layout.addWidget(self.title_label)
@@ -128,9 +111,8 @@ class ReseptitPage(QWidget):
         # Frame for Top Bar
         top_bar_frame = QFrame()
         top_bar_frame.setLayout(top_bar_layout)
-        top_bar_frame.setStyleSheet(
-            f"background-color: {HARMAA}; border-radius: 10px;"
-        )
+        top_bar_frame.setObjectName("top_bar_frame")
+
 
         layout.addWidget(top_bar_frame, 0)
 
@@ -174,20 +156,7 @@ class ReseptitPage(QWidget):
         # Add recipes to the layout
         for recipe in sorted_recipes:
             btn = QPushButton(f"{recipe.name}")
-            btn.setStyleSheet(f"""
-                QPushButton {{
-                    background-color: {TURKOOSI};
-                    color: black;
-                    font-size: 16px;
-                    font-weight: bold;
-                    border-radius: 10px;
-                    padding: 10px;
-                    text-align: left;
-                }}
-                QPushButton:hover {{
-                    background-color: #009ACD;
-                }}
-            """)
+            btn.setObjectName("main_list_button")
             # Connect the button to display the recipe detail
             btn.clicked.connect(lambda checked=False, r=recipe: self.display_recipe_detail(r))
             self.scroll_layout.addWidget(btn)
