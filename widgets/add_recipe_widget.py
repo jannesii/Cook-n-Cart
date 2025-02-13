@@ -140,7 +140,7 @@ class AddRecipeWidget(QWidget):
 
     def _save_recipe(self):
         name = self.name_edit.text().strip()
-        instructions = self.instructions_edit.toPlainText().strip()
+        instructions = self.instructions_edit.toPlainText()
         # Tagit yhdistetään pilkulla erotelluksi merkkijonoksi
         tags = ", ".join(self.selected_tags)
 

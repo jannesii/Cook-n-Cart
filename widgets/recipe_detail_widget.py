@@ -20,9 +20,6 @@ RecipeController = RC()
 ProductController = PC()
 ShoppingListController = SLC()
 
-
-
-
 class RecipeDetailWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -65,7 +62,7 @@ class RecipeDetailWidget(QWidget):
                 f"<b>Valmistusohje:</b> {recipe.instructions}")
             self.tags_label.setText(f"<b>Tagit:</b> {recipe.tags}")
             self.ingredients_label.setText(
-                f"<b>Ainesosat:</b> {recipe.ingredients}")
+                f"<b>Ainesosat:</b>\n {recipe.ingredients}")
             self.created_at_label.setText(
                 f"<b>Luotu:</b> {self.recipe.created_at}")
             self.updated_at_label.setText(

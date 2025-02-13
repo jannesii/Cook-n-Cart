@@ -6,6 +6,20 @@ QWidget {
     font-family: "Segoe UI", sans-serif;
 }
 
+QLineEdit {
+    color: black;
+}
+
+QListWidget {
+    color: black;
+}
+
+QListView::indicator:unchecked {
+    border: 1px solid #808080; /* HARMAA */
+    border-radius: 4px;
+    
+}
+
 /* Yhtenäinen nappien tyyli */
 QPushButton {
     background-color: %%TURKOOSI%%;
