@@ -191,41 +191,48 @@ class ShoppingListRepository:
         rows = self.db.fetchall(query)
 
         if not rows:
+            print("No shopping lists found!")
             return {}
 
         shopping_lists = []
-    
+
         for row in rows:
             # Fetch items for this shopping list
             items_query = "SELECT * FROM shopping_list_items WHERE shopping_list_id = ?"
             items_rows = self.db.fetchall(items_query, (row['id'],))
+            if not items_rows:
+                print(f"No items found for shopping list ID: {row['id']}")
+
             items = [
-            ShoppingListItem(
-                id=item_row['id'],
-                shopping_list_id=item_row['shopping_list_id'],
-                product_id=item_row['product_id'],
-                is_purchased=item_row['is_purchased'],
-                created_at=item_row['created_at'],
-                updated_at=item_row['updated_at'],
-            ) for item_row in items_rows
-        ]
-        
-        # Create the ShoppingList object with the items
-        shopping_list = ShoppingList(
-            id=row['id'],
-            title=row['title'],
-            total_sum=row['total_sum'],
-            purchased_count=row['purchased_count'],
-            created_at=row['created_at'],
-            updated_at=row['updated_at'],
-            items=items  # Include the items here
-        )
-        shopping_lists.append(shopping_list)
-    
-    # Convert to a dictionary with the ID as the key
+                ShoppingListItem(
+                    id=item_row['id'],
+                    shopping_list_id=item_row['shopping_list_id'],
+                    product_id=item_row['product_id'],
+                    quantity=item_row['quantity'],
+                    is_purchased=item_row['is_purchased'],
+                    created_at=item_row['created_at'],
+                    updated_at=item_row['updated_at'],
+                ) for item_row in items_rows
+            ]
+
+            # Create the ShoppingList object with the items
+            shopping_list = ShoppingList(
+                id=row['id'],
+                title=row['title'],
+                total_sum=row['total_sum'],
+                purchased_count=row['purchased_count'],
+                created_at=row['created_at'],
+                updated_at=row['updated_at'],
+                items=items  # Include the items here
+            )
+            shopping_lists.append(shopping_list)
+
+        # Convert to a dictionary with the ID as the key
         shopping_lists_dict: Dict[int, ShoppingList] = {
-        shopping_list.id: shopping_list for shopping_list in shopping_lists
+            shopping_list.id: shopping_list for shopping_list in shopping_lists
         }
+
+        print(f"Final shopping lists dictionary: {shopping_lists_dict}")
         return shopping_lists_dict
 
     def get_shopping_list_by_id(self, shopping_list_id: int) -> ShoppingList:
@@ -256,19 +263,17 @@ class ShoppingListRepository:
             self.add_shopping_list_items(list_id, items)
         return list_id
 
-    def add_shopping_list_items(self, shopping_list_id: int, shopping_list_items: List[ShoppingListItem]):
-        # Prepare and execute the query for insertion or update
-        for item in shopping_list_items:
-            query = """
-            INSERT INTO shopping_list_items (shopping_list_id, product_id, quantity, is_purchased)
-            VALUES (?, ?, ?, ?)
-            ON CONFLICT (shopping_list_id, product_id)
-            DO UPDATE SET
-            quantity = excluded.quantity,
-            is_purchased = excluded.is_purchased
-        """
-        params = (shopping_list_id, item.product_id, item.quantity, item.is_purchased)
-        self.db.execute_query(query, params)
+    def add_shopping_list_items(self, shopping_list_id: int, items: List[ShoppingListItem]):
+        for item in items:
+            print(f"Inserting item into database: {item}")
+            try:
+                query = """
+                INSERT INTO shopping_list_items (shopping_list_id, product_id, quantity, is_purchased, created_at, updated_at)
+                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                """
+                self.db.execute_query(query, (item.shopping_list_id, item.product_id, item.quantity, item.is_purchased))
+            except Exception as e:
+                print(f"Error inserting item: {item}, Error: {e}")
 
     def update_shopping_list(self, shopping_list_id: int, shopping_list: ShoppingList):
         query = """
@@ -302,5 +307,5 @@ class ShoppingListRepository:
                 created_at=row['created_at'],
                 updated_at=row['updated_at'],
             )
-        items.append(item)
+            items.append(item)  # This needs to be inside the loop!
         return items

@@ -140,7 +140,16 @@ class ShoppingListController:
         return total_cost
 
     def get_all_shopping_lists(self) -> Dict[int, ShoppingList]:
-        return self.repo.get_all_shopping_lists()
+        # Fetch all shopping lists from the repository
+        shopping_lists = self.repo.get_all_shopping_lists()
+
+        # Populate items for each shopping list
+        for shopping_list in shopping_lists.values():
+            shopping_list.items = self.repo.get_items_by_shopping_list_id(shopping_list.id)
+
+        print("Fetched Shopping Lists:", shopping_lists)  # Debugging: Print all shopping lists
+        return shopping_lists
+
 
     def get_shopping_list_by_id(self, shopping_list_id: int) -> ShoppingList:
         shopping_list = self.repo.get_shopping_list_by_id(shopping_list_id)
@@ -149,8 +158,9 @@ class ShoppingListController:
         return shopping_list
 
     def add_shopping_list(self, title: str, items: List[dict]):
+        # Create a new ShoppingList object
         shopping_list = ShoppingList(
-            id=0,  # Database will assign the actual ID
+            id=0,  # Database will assign the ID
             title=title,
             total_sum=0,
             purchased_count=0,
@@ -158,34 +168,48 @@ class ShoppingListController:
             updated_at=None,
             items=[]
         )
+        # Insert shopping list into the database and retrieve the assigned ID
         shopping_list_id = self.repo.add_shopping_list(shopping_list)
+        shopping_list.id = shopping_list_id  # Update the object with the correct ID
 
-    # Add products to the shopping list
+        # Add items to the shopping list
         shopping_list_items = []
         for item in items:
-        # Assuming `item` is a dictionary with `product` (a Product object) and `quantity`
             product = item.get('product')
             if not product or 'quantity' not in item:
                 raise ValueError("Invalid product data: 'product' or 'quantity' is missing.")
 
             shopping_list_item = ShoppingListItem(
-                id=0,  # This will be assigned by the database
+                id=0,  # Assigned by the database
                 shopping_list_id=shopping_list_id,
                 product_id=product.id,  # Access the Product object's ID
                 quantity=item['quantity'],
+                is_purchased=item.get('is_purchased', False),
                 created_at=None,
-                updated_at=None,
-                is_purchased=item.get('is_purchased', False)
+                updated_at=None
             )
             shopping_list_items.append(shopping_list_item)
 
-        self.repo.add_shopping_list_items(shopping_list.id, shopping_list_items)
-        shopping_list.items = self.repo.get_items_by_shopping_list_id(shopping_list.id)
+        # Debugging: Log items being added
+        print(f"Adding shopping list items: {shopping_list_items}")
+        self.repo.add_shopping_list_items(shopping_list_id, shopping_list_items)
 
-    # Update the total cost
-        shopping_list.total_sum = self.calculate_total_cost(shopping_list.id)
+        # Debugging: Check inserted items in the database
+        query = "SELECT * FROM shopping_list_items WHERE shopping_list_id = ?"
+        rows = self.repo.db.fetchall(query, (shopping_list_id,))
+        print(f"Inserted items for shopping_list_id {shopping_list_id}: {rows}")
+
+        # Fetch items from the database to update the ShoppingList object
+        shopping_list.items = self.repo.get_items_by_shopping_list_id(shopping_list_id)
+
+        # Debugging: Log fetched items
+        print(f"Fetched items for shopping list {shopping_list_id}: {shopping_list.items}")
+
+        # Calculate the total cost and update the shopping list
+        shopping_list.total_sum = self.calculate_total_cost(shopping_list_id)
 
         return shopping_list
+
 
     def update_shopping_list(self, shopping_list_id: int, title: str = None, items: List[dict] = None):
         shopping_list = self.repo.get_shopping_list_by_id(shopping_list_id)

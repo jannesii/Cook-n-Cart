@@ -129,11 +129,9 @@ class OstolistatPage(QWidget):
         Fetch all shopping lists from the controller and update the dictionary.
         """
         self.shopping_lists = self.shoplist_controller.get_all_shopping_lists()
+        print(self.shopping_lists)  # Debugging: Check the data being fetched
 
     def populate_shopping_list(self):
-        """
-        Populate the scroll area with buttons for each shopping list.
-        """
         # Clear the current layout
         for i in reversed(range(self.scroll_layout.count())):
             widget = self.scroll_layout.itemAt(i).widget()
@@ -142,13 +140,22 @@ class OstolistatPage(QWidget):
 
         # Add shopping lists to the layout
         for shoplist_id, shoplist in self.shopping_lists.items():
+            print(f"Adding button for: {shoplist.title}")  # Debugging: Log each list
             btn = QPushButton(f"{shoplist.title} - {len(shoplist.items)} tuotetta")
             btn.setObjectName("main_list_button")
-            # Connect the button to display the shopping list detail
-            btn.clicked.connect(lambda checked=False, id=shoplist_id: self.display_shoplist_detail(id))
+            btn.clicked.connect(self.create_shoplist_callback(shoplist_id))  # Use a dedicated callback
             self.scroll_layout.addWidget(btn)
 
         self.scroll_layout.addStretch()
+
+    def create_shoplist_callback(self, shoplist_id):
+        """
+        Returns a callback for the given shopping list ID.
+        """
+        def callback():
+            self.display_shoplist_detail(shoplist_id)
+        return callback
+
 
     def display_shoplist_detail(self, shoplist_id):
         """
@@ -176,6 +183,8 @@ class OstolistatPage(QWidget):
         """
         Handle the creation of a new shopping list.
         """
+        self.update_shopping_lists()  # Make sure we get the latest data
+        self.populate_shopping_list()  # Then populate the UI
         self.back_to_list()
 
     def filter_shopping_lists(self, text):
