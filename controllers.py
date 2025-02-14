@@ -202,12 +202,15 @@ class ShoppingListController:
             )
             shopping_list_items.append(shopping_list_item)
 
+        self.repo.add_shopping_list_items(shopping_list_id, shopping_list_items)
+
+        query = "SELECT * FROM shopping_list_items WHERE shopping_list_id = ?"
+        rows = self.repo.db.fetchall(query, (shopping_list_id,))
+
         # Fetch items from the database to update the ShoppingList object
         shopping_list.items = self.repo.get_items_by_shopping_list_id(
             shopping_list_id)
 
-        # Calculate the total cost and update the shopping list
-        shopping_list.total_sum = self.calculate_total_cost(shopping_list_id)
 
         return shopping_list
 
@@ -229,8 +232,7 @@ class ShoppingListController:
                     quantity=item['quantity'],
                     is_purchased=item.get('is_purchased', False)
                 )
-                self.repo.add_item_to_shopping_list(
-                    shopping_list_id, shopping_list_item)
+                self.repo.add_shopping_list_items(shopping_list_id, shopping_list_item)
 
         # Päivitetään hinta
         shopping_list.total_sum = self.calculate_total_cost(shopping_list_id)

@@ -281,7 +281,7 @@ class ShoppingListRepository:
 
     def add_shopping_list_items(self, shopping_list_id: int, items: List[ShoppingListItem]):
         for item in items:
-            print(f"Inserting item into database: {item}")
+            print(f"Attempting to insert item with values: shopping_list_id={shopping_list_id}, product_id={item.product_id}, quantity={item.quantity}, is_purchased={item.is_purchased}")
             try:
                 query = """
                 INSERT INTO shopping_list_items (shopping_list_id, product_id, quantity, is_purchased, created_at, updated_at)
@@ -290,6 +290,7 @@ class ShoppingListRepository:
                 self.db.execute_query(query, (item.shopping_list_id, item.product_id, item.quantity, item.is_purchased))
             except Exception as e:
                 print(f"Error inserting item: {item}, Error: {e}")
+
 
     def update_shopping_list(self, shopping_list_id: int, shopping_list: ShoppingList):
         query = """
