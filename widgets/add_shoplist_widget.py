@@ -60,27 +60,45 @@ class AddShoplistWidget(QWidget):
     def _create_shoplist(self):
         """Create a new shopping list and emit its ID."""
         title = self.title_input.text().strip()
+    
+        # Validate the title is not empty
         if not title:
-            # Handle the case where the title is empty (optional improvement)
             self.title_label.setText("Ostoslistan nimi: (Ei voi olla tyhjä!)")
             self.title_label.setStyleSheet("color: red;")
             return
 
-        # Gather selected products
+    # Gather selected products
         selected_products = []
         for i in range(self.product_list.count()):
             item = self.product_list.item(i)
             if item.checkState() == Qt.Checked:
                 product_data = item.data(Qt.UserRole)
-                selected_products.append({"product_id": product_data["product_id"], "quantity": 1})  # Default quantity
+            
+            # Ensure product_data is valid
+                if not product_data or "product_id" not in product_data:
+                    continue  # Skip invalid items
+            
+                product = self.product_controller.get_product_by_id(product_data["product_id"])
+                if not product:
+                    continue  # Skip if product is not found
+            
+                selected_products.append({"product": product, "quantity": 1})  # Default quantity
 
-        # Create the shopping list
-        shopping_list = self.shoplist_controller.add_shopping_list(title=title, items=selected_products)
+    # Debugging: Print selected products
+        print(f"Selected products: {selected_products}")
 
-        # Emit the ID of the created shopping list
+    # Create the shopping list
+        try:
+            shopping_list = self.shoplist_controller.add_shopping_list(title=title, items=selected_products)
+        except ValueError as e:
+            # Handle invalid data errors from add_shopping_list
+            print(f"Error creating shopping list: {e}")
+            return
+
+    # Emit the ID of the created shopping list
         self.shoplist_created.emit(shopping_list.id)
 
-        # Reset the form
+    # Reset the form
         self.title_input.clear()
         for i in range(self.product_list.count()):
             self.product_list.item(i).setCheckState(Qt.Unchecked)

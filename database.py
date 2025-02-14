@@ -36,5 +36,12 @@ class DatabaseManager:
     def fetchone(self, query, params=()):
         cursor = self.execute_query(query, params)
         return cursor.fetchone()
+    
+    def executemany(self, query: str, params: List[tuple]):
+        with self.connection as conn:
+            cursor = conn.cursor()
+            cursor.executemany(query, params)
+            conn.commit()
+        return cursor
 
 

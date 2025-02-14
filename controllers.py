@@ -79,6 +79,7 @@ class ShoppingListController:
         self.product_repo = ProductRepository()
         self.weight_unit, self.volume_unit = self.load_units()
 
+
     def load_units(self):
         """ Lataa asetetut yksiköt config.json-tiedostosta. """
         try:
@@ -124,7 +125,7 @@ class ShoppingListController:
 
     def calculate_total_cost(self, shopping_list_id: int):
 
-        items = self.repo.get_products_by_shoplist_id(shopping_list_id)
+        items = self.repo.get_items_by_shopping_list_id(shopping_list_id)
         total_cost = 0.0
 
         for item in items:
@@ -134,7 +135,7 @@ class ShoppingListController:
                 total_cost += product.price_per_unit * standard_quantity
 
         total_cost = round(total_cost, 2)
-        self.repo.update_total_sum(shopping_list_id, total_cost)
+        ##self.repo.update_total_sum(shopping_list_id, total_cost)
 
         return total_cost
 
@@ -157,22 +158,31 @@ class ShoppingListController:
             updated_at=None,
             items=[]
         )
-        shopping_list = self.repo.add_shopping_list(shopping_list)
+        shopping_list_id = self.repo.add_shopping_list(shopping_list)
 
-        # Lisää tuotteet ostoslistaan
+    # Add products to the shopping list
         shopping_list_items = []
         for item in items:
+        # Assuming `item` is a dictionary with `product` (a Product object) and `quantity`
+            product = item.get('product')
+            if not product or 'quantity' not in item:
+                raise ValueError("Invalid product data: 'product' or 'quantity' is missing.")
+
             shopping_list_item = ShoppingListItem(
-                product_id=item['product_id'],
+                id=0,  # This will be assigned by the database
+                shopping_list_id=shopping_list_id,
+                product_id=product.id,  # Access the Product object's ID
                 quantity=item['quantity'],
+                created_at=None,
+                updated_at=None,
                 is_purchased=item.get('is_purchased', False)
             )
             shopping_list_items.append(shopping_list_item)
 
-        self.repo.add_items_to_shopping_list(shopping_list.id, shopping_list_items)
+        self.repo.add_shopping_list_items(shopping_list.id, shopping_list_items)
         shopping_list.items = self.repo.get_items_by_shopping_list_id(shopping_list.id)
 
-        # Päivitetään hinta
+    # Update the total cost
         shopping_list.total_sum = self.calculate_total_cost(shopping_list.id)
 
         return shopping_list
@@ -242,6 +252,9 @@ class ProductController:
 
     def get_all_products(self) -> Dict[int, Product]:
         return self.repo.get_all_products()
+    
+    def get_product_by_id(self, product_id: int):
+        return self.repo.get_product_by_id(product_id)
 
     def get_all_categories(self) -> List[str]:
         return self.repo.get_all_categories()

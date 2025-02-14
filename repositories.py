@@ -256,13 +256,19 @@ class ShoppingListRepository:
             self.add_shopping_list_items(list_id, items)
         return list_id
 
-    def add_shopping_list_items(self, shoppingList_id: int, shoppingListitems: ShoppingListItem):
-        query = """
-        INSERT INTO shopping_list_items (shopping_list_id, product_id, quantity, is_purchased)
-        VALUES (?, ?, ?, ?)
+    def add_shopping_list_items(self, shopping_list_id: int, shopping_list_items: List[ShoppingListItem]):
+        # Prepare and execute the query for insertion or update
+        for item in shopping_list_items:
+            query = """
+            INSERT INTO shopping_list_items (shopping_list_id, product_id, quantity, is_purchased)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT (shopping_list_id, product_id)
+            DO UPDATE SET
+            quantity = excluded.quantity,
+            is_purchased = excluded.is_purchased
         """
-        self.db.execute_query(query, (shoppingList_id, shoppingListitems.product_id,
-                                      shoppingListitems.quantity, shoppingListitems.is_purchased))
+        params = (shopping_list_id, item.product_id, item.quantity, item.is_purchased)
+        self.db.execute_query(query, params)
 
     def update_shopping_list(self, shopping_list_id: int, shopping_list: ShoppingList):
         query = """
@@ -276,3 +282,25 @@ class ShoppingListRepository:
             "DELETE FROM shopping_list_items WHERE shopping_list_id = ?", (shopping_list_id,))
         for items in shopping_list.items:
             self.add_shopping_list_items(shopping_list_id, items)
+
+
+    def get_items_by_shopping_list_id(self, shopping_list_id: int) -> List[ShoppingListItem]:
+        query = """
+        SELECT id, shopping_list_id, product_id, quantity, is_purchased, created_at, updated_at
+        FROM shopping_list_items
+        WHERE shopping_list_id = ?
+        """
+        rows = self.db.fetchall(query, (shopping_list_id,))
+        items = []
+        for row in rows:
+            item = ShoppingListItem(
+                id=row['id'],
+                shopping_list_id=row['shopping_list_id'],
+                product_id=row['product_id'],
+                quantity=row['quantity'],
+                is_purchased=row['is_purchased'],
+                created_at=row['created_at'],
+                updated_at=row['updated_at'],
+            )
+        items.append(item)
+        return items
