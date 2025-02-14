@@ -162,7 +162,7 @@ class OstolistatPage(QWidget):
         Fill in the detail page with the given shopping list and switch to detail view.
         """
         shoplist = self.shoplist_controller.get_shopping_list_by_id(shoplist_id)
-        self.page_detail.set_shoplist(shoplist)
+        self.page_detail.set_shopping_list(shoplist)
         self.stacked.setCurrentIndex(2)
 
     def open_add_shoplist_page(self):

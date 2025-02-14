@@ -68,7 +68,7 @@ class ShoplistDetailWidget(QWidget):
             return  # Do nothing if no shopping list is set
         
         self.product_list.clear()
-        shopping_list_items = ShoppingListController.get_items_by_shopping_list_id(self.shoppinglist.id)
+        shopping_list_items = ShoppingListController.repo.get_items_by_shopping_list_id(self.shoppinglist.id)
         
         for item in shopping_list_items:
             product = ProductController.get_all_products().get(item.product_id)
