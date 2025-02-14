@@ -1,15 +1,11 @@
-# File: add_recipe_widget.py
-
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QLineEdit, QTextEdit, QStackedWidget, QCompleter, QMessageBox
 )
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Qt, Signal, QTimer
 
 TURKOOSI = "#00B0F0"
 HARMAA = "#808080"
-
 
 class AddRecipeWidget(QWidget):
     """
@@ -92,7 +88,6 @@ class AddRecipeWidget(QWidget):
         tags_label = QLabel("Tagit:")
         self.tags_display_label = QLabel("Ei valittuja tageja")
         self.select_tags_btn = QPushButton("Valitse tageja")
-        # self.select_tags_btn.setObjectName("recipe_widget_btn")
         self.select_tags_btn.clicked.connect(self._open_tags_page)
         layout.addWidget(tags_label)
         layout.addWidget(self.tags_display_label)
@@ -100,8 +95,6 @@ class AddRecipeWidget(QWidget):
 
         # 4) Tuotteiden lisäys: painike aukaisee tuotteiden valintasivun
         self.add_products_btn = QPushButton("+ Lisää tuotteita")
-        # self.add_products_btn.setObjectName("recipe_widget_btn")
-
         self.add_products_btn.clicked.connect(self._open_products_page)
         layout.addWidget(self.add_products_btn)
 
@@ -138,13 +131,28 @@ class AddRecipeWidget(QWidget):
             self.tags_display_label.setText("Ei valittuja tageja")
         self.stacked.setCurrentIndex(0)
 
+    def setFieldsToRecipe(self, recipe):
+        self.name_edit.setText(recipe.name)
+        self.instructions_edit.setText(recipe.instructions)
+        # Prepopulate tags: split by comma and trim spaces.
+        self.selected_tags = [tag.strip() for tag in recipe.tags.split(",")] if recipe.tags else []
+        self.tags_display_label.setText(recipe.tags if recipe.tags else "Ei valittuja tageja")
+        # Prepopulate the product selection: build a list of dicts from recipe ingredients.
+        self.selected_products = [
+            {"id": ing.product_id, "quantity": ing.quantity, "unit": ing.unit}
+            for ing in recipe.ingredients
+        ]
+        # Store the current recipe id for later update.
+        self.current_recipe_id = recipe.id
+        # Instead of immediately rebuilding the products list, schedule it to run as soon as the event loop is free.
+        QTimer.singleShot(0, lambda: self.products_page.set_selected_products(self.selected_products))
+
+
     def _save_recipe(self):
         name = self.name_edit.text().strip()
         instructions = self.instructions_edit.toPlainText()
-        # Tagit yhdistetään pilkulla erotelluksi merkkijonoksi
         tags = ", ".join(self.selected_tags)
 
-        # Tarkistetaan, että pakolliset kentät on täytetty
         if not name:
             self._show_error("Reseptin nimi on pakollinen.")
             return
@@ -152,21 +160,54 @@ class AddRecipeWidget(QWidget):
             self._show_error("Valmistusohjeet ovat pakolliset.")
             return
 
-        # Muunnetaan valitut tuotteet reseptin ainesosiksi
+        for p in self.selected_products:
+            try:
+                quantity = float(p.get("quantity", 0))
+            except ValueError:
+                self._show_error("Ainesosan määrä ei ole kelvollinen luku.")
+                return
+            if quantity <= 0:
+                self._show_error("Ainesosan määrä täytyy olla suurempi kuin 0.")
+                return
+            if not p.get("unit"):
+                self._show_error("Valitse ainesosalle yksikkö.")
+                return
+
         ingredients = []
         for p in self.selected_products:
+            if isinstance(p, dict):
+                product_id = p.get("id")
+                quantity = p.get("quantity", 1.0)
+                unit = p.get("unit", "")
+            else:
+                product_id = p.id
+                quantity = getattr(p, "quantity", 1.0)
+                unit = getattr(p, "unit", "")
             ingredients.append({
-                "product_id": p.id,
-                "quantity": 1.0  # Oletusmäärä; laajennettavissa tarvittaessa
+                "product_id": product_id,
+                "quantity": quantity,
+                "unit": unit
             })
 
         try:
-            new_recipe = self.recipe_controller.add_recipe(
-                name=name,
-                instructions=instructions,
-                tags=tags,
-                ingredients=ingredients
-            )
+            # If we're in edit mode (current_recipe_id is set), update the recipe.
+            if hasattr(self, "current_recipe_id") and self.current_recipe_id:
+                updated_recipe = self.recipe_controller.update_recipe(
+                    recipe_id=self.current_recipe_id,
+                    name=name,
+                    instructions=instructions,
+                    tags=tags,
+                    ingredients=ingredients
+                )
+                new_recipe = updated_recipe
+            else:
+                # Otherwise, add as a new recipe.
+                new_recipe = self.recipe_controller.add_recipe(
+                    name=name,
+                    instructions=instructions,
+                    tags=tags,
+                    ingredients=ingredients
+                )
         except Exception as e:
             self._show_error(f"Reseptin tallennus epäonnistui: {e}")
             return
@@ -186,6 +227,9 @@ class AddRecipeWidget(QWidget):
         self.tags_display_label.setText("Ei valittuja tageja")
         self.selected_products = []
         self.selected_tags = []
+        # Clear edit mode if present.
+        if hasattr(self, "current_recipe_id"):
+            del self.current_recipe_id
 
     def _show_error(self, message):
         QMessageBox.warning(self, "Virhe", message)

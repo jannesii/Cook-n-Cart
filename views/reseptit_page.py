@@ -5,6 +5,7 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QScrollArea, QStackedWidget, QFrame, QLineEdit
 )
+from PySide6.QtCore import QTimer
 
 
 from controllers import ProductController as PC
@@ -49,6 +50,8 @@ class ReseptitPage(QWidget):
         self.page_detail = RecipeDetailWidget()
         # Hook the "Back" button in RecipeDetailWidget
         self.page_detail.back_btn.clicked.connect(self.back_to_list)
+        # Connect the edit signal from the detail widget:
+        self.page_detail.edit_recipe_requested.connect(self.open_edit_recipe)
 
         # Page 2 (add recipe view)
         self.page_add_recipe = AddRecipeWidget(
@@ -62,14 +65,13 @@ class ReseptitPage(QWidget):
 
         # Add all pages to the QStackedWidget
         self.stacked.addWidget(self.page_list)         # index 0
-        self.stacked.addWidget(self.page_detail)       # index 1
-        self.stacked.addWidget(self.page_add_recipe)   # index 2
+        self.stacked.addWidget(self.page_detail)         # index 1
+        self.stacked.addWidget(self.page_add_recipe)       # index 2
 
         # Start with the list page
         self.stacked.setCurrentIndex(0)
 
         main_layout.addWidget(self.stacked, 1)
-
         self.setLayout(main_layout)
 
     def _create_list_layout(self):
@@ -138,15 +140,9 @@ class ReseptitPage(QWidget):
         self.recipes_dict = RecipeController.get_all_recipes()
 
     def populate_recipe_list(self):
-        """
-        Populate the scroll area with buttons representing each recipe, sorted alphabetically.
-        """
-        # Clear the current layout
-        for i in reversed(range(self.scroll_layout.count())):
-            widget = self.scroll_layout.itemAt(i).widget()
-            if widget is not None:
-                widget.deleteLater()
-
+        # Clear the current layout properly
+        self.clear_layout(self.scroll_layout)
+        
         # Sort recipes by name (case-insensitive)
         sorted_recipes = sorted(
             self.recipes_dict.values(),
@@ -157,11 +153,12 @@ class ReseptitPage(QWidget):
         for recipe in sorted_recipes:
             btn = QPushButton(f"{recipe.name}")
             btn.setObjectName("main_list_button")
-            # Connect the button to display the recipe detail
             btn.clicked.connect(lambda checked=False, r=recipe: self.display_recipe_detail(r))
             self.scroll_layout.addWidget(btn)
 
+        # Add stretch at the end
         self.scroll_layout.addStretch()
+
 
     def display_recipe_detail(self, recipe):
         """
@@ -177,6 +174,14 @@ class ReseptitPage(QWidget):
         """
         self.page_add_recipe.setFieldsToDefaults()
         self.stacked.setCurrentIndex(2)
+    
+    # In reseptit_page.py (inside the ReseptitPage class)
+
+    def open_edit_recipe(self, recipe):
+        self.page_add_recipe.setFieldsToRecipe(recipe)
+        # Use QTimer.singleShot(0, ...) so that the UI can finish processing before switching pages.
+        QTimer.singleShot(0, lambda: self.stacked.setCurrentIndex(2))
+
 
     def back_to_list(self):
         """
@@ -194,15 +199,21 @@ class ReseptitPage(QWidget):
         self.back_to_list()
 
     def filter_recipes(self, text):
-        """
-        Filter the recipe buttons based on the search text.
-        """
         search_text = text.lower()
-        for i in range(self.scroll_layout.count() - 1):  # Exclude the stretch
+        for i in range(self.scroll_layout.count()):
             item = self.scroll_layout.itemAt(i).widget()
+            if item is None:
+                continue  # Skip layout items without a widget (like stretches)
             if search_text in item.text().lower():
                 item.show()
             else:
                 item.hide()
 
 
+
+    def clear_layout(self, layout):
+        while layout.count():
+            item = layout.takeAt(0)
+            widget = item.widget()
+            if widget is not None:
+                widget.deleteLater()

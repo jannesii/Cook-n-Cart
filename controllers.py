@@ -5,6 +5,7 @@ from repositories import RecipeRepository, ProductRepository, ShoppingListReposi
 from typing import List, Dict
 CONFIG_FILE = "utils/config.json"
 
+
 class RecipeController:
     def __init__(self):
         self.repo = RecipeRepository()
@@ -38,9 +39,12 @@ class RecipeController:
 
         # Now create RecipeIngredient instances with the correct recipe_id
         for ing in ingredients:
+            # Expect each ingredient dict to have both 'quantity' and 'unit'
             recipe_ingredient = RecipeIngredient(
                 product_id=ing['product_id'],
-                quantity=ing['quantity']
+                quantity=ing['quantity'],
+                # Use an empty string or a default if not provided
+                unit=ing.get('unit', '')
             )
             self.repo.add_recipe_ingredient(recipe_id, recipe_ingredient)
 
@@ -49,28 +53,33 @@ class RecipeController:
 
         return recipe
 
-    def update_recipe(self, recipe_id: int, name: str = None, instructions: str = None, ingredients: List[dict] = None):
+    def update_recipe(self, recipe_id: int, name: str = None, instructions: str = None, tags: str = None, ingredients: List[dict] = None):
         recipe = self.repo.get_recipe_by_id(recipe_id)
         if not recipe:
             raise ValueError("Recipe not found")
-
         if name:
             recipe.name = name
         if instructions:
             recipe.instructions = instructions
-        if ingredients:
-            # Remove existing ingredients
+        if tags is not None:
+            recipe.tags = tags
+        if ingredients is not None:
+            # Remove existing ingredients and add new ones
             self.repo.remove_ingredients_from_recipe(recipe_id)
-            # Add new ingredients
             for ing in ingredients:
                 recipe_ingredient = RecipeIngredient(
                     product_id=ing['product_id'],
-                    quantity=ing['quantity']
+                    quantity=ing['quantity'],
+                    unit=ing.get('unit', '')
                 )
                 self.repo.add_recipe_ingredient(recipe_id, recipe_ingredient)
-
         self.repo.update_recipe(recipe_id, recipe)
         return recipe
+
+    def delete_recipe(self, recipe_id: int):
+        # Remove ingredients first, then delete the recipe itself.
+        self.repo.remove_ingredients_from_recipe(recipe_id)
+        self.repo.delete_recipe(recipe_id)
 
 
 class ShoppingListController:
@@ -78,7 +87,6 @@ class ShoppingListController:
         self.repo = ShoppingListRepository()
         self.product_repo = ProductRepository()
         self.weight_unit, self.volume_unit = self.load_units()
-
 
     def load_units(self):
         """ Lataa asetetut yksiköt config.json-tiedostosta. """
@@ -113,8 +121,10 @@ class ShoppingListController:
         self.save_units()
 
     def convert_to_standard_unit(self, unit: str, quantity: float) -> float:
-        weight_conversion = {"kg": 1, "g": 0.001, "lb": 0.453592, "oz": 0.0283495}
-        volume_conversion = {"l": 1, "ml": 0.001, "fl oz": 0.0295735, "gal": 3.78541}
+        weight_conversion = {"kg": 1, "g": 0.001,
+                             "lb": 0.453592, "oz": 0.0283495}
+        volume_conversion = {"l": 1, "ml": 0.001,
+                             "fl oz": 0.0295735, "gal": 3.78541}
 
         if unit in weight_conversion:
             return quantity * weight_conversion[unit]
@@ -131,11 +141,12 @@ class ShoppingListController:
         for item in items:
             product = self.product_repo.get_product_by_id(item.product_id)
             if product:
-                standard_quantity = self.convert_to_standard_unit(product.unit, item.quantity)
+                standard_quantity = self.convert_to_standard_unit(
+                    product.unit, item.quantity)
                 total_cost += product.price_per_unit * standard_quantity
 
         total_cost = round(total_cost, 2)
-        ##self.repo.update_total_sum(shopping_list_id, total_cost)
+        # self.repo.update_total_sum(shopping_list_id, total_cost)
 
         return total_cost
 
@@ -145,15 +156,16 @@ class ShoppingListController:
 
         # Populate items for each shopping list
         for shopping_list in shopping_lists.values():
-            shopping_list.items = self.repo.get_items_by_shopping_list_id(shopping_list.id)
+            shopping_list.items = self.repo.get_items_by_shopping_list_id(
+                shopping_list.id)
 
         return shopping_lists
-
 
     def get_shopping_list_by_id(self, shopping_list_id: int) -> ShoppingList:
         shopping_list = self.repo.get_shopping_list_by_id(shopping_list_id)
         if shopping_list:
-            shopping_list.total_sum = self.calculate_total_cost(shopping_list_id)
+            shopping_list.total_sum = self.calculate_total_cost(
+                shopping_list_id)
         return shopping_list
 
     def add_shopping_list(self, title: str, items: List[dict]):
@@ -176,7 +188,8 @@ class ShoppingListController:
         for item in items:
             product = item.get('product')
             if not product or 'quantity' not in item:
-                raise ValueError("Invalid product data: 'product' or 'quantity' is missing.")
+                raise ValueError(
+                    "Invalid product data: 'product' or 'quantity' is missing.")
 
             shopping_list_item = ShoppingListItem(
                 id=0,  # Assigned by the database
@@ -190,13 +203,13 @@ class ShoppingListController:
             shopping_list_items.append(shopping_list_item)
 
         # Fetch items from the database to update the ShoppingList object
-        shopping_list.items = self.repo.get_items_by_shopping_list_id(shopping_list_id)
+        shopping_list.items = self.repo.get_items_by_shopping_list_id(
+            shopping_list_id)
 
         # Calculate the total cost and update the shopping list
         shopping_list.total_sum = self.calculate_total_cost(shopping_list_id)
 
         return shopping_list
-
 
     def update_shopping_list(self, shopping_list_id: int, title: str = None, items: List[dict] = None):
         shopping_list = self.repo.get_shopping_list_by_id(shopping_list_id)
@@ -216,7 +229,8 @@ class ShoppingListController:
                     quantity=item['quantity'],
                     is_purchased=item.get('is_purchased', False)
                 )
-                self.repo.add_item_to_shopping_list(shopping_list_id, shopping_list_item)
+                self.repo.add_item_to_shopping_list(
+                    shopping_list_id, shopping_list_item)
 
         # Päivitetään hinta
         shopping_list.total_sum = self.calculate_total_cost(shopping_list_id)
@@ -262,7 +276,7 @@ class ProductController:
 
     def update_weight_unit(self, new_unit: str):
         self.weight_unit = new_unit
-        self.save_units()   
+        self.save_units()
 
     def update_volume_unit(self, new_unit: str):
         self.volume_unit = new_unit
@@ -270,7 +284,7 @@ class ProductController:
 
     def get_all_products(self) -> Dict[int, Product]:
         return self.repo.get_all_products()
-    
+
     def get_product_by_id(self, product_id: int):
         return self.repo.get_product_by_id(product_id)
 
@@ -282,8 +296,10 @@ class ProductController:
 
     def convert_to_standard_unit(self, unit: str, quantity: float) -> float:
 
-        weight_conversion = {"kg": 1, "g": 0.001, "lb": 0.453592, "oz": 0.0283495}
-        volume_conversion = {"l": 1, "ml": 0.001, "fl oz": 0.0295735, "gal": 3.78541}
+        weight_conversion = {"kg": 1, "g": 0.001,
+                             "lb": 0.453592, "oz": 0.0283495}
+        volume_conversion = {"l": 1, "ml": 0.001,
+                             "fl oz": 0.0295735, "gal": 3.78541}
 
         if unit in weight_conversion:
             return quantity * weight_conversion[unit]
@@ -293,12 +309,13 @@ class ProductController:
             return quantity  # Jos yksikköä ei tunnisteta, palautetaan alkuperäinen arvo
 
     def calculate_total_cost(self, product_id: int, quantity: float):
-       
+
         product = self.repo.get_product_by_id(product_id)
         if not product:
             raise ValueError("Product not found")
 
-        standard_quantity = self.convert_to_standard_unit(product.unit, quantity)
+        standard_quantity = self.convert_to_standard_unit(
+            product.unit, quantity)
         return product.price_per_unit * standard_quantity
 
     def add_product(self, name: str, unit: str, price_per_unit: float, category: str):

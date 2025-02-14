@@ -65,6 +65,7 @@ class RecipeRepository:
                 recipe_id=row['recipe_id'],
                 product_id=row['product_id'],
                 quantity=row['quantity'],
+                unit=row['unit'],  # <-- Added to retrieve the unit from the database.
                 created_at=row['created_at'],
                 updated_at=row['updated_at']
             )
@@ -83,15 +84,32 @@ class RecipeRepository:
 
     def add_recipe_ingredient(self, recipe_id: int, ingredient: RecipeIngredient):
         query = """
-        INSERT INTO recipe_ingredients (recipe_id, product_id, quantity)
-        VALUES (?, ?, ?)
+        INSERT INTO recipe_ingredients (recipe_id, product_id, quantity, unit)
+        VALUES (?, ?, ?, ?)
         """
         self.db.execute_query(
-            query, (recipe_id, ingredient.product_id, ingredient.quantity))
+            query, (recipe_id, ingredient.product_id, ingredient.quantity, ingredient.unit)
+        )
 
     def remove_ingredients_from_recipe(self, recipe_id: int):
         query = "DELETE FROM recipe_ingredients WHERE recipe_id = ?"
         self.db.execute_query(query, (recipe_id,))
+
+    def delete_recipe(self, recipe_id: int):
+        query = "DELETE FROM recipes WHERE id = ?"
+        self.db.execute_query(query, (recipe_id,))
+        
+    def update_recipe(self, recipe_id: int, recipe: Recipe):
+        query = """
+        UPDATE recipes
+        SET name = ?,
+            instructions = ?,
+            tags = ?,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+        """
+        self.db.execute_query(query, (recipe.name, recipe.instructions, recipe.tags, recipe_id))
+
 
 
 class ProductRepository:

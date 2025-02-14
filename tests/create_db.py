@@ -1,85 +1,93 @@
 import sqlite3
 import os
 
-
 def create_database(db_path):
-    # Varmista, että tietokannan hakemisto on olemassa
-    # os.makedirs(os.path.dirname(db_path), exist_ok=True)
+    # Ensure that the database directory exists
+    os.makedirs(os.path.dirname(db_path), exist_ok=True)
 
-    # Tarkista, onko tietokanta jo olemassa
+    # Check if the database already exists
     db_exists = os.path.exists(db_path)
 
-    # Yhdistä SQLite-tietokantaan
+    # Connect to the SQLite database
     conn = sqlite3.connect(db_path)
+    # Enable access to columns by name (optional but useful for schema checks)
+    conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
 
-    # Ota käyttöön vierasavainten tuki
+    # Enable foreign key support
     cursor.execute("PRAGMA foreign_keys = ON;")
 
-    # Taulujen luominen
-    create_tables = """
-    CREATE TABLE  products (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        unit TEXT NOT NULL,
-        price_per_unit REAL,
-        category TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-    
-    
-    CREATE TABLE  recipes (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        instructions TEXT NOT NULL,
-        tags TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
+    if not db_exists:
+        # Create tables if the database is new
+        create_tables = """
+        CREATE TABLE IF NOT EXISTS products (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            unit TEXT NOT NULL,
+            price_per_unit REAL,
+            category TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+        
+        CREATE TABLE IF NOT EXISTS recipes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            instructions TEXT NOT NULL,
+            tags TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+        
+        CREATE TABLE IF NOT EXISTS recipe_ingredients (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            recipe_id INTEGER NOT NULL,
+            product_id INTEGER NOT NULL,
+            quantity REAL NOT NULL,
+            unit TEXT NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE,
+            FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+            UNIQUE(recipe_id, product_id)
+        );
+        
+        CREATE TABLE IF NOT EXISTS shopping_lists (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            total_sum REAL DEFAULT 0.0,
+            purchased_count INTEGER DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+        
+        CREATE TABLE IF NOT EXISTS shopping_list_items (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            shopping_list_id INTEGER NOT NULL,
+            product_id INTEGER NOT NULL,
+            quantity REAL NOT NULL,
+            is_purchased BOOLEAN NOT NULL DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (shopping_list_id) REFERENCES shopping_lists(id) ON DELETE CASCADE,
+            FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+            UNIQUE(shopping_list_id, product_id)
+        );
+        """
+        cursor.executescript(create_tables)
+        print("Tables created successfully.")
+    else:
+        # If the database exists, check if 'unit' column exists in recipe_ingredients.
+        cursor.execute("PRAGMA table_info(recipe_ingredients);")
+        columns = cursor.fetchall()
+        column_names = [col["name"] for col in columns]
+        if "unit" not in column_names:
+            cursor.execute("ALTER TABLE recipe_ingredients ADD COLUMN unit TEXT NOT NULL DEFAULT '';")
+            print("Column 'unit' added to recipe_ingredients table.")
 
-
-    CREATE TABLE  recipe_ingredients (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        recipe_id INTEGER NOT NULL,
-        product_id INTEGER NOT NULL,
-        quantity REAL NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE,
-        FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
-        UNIQUE(recipe_id, product_id)
-    );
-
-    CREATE TABLE  shopping_lists (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT NOT NULL,
-        total_sum REAL DEFAULT 0.0,
-        purchased_count INTEGER DEFAULT 0,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-
-    CREATE TABLE  shopping_list_items (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        shopping_list_id INTEGER NOT NULL,
-        product_id INTEGER NOT NULL,
-        quantity REAL NOT NULL,
-        is_purchased BOOLEAN NOT NULL DEFAULT 0,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (shopping_list_id) REFERENCES shopping_lists(id) ON DELETE CASCADE,
-        FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
-        UNIQUE(shopping_list_id, product_id)
-    );
-    """
-
-    cursor.executescript(create_tables)
-
-    # Triggereiden luominen ilman
+    # Create triggers for updating purchased_count in shopping_lists
     create_triggers = """
-    -- Trigger: Kun is_purchased muuttuu 0 -> 1
-    CREATE TRIGGER trg_item_purchased
+    CREATE TRIGGER IF NOT EXISTS trg_item_purchased
     AFTER UPDATE OF is_purchased ON shopping_list_items
     FOR EACH ROW
     WHEN NEW.is_purchased = 1 AND OLD.is_purchased = 0
@@ -88,9 +96,8 @@ def create_database(db_path):
         SET purchased_count = purchased_count + 1
         WHERE id = NEW.shopping_list_id;
     END;
-
-    -- Trigger: Kun is_purchased muuttuu 1 -> 0
-    CREATE TRIGGER trg_item_unpurchased
+    
+    CREATE TRIGGER IF NOT EXISTS trg_item_unpurchased
     AFTER UPDATE OF is_purchased ON shopping_list_items
     FOR EACH ROW
     WHEN NEW.is_purchased = 0 AND OLD.is_purchased = 1
@@ -99,9 +106,8 @@ def create_database(db_path):
         SET purchased_count = purchased_count - 1
         WHERE id = NEW.shopping_list_id;
     END;
-
-    -- Trigger: Kun ostetaan uusi tuote
-    CREATE TRIGGER trg_item_insert_purchased
+    
+    CREATE TRIGGER IF NOT EXISTS trg_item_insert_purchased
     AFTER INSERT ON shopping_list_items
     FOR EACH ROW
     WHEN NEW.is_purchased = 1
@@ -110,9 +116,8 @@ def create_database(db_path):
         SET purchased_count = purchased_count + 1
         WHERE id = NEW.shopping_list_id;
     END;
-
-    -- Trigger: Kun poistetaan ostettu tuote
-    CREATE TRIGGER trg_item_delete_purchased
+    
+    CREATE TRIGGER IF NOT EXISTS trg_item_delete_purchased
     AFTER DELETE ON shopping_list_items
     FOR EACH ROW
     WHEN OLD.is_purchased = 1
@@ -122,38 +127,35 @@ def create_database(db_path):
         WHERE id = OLD.shopping_list_id;
     END;
     """
-
     try:
-        # cursor.executescript(create_triggers)
-        print("Triggereiden luominen onnistui.")
+        cursor.executescript(create_triggers)
+        print("Triggers created successfully.")
     except sqlite3.OperationalError as e:
-        print(f"Virhe triggereiden luomisessa: {e}")
+        print(f"Error creating triggers: {e}")
 
-    # Indeksien luominen
+    # Create indices to improve query performance
     create_indices = """
-    CREATE INDEX  idx_recipe_ingredients_recipe_id ON recipe_ingredients(recipe_id);
-    CREATE INDEX  idx_recipe_ingredients_product_id ON recipe_ingredients(product_id);
-    CREATE INDEX  idx_shopping_list_items_shopping_list_id ON shopping_list_items(shopping_list_id);
-    CREATE INDEX  idx_shopping_list_items_product_id ON shopping_list_items(product_id);
-    CREATE INDEX  idx_shopping_lists_purchased_count ON shopping_lists(purchased_count);
+    CREATE INDEX IF NOT EXISTS idx_recipe_ingredients_recipe_id ON recipe_ingredients(recipe_id);
+    CREATE INDEX IF NOT EXISTS idx_recipe_ingredients_product_id ON recipe_ingredients(product_id);
+    CREATE INDEX IF NOT EXISTS idx_shopping_list_items_shopping_list_id ON shopping_list_items(shopping_list_id);
+    CREATE INDEX IF NOT EXISTS idx_shopping_list_items_product_id ON shopping_list_items(product_id);
+    CREATE INDEX IF NOT EXISTS idx_shopping_lists_purchased_count ON shopping_lists(purchased_count);
     """
-
     cursor.executescript(create_indices)
 
-    # Tallenna muutokset ja sulje yhteys
+    # Commit changes and close the connection
     conn.commit()
     conn.close()
 
     if not db_exists:
-        print(f"Tietokanta '{db_path}' luotiin onnistuneesti.")
+        print(f"Database '{db_path}' created successfully.")
     else:
-        print(f"Tietokanta '{db_path}' päivitettiin onnistuneesti.")
-
+        print(f"Database '{db_path}' updated successfully.")
 
 if __name__ == "__main__":
-    # Määritä tietokannan polku
+    # Define the database path
     database = "cook_and_cart.db"
     database_path = os.path.join(os.getcwd(), "utils", database)
 
-    # Luo tietokanta ja tarvittavat taulut
+    # Create or update the database schema
     create_database(database_path)

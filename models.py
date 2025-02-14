@@ -33,6 +33,7 @@ class RecipeIngredient:
     recipe_id: Optional[int] = field(default=None)
     product_id: int = field(default=0)
     quantity: float = field(default=1.0)
+    unit: str = field(default="")  # New field for weight/unit (e.g., "ml", "g", etc.)
     created_at: Optional[datetime] = field(default=None)
     updated_at: Optional[datetime] = field(default=None)
 
