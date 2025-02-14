@@ -84,9 +84,6 @@ class AddShoplistWidget(QWidget):
             
                 selected_products.append({"product": product, "quantity": 1})  # Default quantity
 
-    # Debugging: Print selected products
-        print(f"Selected products: {selected_products}")
-
     # Create the shopping list
         try:
             shopping_list = self.shoplist_controller.add_shopping_list(title=title, items=selected_products)

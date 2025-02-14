@@ -4,7 +4,7 @@ import sys
 import json
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QScrollArea, QStackedWidget, QFrame, QLineEdit, QListWidgetItem
+    QScrollArea, QStackedWidget, QFrame, QLineEdit, QListWidgetItem, QMessageBox
 )
 from widgets.add_shoplist_widget import AddShoplistWidget
 from widgets.shoplist_detail_widget import ShoplistDetailWidget
@@ -129,9 +129,11 @@ class OstolistatPage(QWidget):
         Fetch all shopping lists from the controller and update the dictionary.
         """
         self.shopping_lists = self.shoplist_controller.get_all_shopping_lists()
-        print(self.shopping_lists)  # Debugging: Check the data being fetched
 
     def populate_shopping_list(self):
+        """
+        Populate the scroll area with buttons for each shopping list, including a delete button.
+        """
         # Clear the current layout
         for i in reversed(range(self.scroll_layout.count())):
             widget = self.scroll_layout.itemAt(i).widget()
@@ -140,13 +142,54 @@ class OstolistatPage(QWidget):
 
         # Add shopping lists to the layout
         for shoplist_id, shoplist in self.shopping_lists.items():
-            print(f"Adding button for: {shoplist.title}")  # Debugging: Log each list
+            # Horizontal layout for each shopping list (title + delete button)
+            list_layout = QHBoxLayout()
+
+            # Shopping List Button
             btn = QPushButton(f"{shoplist.title} - {len(shoplist.items)} tuotetta")
             btn.setObjectName("main_list_button")
-            btn.clicked.connect(self.create_shoplist_callback(shoplist_id))  # Use a dedicated callback
-            self.scroll_layout.addWidget(btn)
+            btn.clicked.connect(lambda checked=False, id=shoplist_id: self.display_shoplist_detail(id))
+            list_layout.addWidget(btn)
+
+            # Delete Button
+            delete_btn = QPushButton("Poista")
+            delete_btn.setObjectName("delete_list_button")
+            delete_btn.clicked.connect(lambda checked=False, id=shoplist_id: self.delete_shopping_list(id))
+            list_layout.addWidget(delete_btn)
+
+            # Add the horizontal layout to the scroll layout
+            container = QFrame()
+            container.setLayout(list_layout)
+            self.scroll_layout.addWidget(container)
 
         self.scroll_layout.addStretch()
+
+    def delete_shopping_list(self, shoplist_id):
+        """
+        Deletes the shopping list with the given ID.
+        """
+        # Confirm deletion with the user (optional)
+        confirm = QMessageBox.question(
+            self,
+            "Vahvistus",
+            "Haluatko varmasti poistaa tämän ostoslistan?",
+            QMessageBox.Yes | QMessageBox.No
+        )
+        if confirm != QMessageBox.Yes:
+            return
+
+        # Perform deletion via the controller
+        try:
+            self.shoplist_controller.delete_shopping_list_by_id(shoplist_id)
+            QMessageBox.information(self, "Poistettu", "Ostoslista on poistettu onnistuneesti.")
+        except Exception as e:
+            QMessageBox.critical(self, "Virhe", f"Ostoslistan poistaminen epäonnistui: {str(e)}")
+            return
+
+        # Refresh the UI
+        self.update_shopping_lists()
+        self.populate_shopping_list()
+
 
     def create_shoplist_callback(self, shoplist_id):
         """

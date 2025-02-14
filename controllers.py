@@ -147,7 +147,6 @@ class ShoppingListController:
         for shopping_list in shopping_lists.values():
             shopping_list.items = self.repo.get_items_by_shopping_list_id(shopping_list.id)
 
-        print("Fetched Shopping Lists:", shopping_lists)  # Debugging: Print all shopping lists
         return shopping_lists
 
 
@@ -190,20 +189,8 @@ class ShoppingListController:
             )
             shopping_list_items.append(shopping_list_item)
 
-        # Debugging: Log items being added
-        print(f"Adding shopping list items: {shopping_list_items}")
-        self.repo.add_shopping_list_items(shopping_list_id, shopping_list_items)
-
-        # Debugging: Check inserted items in the database
-        query = "SELECT * FROM shopping_list_items WHERE shopping_list_id = ?"
-        rows = self.repo.db.fetchall(query, (shopping_list_id,))
-        print(f"Inserted items for shopping_list_id {shopping_list_id}: {rows}")
-
         # Fetch items from the database to update the ShoppingList object
         shopping_list.items = self.repo.get_items_by_shopping_list_id(shopping_list_id)
-
-        # Debugging: Log fetched items
-        print(f"Fetched items for shopping list {shopping_list_id}: {shopping_list.items}")
 
         # Calculate the total cost and update the shopping list
         shopping_list.total_sum = self.calculate_total_cost(shopping_list_id)
@@ -236,6 +223,13 @@ class ShoppingListController:
 
         self.repo.update_shopping_list(shopping_list_id, shopping_list)
         return shopping_list
+
+    def delete_shopping_list_by_id(self, shoplist_id: int):
+        """
+        Deletes the shopping list with the given ID.
+        """
+        self.repo.delete_shopping_list_by_id(shoplist_id)
+
 
 class ProductController:
     def __init__(self):

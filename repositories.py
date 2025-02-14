@@ -231,8 +231,6 @@ class ShoppingListRepository:
         shopping_lists_dict: Dict[int, ShoppingList] = {
             shopping_list.id: shopping_list for shopping_list in shopping_lists
         }
-
-        print(f"Final shopping lists dictionary: {shopping_lists_dict}")
         return shopping_lists_dict
 
     def get_shopping_list_by_id(self, shopping_list_id: int) -> ShoppingList:
@@ -307,5 +305,18 @@ class ShoppingListRepository:
                 created_at=row['created_at'],
                 updated_at=row['updated_at'],
             )
-            items.append(item)  # This needs to be inside the loop!
+            items.append(item) 
         return items
+
+    def delete_shopping_list_by_id(self, shoplist_id: int):
+        try:
+            # Delete all items in the shopping list first (cascade delete might also work)
+            delete_items_query = "DELETE FROM shopping_list_items WHERE shopping_list_id = ?"
+            self.db.execute_query(delete_items_query, (shoplist_id,))
+
+            # Delete the shopping list itself
+            delete_list_query = "DELETE FROM shopping_lists WHERE id = ?"
+            self.db.execute_query(delete_list_query, (shoplist_id,))
+        except Exception as e:
+            raise Exception(f"Failed to delete shopping list: {str(e)}")
+
