@@ -43,7 +43,7 @@ class ProductItemWidget(QWidget):
         
         # Unit selection drop-down
         self.unit_combo = QComboBox()
-        self.unit_combo.addItems(["g", "kg", "ml", "l", "oz", "lb"])
+        self.unit_combo.addItems(["kpl", "g", "kg", "ml", "l", "oz", "lb"])
         layout.addWidget(self.unit_combo)
         
         self.setLayout(layout)
