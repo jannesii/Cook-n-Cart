@@ -96,7 +96,7 @@ class ShoplistDetailWidget(QWidget):
         for item in shopping_list_items:
             product = ProductController.get_all_products().get(item.product_id)
             if product:
-                item_text = f"{product.name} - {item.quantity} {product.unit}"
+                item_text = f"{product.name} - {item.quantity} {product.unit} - {product.price_per_unit:.2f} {currency}"
                 list_item = QListWidgetItem(item_text)
                 list_item.setData(Qt.UserRole, item)
                 self.product_list.addItem(list_item)
