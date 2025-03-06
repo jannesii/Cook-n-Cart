@@ -144,9 +144,11 @@ class OstolistatPage(QWidget):
         for shoplist_id, shoplist in self.shopping_lists.items():
             # Horizontal layout for each shopping list (title + delete button)
             list_layout = QHBoxLayout()
+            #total cost
+            total_cost = self.shoplist_controller.calculate_total_cost(shoplist_id)
 
             # Shopping List Button
-            btn = QPushButton(f"{shoplist.title} - {len(shoplist.items)} tuotetta")
+            btn = QPushButton(f"{shoplist.title} - {len(shoplist.items)} tuotetta - {total_cost:.2f}€")
             btn.setObjectName("main_list_button")
             btn.clicked.connect(lambda checked=False, id=shoplist_id: self.display_shoplist_detail(id))
             list_layout.addWidget(btn)

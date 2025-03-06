@@ -160,6 +160,35 @@ class ShoppingListController:
                 shopping_list.id)
 
         return shopping_lists
+    
+    def get_shopping_list_with_prices(self, shopping_list_id: int):
+
+        shopping_list = self.repo.get_shopping_list_by_id(ShoppingList)
+        if not shopping_list:
+            raise ValueError("Shopping list not found")
+
+        items_with_prices = []
+        for item in shopping_list.items:
+            product = self.repo.get_product_by_id(item.product_id)
+            if product:
+                total_price = round(product.price_per_unit * item.quantity, 2)
+                items_with_prices.append({
+                "product_id": item.product_id,
+                "name": product.name,
+                "unit": product.unit,
+                "price_per_unit": product.price_per_unit,
+                "quantity": item.quantity,
+                "total_price": total_price,  # Kokonaishinta
+                "is_purchased": item.is_purchased
+            })
+
+        return {
+        "shopping_list_id": shopping_list,
+        "title": shopping_list.title,
+        "items": items_with_prices,
+        "total_sum": shopping_list.total_sum
+    }
+
 
     def get_shopping_list_by_id(self, shopping_list_id: int) -> ShoppingList:
         shopping_list = self.repo.get_shopping_list_by_id(shopping_list_id)
@@ -167,7 +196,7 @@ class ShoppingListController:
             shopping_list.total_sum = self.calculate_total_cost(
                 shopping_list_id)
         return shopping_list
-
+    
     def add_shopping_list(self, title: str, items: List[dict]):
         # Create a new ShoppingList object
         shopping_list = ShoppingList(
