@@ -90,7 +90,7 @@ class EditRecipeWidget(QWidget):
             
             # Unit dropdown (aligned right)
             unit_combo = QComboBox()
-            unit_combo.addItems(["g", "kg", "ml", "l", "oz", "lb"])
+            unit_combo.addItems(["kpl", "g", "kg", "ml", "l", "oz", "lb"])
             index = unit_combo.findText(ingredient.unit)
             if index != -1:
                 unit_combo.setCurrentIndex(index)

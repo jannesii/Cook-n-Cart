@@ -73,6 +73,22 @@ QPushButton:pressed#gray_button {
     background-color: %%TURKOOSI%%;
 }
 
+QPushButton#delete_button {
+    background-color: red;
+    color: white;
+    font-weight: bold;
+    border-radius: 5px;
+    padding: 10px;
+}
+
+QPushButton:hover#delete_button {
+    background-color: crimson;
+}
+
+QPushButton:pressed#delete_button {
+    background-color: darkred;
+}
+
 /* Esimerkki label-tyylistä */
 QLabel {
     color: #333333;
@@ -116,6 +132,10 @@ QComboBox#asetukset_combobox {
     font-weight: bold;
     padding: 2px;   
     border-radius: 5px;
+}
+
+QComboBox#asetukset_combobox QAbstractItemView {
+    color: black;
 }
 
 /* Voit myös määritellä luokkia, esim. kaikille “warning”-teksteille */

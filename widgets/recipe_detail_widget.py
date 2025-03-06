@@ -40,6 +40,7 @@ class RecipeDetailWidget(QWidget):
         btn_layout = QHBoxLayout()
         self.edit_btn = QPushButton("Muokkaa reseptiä")
         self.delete_btn = QPushButton("Poista resepti")
+        self.delete_btn.setObjectName("delete_button")
         btn_layout.addWidget(self.edit_btn)
         btn_layout.addWidget(self.delete_btn)
         btn_layout.addStretch()

@@ -55,15 +55,7 @@ class ProductDetailWidget (QWidget):
 
         # "Remove" button
         self.remove_btn = QPushButton("Poista tuote")
-        self.remove_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: red;
-                color: white;
-                font-weight: bold;
-                border-radius: 5px;
-                padding: 10px;
-            }}
-        """)
+        self.remove_btn.setObjectName("delete_button")
         self.layout.addWidget(self.remove_btn)
 
         self.setLayout(self.layout)
