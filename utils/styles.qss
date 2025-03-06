@@ -128,7 +128,6 @@ QLabel#asetukset_label {
 }
 
 QComboBox#asetukset_combobox {
-    color: black,
     font-size: 14px;
     font-weight: bold;
     padding: 2px;   
