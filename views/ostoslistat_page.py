@@ -108,7 +108,7 @@ class OstolistatPage(QWidget):
             if widget:
                 widget.deleteLater()
         for shoplist_id, shoplist in self.shopping_lists.items():
-            btn = QPushButton(f"{shoplist.title} - {len(shoplist.items)} tuotetta")
+            btn = QPushButton(f"{shoplist.title}\n{len(shoplist.items)} tuotetta")
             btn.setObjectName("main_list_button")
             btn.clicked.connect(lambda checked=False, id=shoplist_id: self.display_shoplist_detail(id))
             self.scroll_layout.addWidget(btn)
