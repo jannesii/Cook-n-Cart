@@ -139,9 +139,6 @@ class ReseptitPage(QWidget):
         self.recipes_dict = RecipeController.get_all_recipes()
 
     def populate_recipe_list(self):
-        """
-        Populates the scroll area with a button for each recipe.
-        """
         # Clear current layout
         self.clear_layout(self.scroll_layout)
         # Sort recipes by name (case-insensitive)
@@ -152,10 +149,13 @@ class ReseptitPage(QWidget):
         for recipe in sorted_recipes:
             btn = QPushButton(f"{recipe.name}")
             btn.setObjectName("main_list_button")
+            # Store the recipe object for later filtering
+            btn.recipe = recipe
             # When clicked, display the recipe detail view
             btn.clicked.connect(lambda checked=False, r=recipe: self.display_recipe_detail(r))
             self.scroll_layout.addWidget(btn)
         self.scroll_layout.addStretch()
+
 
     def display_recipe_detail(self, recipe):
         """
@@ -203,18 +203,27 @@ class ReseptitPage(QWidget):
         self.back_to_list()
 
     def filter_recipes(self, text):
-        """
-        Filters the recipe list based on the search text.
-        """
         search_text = text.lower()
         for i in range(self.scroll_layout.count()):
             widget = self.scroll_layout.itemAt(i).widget()
             if widget is None:
                 continue
-            if search_text in widget.text().lower():
-                widget.show()
+            # If the recipe attribute is present, check name and tags.
+            recipe = getattr(widget, "recipe", None)
+            if recipe:
+                name_match = search_text in recipe.name.lower()
+                tags_match = search_text in recipe.tags.lower() if recipe.tags else False
+                if name_match or tags_match:
+                    widget.show()
+                else:
+                    widget.hide()
             else:
-                widget.hide()
+                # Fallback: check the widget text (if for some reason recipe is not set)
+                if search_text in widget.text().lower():
+                    widget.show()
+                else:
+                    widget.hide()
+
 
     def clear_layout(self, layout):
         """
