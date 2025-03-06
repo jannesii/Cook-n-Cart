@@ -1,17 +1,13 @@
-# ostoslistat_page.py
-
+# File: ostoslistat_page.py (Revised)
 import sys
-import json
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QScrollArea, QStackedWidget, QFrame, QLineEdit, QListWidgetItem, QMessageBox
+    QScrollArea, QStackedWidget, QFrame, QLineEdit
 )
+from PySide6.QtCore import Qt
 from widgets.add_shoplist_widget import AddShoplistWidget
 from widgets.shoplist_detail_widget import ShoplistDetailWidget
-
-from controllers import ProductController
-from controllers import ShoppingListController
-
+from controllers import ProductController, ShoppingListController
 
 TURKOOSI = "#00B0F0"
 HARMAA = "#808080"
@@ -20,34 +16,27 @@ HARMAA = "#808080"
 class OstolistatPage(QWidget):
     """
     Ostoslistat Page:
-    - StackedWidget with:
-      - Page 0: Shopping list overview with a search bar and "Create New List" button.
-      - Page 1: AddShoplistWidget to create a new shopping list.
-      - Page 2: ShoplistDetailWidget to display details of a selected shopping list.
+      - QStackedWidget with three pages:
+         Page 0: Shopping list overview with a top bar (title, search bar, and "Luo uusi ostoslista" button)
+                 and a scrollable list of shopping lists.
+         Page 1: Add shopping list view (AddShoplistWidget).
+         Page 2: Detail view (ShoplistDetailWidget).
     """
-
     def __init__(self, parent=None):
         super().__init__(parent)
-
-        # Controllers
         self.shoplist_controller = ShoppingListController()
         self.product_controller = ProductController()
-
-        # Shopping lists dictionary
         self.shopping_lists = {}
         self.update_shopping_lists()
-
-        # Main layout
+        
         main_layout = QVBoxLayout(self)
-
-        # Stacked widget
         self.stacked = QStackedWidget()
-
-        # Page 0 (list view)
+        
+        # Page 0: List view
         self.page_list = QWidget()
         self.page_list.setLayout(self._create_list_layout())
-
-        # Page 1 (add shopping list view)
+        
+        # Page 1: Add shopping list view
         self.page_add_shoplist = AddShoplistWidget(
             shoplist_controller=self.shoplist_controller,
             product_controller=self.product_controller,
@@ -55,191 +44,95 @@ class OstolistatPage(QWidget):
         )
         self.page_add_shoplist.shoplist_created.connect(self.on_shoplist_created)
         self.page_add_shoplist.cancel_btn.clicked.connect(self.back_to_list)
-
-        # Page 2 (detail view)
+        
+        # Page 2: Detail view
         self.page_detail = ShoplistDetailWidget()
-
-        self.page_detail.back_btn.clicked.connect(self.back_to_list)
-
-        # Add pages to the stacked widget
-        self.stacked.addWidget(self.page_list)         # index 0
-        self.stacked.addWidget(self.page_add_shoplist) # index 1
-        self.stacked.addWidget(self.page_detail)       # index 2
-
-        # Default to the shopping list view
-        self.stacked.setCurrentIndex(0)
-
-        # Add the stacked widget to the main layout
+        # When finished (e.g. after deletion or when user clicks back), return to list view.
+        self.page_detail.finished.connect(self.back_to_list)
+        
+        self.stacked.addWidget(self.page_list)       # index 0: List view
+        self.stacked.addWidget(self.page_add_shoplist) # index 1: Add view
+        self.stacked.addWidget(self.page_detail)       # index 2: Detail view
+        
         main_layout.addWidget(self.stacked, 1)
-
+        self.setLayout(main_layout)
+        self.stacked.setCurrentIndex(0)
+    
     def _create_list_layout(self):
-        """
-        Creates the layout for the shopping list overview (Page 0).
-        """
         layout = QVBoxLayout()
-
-        # -- Top Bar --
+        
+        # Top bar: title, search bar, and "Luo uusi ostoslista" button
         top_bar_layout = QHBoxLayout()
-
-        # Title Label
         self.title_label = QLabel("Ostoslistat")
         self.title_label.setObjectName("top_bar_title_label")
-
-        # Search Bar
+        
         self.search_bar = QLineEdit()
         self.search_bar.setPlaceholderText("Hae ostoslistoja")
         self.search_bar.textChanged.connect(self.filter_shopping_lists)
-
-        # Create New List Button
-        self.new_btn = QPushButton("Luo uusi ostoslista")
-        self.new_btn.clicked.connect(self.open_add_shoplist_page)
-
-        # Styling
         self.search_bar.setObjectName("top_bar_search_bar")
-
-
-        # Assemble Top Bar
+        
+        self.new_btn = QPushButton("Luo uusi ostoslista")
+        self.new_btn.setObjectName("top_bar_new_button")
+        self.new_btn.clicked.connect(self.open_add_shoplist_page)
+        
         top_bar_layout.addWidget(self.title_label)
         top_bar_layout.addStretch()
         top_bar_layout.addWidget(self.search_bar)
         top_bar_layout.addWidget(self.new_btn)
-
+        
         top_bar_frame = QFrame()
         top_bar_frame.setLayout(top_bar_layout)
         top_bar_frame.setObjectName("top_bar_frame")
-        layout.addWidget(top_bar_frame, 0)
-
-        # -- Scroll Area for Shopping Lists --
+        layout.addWidget(top_bar_frame)
+        
+        # Scroll area containing the shopping list buttons
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
-
         self.scroll_content = QWidget()
         self.scroll_layout = QVBoxLayout(self.scroll_content)
-
         self.scroll_area.setWidget(self.scroll_content)
         layout.addWidget(self.scroll_area, 1)
-
-        # Populate shopping lists
+        
         self.populate_shopping_list()
-
         return layout
-
+    
     def update_shopping_lists(self):
-        """
-        Fetch all shopping lists from the controller and update the dictionary.
-        """
+        """Fetch all shopping lists from the controller."""
         self.shopping_lists = self.shoplist_controller.get_all_shopping_lists()
-
+    
     def populate_shopping_list(self):
-        """
-        Populate the scroll area with buttons for each shopping list, including a delete button.
-        """
-        # Clear the current layout
-        for i in reversed(range(self.scroll_layout.count())):
-            widget = self.scroll_layout.itemAt(i).widget()
-            if widget is not None:
+        """Populate the scroll area with a button for each shopping list."""
+        while self.scroll_layout.count():
+            item = self.scroll_layout.takeAt(0)
+            widget = item.widget()
+            if widget:
                 widget.deleteLater()
-
-        # Add shopping lists to the layout
         for shoplist_id, shoplist in self.shopping_lists.items():
-            # Horizontal layout for each shopping list (title + delete button)
-            list_layout = QHBoxLayout()
-            #total cost
-            total_cost = self.shoplist_controller.calculate_total_cost(shoplist_id)
-
-            # Shopping List Button
-            btn = QPushButton(f"{shoplist.title} - {len(shoplist.items)} tuotetta - {total_cost:.2f}€")
+            btn = QPushButton(f"{shoplist.title} - {len(shoplist.items)} tuotetta")
             btn.setObjectName("main_list_button")
             btn.clicked.connect(lambda checked=False, id=shoplist_id: self.display_shoplist_detail(id))
-            list_layout.addWidget(btn)
-
-            # Delete Button
-            delete_btn = QPushButton("Poista")
-            delete_btn.setObjectName("delete_list_button")
-            delete_btn.clicked.connect(lambda checked=False, id=shoplist_id: self.delete_shopping_list(id))
-            list_layout.addWidget(delete_btn)
-
-            # Add the horizontal layout to the scroll layout
-            container = QFrame()
-            container.setLayout(list_layout)
-            self.scroll_layout.addWidget(container)
-
+            self.scroll_layout.addWidget(btn)
         self.scroll_layout.addStretch()
-
-    def delete_shopping_list(self, shoplist_id):
-        """
-        Deletes the shopping list with the given ID.
-        """
-        # Confirm deletion with the user (optional)
-        confirm = QMessageBox.question(
-            self,
-            "Vahvistus",
-            "Haluatko varmasti poistaa tämän ostoslistan?",
-            QMessageBox.Yes | QMessageBox.No
-        )
-        if confirm != QMessageBox.Yes:
-            return
-
-        # Perform deletion via the controller
-        try:
-            self.shoplist_controller.delete_shopping_list_by_id(shoplist_id)
-            QMessageBox.information(self, "Poistettu", "Ostoslista on poistettu onnistuneesti.")
-        except Exception as e:
-            QMessageBox.critical(self, "Virhe", f"Ostoslistan poistaminen epäonnistui: {str(e)}")
-            return
-
-        # Refresh the UI
-        self.update_shopping_lists()
-        self.populate_shopping_list()
-
-
-    def create_shoplist_callback(self, shoplist_id):
-        """
-        Returns a callback for the given shopping list ID.
-        """
-        def callback():
-            self.display_shoplist_detail(shoplist_id)
-        return callback
-
-
+    
+    def filter_shopping_lists(self, text):
+        search_text = text.lower()
+        for i in range(self.scroll_layout.count()):
+            widget = self.scroll_layout.itemAt(i).widget()
+            if widget:
+                widget.setVisible(search_text in widget.text().lower())
+    
     def display_shoplist_detail(self, shoplist_id):
-        """
-        Fill in the detail page with the given shopping list and switch to detail view.
-        """
         shoplist = self.shoplist_controller.get_shopping_list_by_id(shoplist_id)
         self.page_detail.set_shopping_list(shoplist)
         self.stacked.setCurrentIndex(2)
-
+    
     def open_add_shoplist_page(self):
-        """
-        Opens the add shopping list page.
-        """
         self.stacked.setCurrentIndex(1)
-
+    
     def back_to_list(self):
-        """
-        Switch back to the shopping list overview and refresh the data.
-        """
         self.update_shopping_lists()
         self.populate_shopping_list()
         self.stacked.setCurrentIndex(0)
-
-    def on_shoplist_created(self):
-        """
-        Handle the creation of a new shopping list.
-        """
-        self.update_shopping_lists()  # Make sure we get the latest data
-        self.populate_shopping_list()  # Then populate the UI
+    
+    def on_shoplist_created(self, shoplist_id):
         self.back_to_list()
-
-    def filter_shopping_lists(self, text):
-        """
-        Filter the shopping list buttons based on search input.
-        """
-        search_text = text.lower()
-        for i in range(self.scroll_layout.count() - 1):  # Exclude the stretch
-            item = self.scroll_layout.itemAt(i).widget()
-            if search_text in item.text().lower():
-                item.show()
-            else:
-                item.hide()

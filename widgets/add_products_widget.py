@@ -37,8 +37,8 @@ class ProductItemWidget(QWidget):
         # Quantity input with validator (only positive numbers allowed)
         self.quantity_edit = QLineEdit("1.0")
         self.quantity_edit.setFixedWidth(50)
-        validator = QDoubleValidator(0.01, 10000.0, 2, self)
-        self.quantity_edit.setValidator(validator)
+        validator = QDoubleValidator(0, 10000, 2, self)
+        #self.quantity_edit.setValidator(validator)
         layout.addWidget(self.quantity_edit)
         
         # Unit selection drop-down
