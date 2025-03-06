@@ -24,14 +24,13 @@ class RecipeDetailWidget(QWidget):
         self.tags_label = QLabel()
         self.ingredients_Titlelabel = QLabel("<b>Ainesosat:</b>")
         self.ingredients_label = QLabel()
-        self.created_at_label = QLabel()
+        #self.created_at_label = QLabel()
         self.updated_at_label = QLabel()
 
         # Allow text to wrap:
         for lbl in [self.name_label, self.instructions_label,
                     self.tags_label, self.ingredients_Titlelabel,
-                    self.ingredients_label, self.created_at_label, 
-                    self.updated_at_label]:
+                    self.ingredients_label, self.updated_at_label]:
             lbl.setWordWrap(True)
             self.layout.addWidget(lbl)
 
@@ -52,11 +51,15 @@ class RecipeDetailWidget(QWidget):
 
         # Connect the edit button to a local slot that emits our signal
         self.edit_btn.clicked.connect(self.on_edit_clicked)
-        # (You can similarly handle the delete button if needed.)
-
+        self.delete_btn.clicked.connect(self.on_delete_clicked)
+        
     def on_edit_clicked(self):
         if self.recipe:
             self.edit_recipe_requested.emit(self.recipe)
+            
+    def on_delete_clicked(self):
+        if self.recipe:
+            self.delete_recipe_requested.emit(self.recipe)
 
     def set_recipe(self, recipe):
         """Update the widget fields with the given recipe details."""
@@ -76,12 +79,12 @@ class RecipeDetailWidget(QWidget):
                 ingredients_text += f"{product_name}: {quantity_str} {ingredient.unit}<br>"
             self.ingredients_label.setText(ingredients_text)
             
-            self.created_at_label.setText(f"<b>Luotu:</b> {recipe.created_at}")
+            #self.created_at_label.setText(f"<b>Luotu:</b> {recipe.created_at}")
             self.updated_at_label.setText(f"<b>Päivitetty:</b> {recipe.updated_at}")
         else:
             self.name_label.setText("")
             self.instructions_label.setText("")
             self.tags_label.setText("")
             self.ingredients_label.setText("")
-            self.created_at_label.setText("")
+            #self.created_at_label.setText("")
             self.updated_at_label.setText("")
