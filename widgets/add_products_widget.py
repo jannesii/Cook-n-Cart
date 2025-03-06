@@ -2,7 +2,7 @@
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QLineEdit, QListWidget, QListWidgetItem, QFormLayout, QComboBox, QCheckBox
+    QLineEdit, QListWidget, QListWidgetItem, QFormLayout, QComboBox, QCheckBox, QMessageBox
 )
 from PySide6.QtGui import QDoubleValidator
 from PySide6.QtCore import Signal, Qt, QTimer
@@ -160,8 +160,20 @@ class AddProductsWidget(QWidget):
             if widget and widget.checkbox.isChecked():
                 try:
                     quantity = float(widget.quantity_edit.text().strip())
+                    if quantity <= 0:
+                        QMessageBox.warning(
+                            self,
+                            "Invalid Quantity",
+                            f"Quantity for product '{widget.product.name}' must be positive."
+                        )
+                        return  # Stop and do not proceed if invalid
                 except ValueError:
-                    quantity = 1.0
+                    QMessageBox.warning(
+                        self,
+                        "Invalid Input",
+                        f"Please enter a valid number for the quantity of product '{widget.product.name}'."
+                    )
+                    return
                 new_selection.append({
                     "id": widget.product.id,
                     "quantity": quantity,
