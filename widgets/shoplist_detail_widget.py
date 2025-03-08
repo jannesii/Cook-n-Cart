@@ -73,24 +73,38 @@ class ShoplistDetailWidget(QWidget):
         self._refresh_product_list()
     
     def _refresh_product_list(self):
+        """Refreshes the shopping list's product list."""
         if not self.shoppinglist:
             return
+
         self.product_list.clear()
         shopping_list_items = self.shoplist_controller.repo.get_items_by_shopping_list_id(self.shoppinglist.id)
+
         for item in shopping_list_items:
             product = PC().get_all_products().get(item.product_id)
             if product:
-                item_text = f"{product.name} - {item.quantity} {product.unit} - {product.price_per_unit:.2f}"# {currency}"
+                unit_display = item.unit if hasattr(item, "unit") else "kpl"
+                item_text = f"{product.name} - {item.quantity} {unit_display}"
                 list_item = QListWidgetItem(item_text)
                 list_item.setData(Qt.UserRole, item)
                 self.product_list.addItem(list_item)
     
     def _open_add_products_widget(self):
+        if not self.shoppinglist:
+            return  
+        
         shopping_list_items = self.shoplist_controller.repo.get_items_by_shopping_list_id(self.shoppinglist.id)
-        selected_products = [
-            PC().get_all_products().get(item.product_id)
-            for item in shopping_list_items if PC().get_all_products().get(item.product_id)
-        ]
+        selected_products = []
+
+        for item in shopping_list_items:
+                product = PC().get_all_products().get(item.product_id)
+                if product:
+                    selected_products.append({
+                        "id": product.id,
+                        "quantity": item.quantity,
+                        "unit": item.unit if hasattr(item, "unit") else "kpl"  #KPL jos yksikköä ei ole.
+                    })
+
         self.add_products_widget.set_selected_products(selected_products)
         self.stacked_widget.setCurrentIndex(1)
     
@@ -98,29 +112,69 @@ class ShoplistDetailWidget(QWidget):
         self._add_selected_products(selected_products)
         self.stacked_widget.setCurrentIndex(0)
     
+    #Käyttää repo metodeja controllerin kautta, mutta controlleriin pitää lisätä nämä metodit.
     def _add_selected_products(self, selected_products):
         if not self.shoppinglist:
             print("No shopping list is set.")
             return
+
+        print("DEBUG: Received selected_products =", selected_products)  
+
+        # Hae nykyiset tuotteet
         existing_items = self.shoplist_controller.repo.get_items_by_shopping_list_id(self.shoppinglist.id)
-        existing_ids = {item.product_id for item in existing_items}
+        existing_items_dict = {item.product_id: item for item in existing_items}  
+
         new_items = []
-        for product in selected_products:
-            if product.id not in existing_ids:
+        updated_items = []
+        removed_items = []
+
+        for product_data in selected_products:
+            
+            product_id = product_data["id"]
+            quantity = product_data.get("quantity", 1)  # Default to 1 if not provided
+
+            #Quantity ei varmaan toimi poistamiseen? en tiiä.
+
+            if product_id in existing_items_dict: 
+                
+                existing_item = existing_items_dict[product_id]
+                
+                if quantity == 0:  
+                    removed_items.append(existing_item.id)  
+                elif existing_item.quantity != quantity:  
+                    updated_items.append(existing_item)  
+
+            else:  
                 item = ShoppingListItem(
-                    id=0,
+                    id=0,  
                     shopping_list_id=self.shoppinglist.id,
-                    product_id=product.id,
-                    quantity=1,
+                    product_id=product_id,
+                    quantity=quantity,
                     is_purchased=False,
-                    created_at=None,
-                    updated_at=None
+                    created_at=None,  
+                    updated_at=None   
                 )
-                new_items.append(item)
+                new_items.append(item)  # Mark it for insertion
+
+        # Apply changes to the database
         if new_items:
+            
             self.shoplist_controller.repo.add_shopping_list_items(self.shoppinglist.id, new_items)
+        
+        if updated_items:
+            
+            for item in updated_items:
+                self.shoplist_controller.repo.update_shopping_list_item(item)
+        
+        if removed_items:
+            #Ei toimi
+            for item_id in removed_items:
+                self.shoplist_controller.repo.delete_shopping_list_item(self.shoppinglist.id, item_id)
+
+       
         self._refresh_product_list()
-    
+
+
     def _delete_shoplist(self):
         if not self.shoppinglist:
             return

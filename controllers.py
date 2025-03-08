@@ -252,14 +252,18 @@ class ShoppingListController:
             shopping_list.title = title
         if items:
             # Poistetaan vanhat tuotteet
-            self.repo.remove_items_from_shopping_list(shopping_list_id)
+            self.repo.delete_shopping_list_item(shopping_list_id)
 
             # Lisätään uudet tuotteet
             for item in items:
                 shopping_list_item = ShoppingListItem(
+                    id=0,  
+                    shopping_list_id=shopping_list_id,
                     product_id=item['product_id'],
                     quantity=item['quantity'],
-                    is_purchased=item.get('is_purchased', False)
+                    is_purchased=item.get('is_purchased', False),
+                    created_at=None,  
+                    updated_at=None,  
                 )
                 self.repo.add_shopping_list_items(shopping_list_id, shopping_list_item)
 
