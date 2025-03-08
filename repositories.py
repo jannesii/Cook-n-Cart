@@ -327,14 +327,15 @@ class ShoppingListRepository:
             items.append(item) 
         return items
     
-    def update_shopping_list_item(self, item: ShoppingListItem):
-        """Updates the quantity or purchase status of an item in the shopping list."""
-        query = """
-        UPDATE shopping_list_items
-        SET quantity = ?, is_purchased = ?, updated_at = CURRENT_TIMESTAMP
-        WHERE shopping_list_id = ? AND product_id = ?
-        """
-        self.db.execute_query(query, (item.quantity, item.is_purchased, item.shopping_list_id, item.product_id))
+    def update_shopping_list_items(self, items: List[ShoppingListItem]):
+        """Updates the quantity or purchase status of multiple items in the shopping list."""
+        for item in items:
+            query = """
+            UPDATE shopping_list_items
+            SET quantity = ?, is_purchased = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE shopping_list_id = ? AND product_id = ?
+            """
+            self.db.execute_query(query, (item.quantity, item.is_purchased, item.shopping_list_id, item.product_id))
     
     def delete_shopping_list_item(self, item_id: int):
         """Removes an item from the shopping list."""

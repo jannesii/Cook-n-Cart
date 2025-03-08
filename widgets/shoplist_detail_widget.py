@@ -120,31 +120,32 @@ class ShoplistDetailWidget(QWidget):
 
         print("DEBUG: Received selected_products =", selected_products)  
 
-        # Hae nykyiset tuotteet
+        
         existing_items = self.shoplist_controller.repo.get_items_by_shopping_list_id(self.shoppinglist.id)
-        existing_items_dict = {item.product_id: item for item in existing_items}  
+        existing_items_dict = {item.product_id: item for item in existing_items}
 
         new_items = []
         updated_items = []
         removed_items = []
 
         for product_data in selected_products:
-            
             product_id = product_data["id"]
-            quantity = product_data.get("quantity", 1)  # Default to 1 if not provided
-
-            #Quantity ei varmaan toimi poistamiseen? en tiiä.
+            quantity = product_data.get("quantity", 1)  
 
             if product_id in existing_items_dict: 
                 
                 existing_item = existing_items_dict[product_id]
                 
                 if quantity == 0:  
-                    removed_items.append(existing_item.id)  
+                    #Ei muuten toimi
+                    removed_items.append(existing_item.id)
                 elif existing_item.quantity != quantity:  
-                    updated_items.append(existing_item)  
+                    
+                    existing_item.quantity = quantity  
+                    updated_items.append(existing_item)
 
             else:  
+                
                 item = ShoppingListItem(
                     id=0,  
                     shopping_list_id=self.shoppinglist.id,
@@ -156,24 +157,26 @@ class ShoplistDetailWidget(QWidget):
                 )
                 new_items.append(item)  # Mark it for insertion
 
-        # Apply changes to the database
-        if new_items:
-            
-            self.shoplist_controller.repo.add_shopping_list_items(self.shoppinglist.id, new_items)
-        
-        if updated_items:
-            
-            for item in updated_items:
-                self.shoplist_controller.repo.update_shopping_list_item(item)
+        # Debug korjaamiseen
+        print(f"New items to be added: {new_items}")
+        print(f"Updated items to be modified: {updated_items}")
+        print(f"Removed items: {removed_items}")
         
         if removed_items:
-            #Ei toimi
-            for item_id in removed_items:
-                self.shoplist_controller.repo.delete_shopping_list_item(self.shoppinglist.id, item_id)
+            print(f"Removing items: {removed_items}")
+            self.shoplist_controller.repo.delete_shopping_list_item(removed_items)  
 
-       
+        if updated_items:
+            print(f"Updating items: {updated_items}")
+            self.shoplist_controller.repo.update_shopping_list_items(updated_items)  
+
+        if new_items:
+            print(f"Adding new items: {new_items}")
+            self.shoplist_controller.repo.add_shopping_list_items(self.shoppinglist.id, new_items)  
+
+        print(f"New items: {len(new_items)} | Updated items: {len(updated_items)} | Removed items: {len(removed_items)}")
+
         self._refresh_product_list()
-
 
     def _delete_shoplist(self):
         if not self.shoppinglist:
