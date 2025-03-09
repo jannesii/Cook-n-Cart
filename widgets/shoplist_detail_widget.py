@@ -83,7 +83,7 @@ class ShoplistDetailWidget(QWidget):
         for item in shopping_list_items:
             product = PC().get_all_products().get(item.product_id)
             if product:
-                unit_display = item.unit if hasattr(item, "unit") else "kpl"
+                unit_display = item_text = f"{product.name} - {item.quantity} {product.unit} - {product.price_per_unit:.2f}"# {currency}"
                 item_text = f"{product.name} - {item.quantity} {unit_display}"
                 list_item = QListWidgetItem(item_text)
                 list_item.setData(Qt.UserRole, item)
