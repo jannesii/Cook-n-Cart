@@ -9,7 +9,7 @@ from repositories import RecipeRepository, ProductRepository, ShoppingListReposi
 from typing import List, Dict
 CONFIG_FILE = "utils/config.json"
 
-
+cs = ConversionService("EUR")
 class RecipeController:
     def __init__(self):
         self.repo = RecipeRepository()
@@ -90,7 +90,7 @@ class ShoppingListController:
     def __init__(self):
         self.repo = ShoppingListRepository()
         self.product_repo = ProductRepository()
-        self.conversion_service = ConversionService("EUR")  # Base currency EUR
+        self.conversion_service = cs  # Base currency EUR
         self.weight_unit, self.volume_unit = self.load_units()
 
     def load_units(self):
@@ -287,7 +287,7 @@ CONFIG_FILE = "utils/config.json"
 class ProductController:
     def __init__(self):
         self.repo = ProductRepository()
-        self.conversion_service = ConversionService("EUR")  # Base currency EUR
+        self.conversion_service = cs  # Base currency EUR
         self.weight_unit, self.volume_unit = self.load_units()
         self.currency, self.currency_multiplier = self.load_currency()
 
