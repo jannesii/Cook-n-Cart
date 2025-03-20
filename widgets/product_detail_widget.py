@@ -5,14 +5,12 @@ from PySide6.QtCore import Qt
 from controllers import ProductController, ShoppingListController, RecipeController
 from models import Product
 
-RecipeController = RecipeController()
-ProductController = ProductController()
-ShoppingListController = ShoppingListController()
-
 class ProductDetailWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
+        self.product_controller = ProductController()
+        self.shoplist_controller = ShoppingListController()
         self.product = None  # Tallennetaan valittu tuote
 
         self.layout = QVBoxLayout(self)
@@ -49,16 +47,16 @@ class ProductDetailWidget(QWidget):
         self.product = product
         if product:
         # Haetaan käyttäjän asetuksista paino-, tilavuusyksikkö ja valuutta
-            currency_unit = ProductController.currency
-            weight_unit = ShoppingListController.weight_unit
-            volume_unit = ShoppingListController.volume_unit
+            currency_unit = self.product_controller.currency
+            weight_unit = self.shoplist_controller.weight_unit
+            volume_unit = self.shoplist_controller.volume_unit
 
         # Määritetään oikea yksikkö tuotteelle ja muunnetaan määrä
             if product.unit.lower() in ["kg", "g", "lb", "oz"]:
-                converted_quantity = ProductController.convert_to_standard_unit(product.unit, 1)  # 1 yksikkö
+                converted_quantity = self.product_controller.convert_to_standard_unit(product.unit, 1)  # 1 unit in standardized form
                 unit_display = f"{converted_quantity} {weight_unit}"
             elif product.unit.lower() in ["l", "ml", "fl oz", "gal"]:
-                converted_quantity = ProductController.convert_to_standard_unit(product.unit, 1)  # 1 yksikkö
+                converted_quantity = self.product_controller.convert_to_standard_unit(product.unit, 1)  # 1 yksikkö
                 unit_display = f"{converted_quantity} {volume_unit}"
             else:
                 converted_quantity = 1  # Oletusarvo, jos yksikköä ei tunnisteta
@@ -70,7 +68,7 @@ class ProductDetailWidget(QWidget):
 
         # Päivitetään käyttöliittymä
             self.name_label.setText(f"Nimi: {product.name}")
-            self.price_label.setText(f"Hinta: {ProductController.get_price_with_currency(product.price_per_unit)}")
+            self.price_label.setText(f"Hinta: {self.product_controller.get_price_with_currency(product.price_per_unit)}")
             self.category_label.setText(f"Kategoria: {product.category}")
             self.unit_label.setText(f"Yksikkö: {unit_display}")
             self.created_at_label.setText(f"Luotu: {product.created_at}")
