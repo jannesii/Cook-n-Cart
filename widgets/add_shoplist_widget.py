@@ -48,7 +48,6 @@ class AddShoplistWidget(QWidget):
 
     def _handle_finished_add_products(self, selected_products):
         """Handles the selection of products from AddProductsWidget."""
-        print("DEBUG: Selected products received:", selected_products)
 
         self.selected_products = []
         
@@ -73,8 +72,6 @@ class AddShoplistWidget(QWidget):
                 "quantity": quantity,  
                 "unit": product_data.get("unit", "kpl")  # Default unit
             })
-
-        print("DEBUG: Final selected_products list:", self.selected_products)
 
 
     def _create_shoplist(self):

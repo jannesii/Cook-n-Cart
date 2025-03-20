@@ -218,8 +218,7 @@ class ShoppingListRepository:
             # Fetch items for this shopping list
             items_query = "SELECT * FROM shopping_list_items WHERE shopping_list_id = ?"
             items_rows = self.db.fetchall(items_query, (row['id'],))
-            if not items_rows:
-                print(f"No items found for shopping list ID: {row['id']}")
+    
 
             items = [
                 ShoppingListItem(
