@@ -1,6 +1,6 @@
 {
     "settings": {
-        "currency": "\u20ac",
+        "currency": "$",
         "weight_unit": "kg",
         "volume_unit": "ml"
     }
