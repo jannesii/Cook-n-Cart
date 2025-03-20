@@ -1,6 +1,9 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QLineEdit, QPushButton, QLabel, QListWidget, QListWidgetItem, QHBoxLayout
-from PySide6.QtCore import Signal, Qt
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QLineEdit, QPushButton, QLabel, QHBoxLayout
+from PySide6.QtCore import Signal
 
+from models import ShoppingList
+from widgets.add_products_widget import AddProductsWidget
+from controllers import ProductController as PC
 
 class AddShoplistWidget(QWidget):
     """
@@ -12,6 +15,7 @@ class AddShoplistWidget(QWidget):
         super().__init__(parent)
         self.shoplist_controller = shoplist_controller
         self.product_controller = product_controller
+        self.selected_products = []  # Store selected products from AddProductsWidget
 
         self.layout = QVBoxLayout(self)
 
@@ -22,81 +26,77 @@ class AddShoplistWidget(QWidget):
         self.title_input = QLineEdit()
         self.layout.addWidget(self.title_input)
 
-        # Product selection (optional)
-        self.product_list_label = QLabel("Valitse tuotteita (valinnainen):")
-        self.layout.addWidget(self.product_list_label)
+        # Product selection widget
+        self.product_selection_label = QLabel("Valitse tuotteita (valinnainen):")
+        self.layout.addWidget(self.product_selection_label)
 
-        self.product_list = QListWidget()
-        self.layout.addWidget(self.product_list)
-
-        # Populate product list from the database
-        self._populate_product_list()
+        self.add_products_widget = AddProductsWidget(self.product_controller, self)
+        self.add_products_widget.finished.connect(self._handle_finished_add_products)
+        self.layout.addWidget(self.add_products_widget)
 
         # Buttons layout
         buttons_layout = QHBoxLayout()
-
-        # Create button
         self.create_btn = QPushButton("Luo ostoslista")
         self.create_btn.clicked.connect(self._create_shoplist)
         buttons_layout.addWidget(self.create_btn)
 
-        # Cancel button
         self.cancel_btn = QPushButton("Peruuta")
         self.cancel_btn.setObjectName("gray_button")
         buttons_layout.addWidget(self.cancel_btn)
 
         self.layout.addLayout(buttons_layout)
 
-    def _populate_product_list(self):
-        """Fetch and populate products into the list."""
-        products = self.product_controller.get_all_products()
-        for product_id, product in products.items():
-            item_text = f"{product.name} ({product.unit}) - {product.category}"
-            list_item = QListWidgetItem(item_text)
-            list_item.setData(Qt.UserRole, {"product_id": product_id, "product": product})
-            list_item.setCheckState(Qt.Unchecked)  # Allow users to select products
-            self.product_list.addItem(list_item)
+    def _handle_finished_add_products(self, selected_products):
+        """Handles the selection of products from AddProductsWidget."""
+        print("DEBUG: Selected products received:", selected_products)
+
+        self.selected_products = []
+        
+        for product_data in selected_products:
+            product_id = product_data.get("id")
+            quantity = product_data.get("quantity", 1)  
+            
+            # Ensure product_id is valid
+            if not product_id:
+                print("ERROR: Missing product ID in selected product data:", product_data)
+                continue
+            
+            # Fetch full product details from the database
+            product = self.product_controller.get_product_by_id(product_id)
+            if not product:
+                print(f"ERROR: Product with ID {product_id} not found in database.")
+                continue  # Skip if product is not found
+            
+            # Append correctly structured data
+            self.selected_products.append({
+                "product": product,  
+                "quantity": quantity,  
+                "unit": product_data.get("unit", "kpl")  # Default unit
+            })
+
+        print("DEBUG: Final selected_products list:", self.selected_products)
+
 
     def _create_shoplist(self):
         """Create a new shopping list and emit its ID."""
         title = self.title_input.text().strip()
-    
-        # Validate the title is not empty
+
         if not title:
             self.title_label.setText("Ostoslistan nimi: (Ei voi olla tyhjä!)")
             self.title_label.setStyleSheet("color: red;")
             return
 
-    # Gather selected products
-        selected_products = []
-        for i in range(self.product_list.count()):
-            item = self.product_list.item(i)
-            if item.checkState() == Qt.Checked:
-                product_data = item.data(Qt.UserRole)
-            
-            # Ensure product_data is valid
-                if not product_data or "product_id" not in product_data:
-                    continue  # Skip invalid items
-            
-                product = self.product_controller.get_product_by_id(product_data["product_id"])
-                if not product:
-                    continue  # Skip if product is not found
-            
-                selected_products.append({"product": product, "quantity": 1})  # Default quantity
-
-    # Create the shopping list
+        # Create the shopping list with selected products
         try:
-            shopping_list = self.shoplist_controller.add_shopping_list(title=title, items=selected_products)
+            shopping_list = self.shoplist_controller.add_shopping_list(title=title, items=self.selected_products)
         except ValueError as e:
-            # Handle invalid data errors from add_shopping_list
             print(f"Error creating shopping list: {e}")
             return
 
-    # Emit the ID of the created shopping list
+        # Emit the ID of the created shopping list
         self.shoplist_created.emit(shopping_list.id)
 
-    # Reset the form
+        # Reset the form
         self.title_input.clear()
-        for i in range(self.product_list.count()):
-            self.product_list.item(i).setCheckState(Qt.Unchecked)
-
+        self.selected_products = []
+        self.add_products_widget.set_selected_products([])  # Reset selection in widget
