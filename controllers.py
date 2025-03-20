@@ -275,6 +275,11 @@ class ShoppingListController:
         """
         self.repo.delete_shopping_list_by_id(shoplist_id)
 
+    def get_items_by_shopping_list_id(self, shoplist_id):
+        shoppinglist = []
+        shoppinglist = self.repo.get_items_by_shopping_list_id(shoplist_id)
+        return shoppinglist
+
 
 CONFIG_FILE = "utils/config.json"
 
