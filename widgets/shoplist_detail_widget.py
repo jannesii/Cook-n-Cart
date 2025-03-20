@@ -1,4 +1,4 @@
-# File: shoplist_detail_widget.py (Revised)
+# File: shoplist_detail_widget.py
 import sys
 import json
 from PySide6.QtWidgets import (

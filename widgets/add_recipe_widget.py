@@ -1,3 +1,4 @@
+# add_recipe_widget.py
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QLineEdit, QTextEdit, QStackedWidget, QCompleter, QMessageBox

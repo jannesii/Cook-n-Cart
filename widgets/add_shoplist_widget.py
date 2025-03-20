@@ -1,3 +1,5 @@
+# add_shoplist_widget.py
+
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QLineEdit, QPushButton, QLabel, QHBoxLayout
 from PySide6.QtCore import Signal
 

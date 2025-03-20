@@ -7,14 +7,14 @@ widgets_dir = os.path.join(root_dir, "widgets")
 utils_dir = os.path.join(root_dir, "utils")
 output_file = r"tests\combined\all_combined.py"
 
-def combine_files(directories, output_file):
+def combine_files(directories, output_file, extensions=(".py", ".qss")):
     total_lines = 0
     all_code = ""
 
     for directory in directories:
         if os.path.exists(directory):
             for file in os.listdir(directory):
-                if file.endswith(".py"):
+                if file.endswith(extensions):
                     file_path = os.path.join(directory, file)
                     with open(file_path, "r", encoding="utf-8") as f:
                         lines = f.readlines()
@@ -28,6 +28,6 @@ def combine_files(directories, output_file):
 
     print(f"{output_file} created with {total_lines} total lines.")
 
-# Combine all Python files into one
-directories_to_combine = [root_dir, views_dir, widgets_dir]
+# Combine all files with the specified extensions into one
+directories_to_combine = [root_dir, views_dir, widgets_dir, utils_dir]
 combine_files(directories_to_combine, output_file)
