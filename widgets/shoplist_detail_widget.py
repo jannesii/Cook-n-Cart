@@ -3,13 +3,15 @@ import sys
 import json
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QPushButton, QListWidget,
-    QListWidgetItem, QLabel, QStackedWidget, QMessageBox
+    QListWidgetItem, QLabel, QStackedWidget, QMessageBox,
+    QDialog
 )
 from PySide6.QtCore import Qt, Signal
 from controllers import ProductController as PC
 from controllers import ShoppingListController as SLC
 from models import ShoppingList, ShoppingListItem
 from widgets.add_products_widget import AddProductsWidget
+from widgets.import_recipe_widget import ImportRecipeWidget
 
 TURKOOSI = "#00B0F0"
 HARMAA = "#808080"
@@ -39,33 +41,49 @@ class ShoplistDetailWidget(QWidget):
         self.add_products_widget.finished.connect(self._handle_finished_add_products)
         self.stacked_widget.addWidget(self.add_products_widget)
         
+        # Page 2: New ImportRecipeWidget
+        self.import_recipe_widget = ImportRecipeWidget(self)
+        self.import_recipe_widget.importCompleted.connect(self._handle_import_completed)
+        self.import_recipe_widget.cancelImport.connect(self._handle_import_cancel)
+        self.stacked_widget.addWidget(self.import_recipe_widget)
+        
         self.stacked_widget.setCurrentIndex(0)
         self.setLayout(self.layout)
     
     def _create_detail_layout(self):
         layout = QVBoxLayout()
-        # Title label for the shopping list
+        # Title for the shopping list
         self.shoplist_label = QLabel("Shopping List Details")
         self.shoplist_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.shoplist_label)
-        # List widget to show products
+        
+        # List of products already in the shopping list
         self.product_list = QListWidget()
         layout.addWidget(self.product_list)
-        # Button to open add products view
+        
+        # --- New Button: Import from Recipe ---
+        self.import_from_recipe_btn = QPushButton("Tuo tuotteet reseptiltä")
+        self.import_from_recipe_btn.clicked.connect(self._open_import_recipe_page)
+        layout.addWidget(self.import_from_recipe_btn)
+        
+        # Existing button for manually adding a product
         self.add_product_btn = QPushButton("Lisää tuote")
         self.add_product_btn.clicked.connect(self._open_add_products_widget)
         layout.addWidget(self.add_product_btn)
-        # New Delete button for deleting the shopping list
+        
+        
+        # Delete and Back buttons
         self.delete_btn = QPushButton("Poista ostoslista")
         self.delete_btn.setObjectName("delete_button")
         self.delete_btn.clicked.connect(self._delete_shoplist)
         layout.addWidget(self.delete_btn)
-        # Back button to return to the main list
+        
         self.back_btn = QPushButton("Takaisin")
         self.back_btn.clicked.connect(self._go_back)
         layout.addWidget(self.back_btn)
+        
         return layout
-    
+
     def set_shopping_list(self, shopping_list: ShoppingList):
         """Sets the current shopping list and refreshes the product list."""
         self.shoppinglist = shopping_list
@@ -111,6 +129,21 @@ class ShoplistDetailWidget(QWidget):
     def _handle_finished_add_products(self, selected_products):
         self._add_selected_products(selected_products)
         self.stacked_widget.setCurrentIndex(0)
+        
+    def _open_import_recipe_page(self):
+        # Switch to the import recipe page (index 2)
+        self.stacked_widget.setCurrentIndex(2)
+
+    def _handle_import_completed(self, selected_products):
+        # Add the imported products to the shopping list (using your existing merge/update logic)
+        self._add_selected_products(selected_products)
+        # Return to the detail view after import
+        self.stacked_widget.setCurrentIndex(0)
+
+    def _handle_import_cancel(self):
+        # If cancelled, return to the detail view
+        self.stacked_widget.setCurrentIndex(0)
+
     
     #Käyttää repo metodeja controllerin kautta, mutta controlleriin pitää lisätä nämä metodit.
     def _add_selected_products(self, selected_products):

@@ -4,6 +4,7 @@ import os
 root_dir = os.getcwd()  # Change this to your project path
 views_dir = os.path.join(root_dir, "views")
 widgets_dir = os.path.join(root_dir, "widgets")
+utils_dir = os.path.join(root_dir, "utils")
 output_file = r"tests\combined\all_combined.py"
 
 def combine_files(directories, output_file):
