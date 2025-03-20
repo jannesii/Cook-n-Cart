@@ -62,6 +62,12 @@ class ShoplistDetailWidget(QWidget):
         # Connect itemChanged signal so that toggling the checkbox updates the purchase status.
         self.product_list.itemChanged.connect(self._on_item_changed)
         layout.addWidget(self.product_list)
+
+        # Lisää uusi QLabel kokonaishinnan näyttämiseen
+        self.total_cost_label = QLabel("Kokonaishinta: 0 €")
+        self.total_cost_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(self.total_cost_label)
+
         
         # --- New Button: Import from Recipe ---
         self.import_from_recipe_btn = QPushButton("Tuo tuotteet reseptiltä")
@@ -92,30 +98,44 @@ class ShoplistDetailWidget(QWidget):
         self._refresh_product_list()
         
     def _refresh_product_list(self):
-        """Refreshes the shopping list's product list and sets up checkable items."""
+        """Refreshes the shopping list's product list."""
         if not self.shoppinglist:
             return
 
-        # Block signals to avoid triggering itemChanged during population.
-        self.product_list.blockSignals(True)
         self.product_list.clear()
         shopping_list_items = self.shoplist_controller.repo.get_items_by_shopping_list_id(self.shoppinglist.id)
+
+        total_cost = 0  # Muuttuja kokonaishinnan tallentamiseen
+
+        self.product_list.blockSignals(True)  # Estetään signaalit päivityksen ajaksi
 
         for item in shopping_list_items:
             product = PC().get_all_products().get(item.product_id)
             if product:
-                # If the item is marked as purchased, prefix with "[Ostettu] "
+                total_price = product.price_per_unit * item.quantity  # Lasketaan kokonaishinta
+                price_with_currency = PC().get_price_with_currency(total_price)  # Muunnetaan valuuttaan
+                total_cost += total_price  # Lisätään tuotteen kokonaishinta summaan
+            
+            # Jos tuote on ostettu, lisätään merkintä "[Ostettu]"
                 purchased_prefix = "[Ostettu] " if item.is_purchased else ""
-                text = f"{purchased_prefix}{product.name} - {item.quantity} {product.unit} - {product.price_per_unit:.2f}"
-                list_item = QListWidgetItem(text)
+
+            # Rakennetaan tekstirivi
+                unit_display = f"{purchased_prefix}{product.name} - {item.quantity} {product.unit} - {price_with_currency}"
+                list_item = QListWidgetItem(unit_display)
                 list_item.setData(Qt.UserRole, item)
-                # Make the list item checkable
+
+            # Tehdään listaelementistä valittava
                 list_item.setFlags(list_item.flags() | Qt.ItemIsUserCheckable)
-                # Set check state based on is_purchased flag
                 list_item.setCheckState(Qt.Checked if item.is_purchased else Qt.Unchecked)
+
                 self.product_list.addItem(list_item)
-        self.product_list.blockSignals(False)
-        
+
+        self.product_list.blockSignals(False)  # Sallitaan signaalit uudelleen
+
+    # Lasketaan ja päivitetään ostoslistan kokonaishinta
+        total_cost_with_currency = PC().get_price_with_currency(total_cost)
+        self.total_cost_label.setText(f"Kokonaishinta: {total_cost_with_currency}")
+
     def _on_item_changed(self, list_item: QListWidgetItem):
         """
         Called when a list item's check state changes.
@@ -177,7 +197,7 @@ class ShoplistDetailWidget(QWidget):
             print("No shopping list is set.")
             return
 
-        existing_items = self.shoplist_controller.repo.get_items_by_shopping_list_id(self.shoppinglist.id)
+        existing_items = self.shoplist_controller.get_items_by_shopping_list_id(self.shoppinglist.id)
         existing_items_dict = {item.product_id: item for item in existing_items}
 
         new_items = []
