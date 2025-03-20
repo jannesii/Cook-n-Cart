@@ -1,11 +1,5 @@
 import os
 
-# Define root directory
-root_dir = os.getcwd()  # Change this to your project path
-views_dir = os.path.join(root_dir, "views")
-widgets_dir = os.path.join(root_dir, "widgets")
-utils_dir = os.path.join(root_dir, "utils")
-output_file = r"tests\combined\all_combined.py"
 
 def combine_files(directories, output_file, extensions=(".py", ".qss")):
     total_lines = 0
@@ -28,6 +22,27 @@ def combine_files(directories, output_file, extensions=(".py", ".qss")):
 
     print(f"{output_file} created with {total_lines} total lines.")
 
-# Combine all files with the specified extensions into one
-directories_to_combine = [root_dir, views_dir, widgets_dir, utils_dir]
-combine_files(directories_to_combine, output_file)
+
+def main():
+    # Define root directory
+    root_dir = os.getcwd()  # Change this to your project path
+    views_dir = os.path.join(root_dir, "views")
+    widgets_dir = os.path.join(root_dir, "widgets")
+    utils_dir = os.path.join(root_dir, "utils")
+    output_file = r"tests\combined\all_combined.py"
+
+    # Combine all files with the specified extensions into one
+    directories_to_combine = []
+    directories_to_combine.append(root_dir)
+    directories_to_combine.append(views_dir)
+    directories_to_combine.append(widgets_dir)
+    # directories_to_combine.append(utils_dir)
+
+    extensions_to_include = (".py", ".qss")
+
+    combine_files(directories_to_combine, output_file,
+                  extensions=extensions_to_include)
+
+
+if __name__ == '__main__':
+    main()

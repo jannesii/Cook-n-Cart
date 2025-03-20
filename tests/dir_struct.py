@@ -1,5 +1,4 @@
 import os
-import argparse
 
 def print_directory_structure(root_dir, prefix='', exclude=None):
     if exclude is None:
@@ -16,14 +15,14 @@ def print_directory_structure(root_dir, prefix='', exclude=None):
         if os.path.isdir(path):
             extension = "    " if index == count - 1 else "│   "
             print_directory_structure(path, prefix + extension, exclude)
+            
+def main():
+    # Hard-coded settings
+    directory_to_list = os.getcwd()  # Change this to your desired directory
+    exclude_dirs = ["__pycache__", ".git", "build", "dist", "tests"]
+
+    print(f"Directory structure for: {directory_to_list}\n")
+    print_directory_structure(directory_to_list, exclude=exclude_dirs)
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Print the directory structure in a tree format.')
-    parser.add_argument('directory', nargs='?', default=os.getcwd(), help='Directory to list (default: current directory)')
-    # Default exclude list: __pycache__, .git, build, and dist
-    parser.add_argument('--exclude', nargs='*', default=["__pycache__", ".git", "build", "dist", "tests"],
-                        help='Directory names to exclude (default: "__pycache__ .git build dist")')
-    args = parser.parse_args()
-
-    print(f"Directory structure for: {args.directory}\n")
-    print_directory_structure(args.directory, exclude=args.exclude)
+    main()
