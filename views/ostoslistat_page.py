@@ -108,12 +108,17 @@ class OstolistatPage(QWidget):
             if widget:
                 widget.deleteLater()
         for shoplist_id, shoplist in self.shopping_lists.items():
-            btn = QPushButton(f"{shoplist.title}\n{len(shoplist.items)} tuotetta")
+            # Count how many items are purchased
+            purchased_count = sum(1 for item in shoplist.items if item.is_purchased)
+            total_items = len(shoplist.items)
+            # Create text showing purchased/total
+            btn_text = f"{shoplist.title}\n{purchased_count}/{total_items}"
+            btn = QPushButton(btn_text)
             btn.setObjectName("main_list_button")
             btn.clicked.connect(lambda checked=False, id=shoplist_id: self.display_shoplist_detail(id))
             self.scroll_layout.addWidget(btn)
         self.scroll_layout.addStretch()
-    
+        
     def filter_shopping_lists(self, text):
         search_text = text.lower()
         for i in range(self.scroll_layout.count()):

@@ -280,11 +280,18 @@ class ShoppingListController:
         self.repo.delete_shopping_list_by_id(shoplist_id)
 
 
+import json
+from typing import Dict, List
+from models import Product, ShoppingListItem
+from repositories import ProductRepository
+
+CONFIG_FILE = "utils/config.json"
+
 class ProductController:
     def __init__(self):
         self.repo = ProductRepository()
         self.weight_unit, self.volume_unit = self.load_units()
-
+        self.currency, self.currency_multiplier = self.load_currency()
     def load_units(self):
         """ Lataa asetetut yksiköt config.json-tiedostosta. """
         try:
@@ -294,30 +301,35 @@ class ProductController:
         except (FileNotFoundError, json.JSONDecodeError):
             return "kg", "l"  # Oletusyksiköt
 
-    def save_units(self):
-        """ Tallentaa yksikköasetukset config.json-tiedostoon. """
+    def load_currency(self):
+
         try:
             with open(CONFIG_FILE, "r", encoding="utf-8") as file:
-                config = json.load(file)
+                settings = json.load(file).get("settings", {})
+                currency = settings.get("currency", "€")
+
+            # Käytetään kunnollista if-elif-else rakennetta
+            if currency == "€":
+                multiplier = 1
+            elif currency == "$":
+                multiplier = 1.18 
+            elif currency == "£":
+                multiplier = 1.31
+            else:
+                multiplier = 1  # Oletus, jos tuntematon valuutta
+            return currency, multiplier
+
         except (FileNotFoundError, json.JSONDecodeError):
-            config = {}
+            return "€", 1  # Oletus: Eurot ilman muunnosta
 
-        config["settings"] = config.get("settings", {})
-        config["settings"]["weight_unit"] = self.weight_unit
-        config["settings"]["volume_unit"] = self.volume_unit
+    def get_price_with_currency(self, price_per_unit: float) -> str:
 
-        with open(CONFIG_FILE, "w", encoding="utf-8") as file:
-            json.dump(config, file, indent=4)
-
-    def update_weight_unit(self, new_unit: str):
-        self.weight_unit = new_unit
-        self.save_units()
-
-    def update_volume_unit(self, new_unit: str):
-        self.volume_unit = new_unit
-        self.save_units()
+        converted_price = price_per_unit * self.currency_multiplier
+       
+        return f"{converted_price:.2f} {self.currency}"
 
     def get_all_products(self) -> Dict[int, Product]:
+     
         return self.repo.get_all_products()
 
     def get_product_by_id(self, product_id: int):
@@ -348,14 +360,11 @@ class ProductController:
         product = self.repo.get_product_by_id(product_id)
         if not product:
             raise ValueError("Product not found")
-
-        standard_quantity = self.convert_to_standard_unit(
-            product.unit, quantity)
-        return product.price_per_unit * standard_quantity
+        return self.get_price_with_currency(product.price_per_unit * quantity)
 
     def add_product(self, name: str, unit: str, price_per_unit: float, category: str):
         product = Product(
-            id=0,  # Database will assign the actual ID
+            id=0,
             name=name,
             unit=unit,
             price_per_unit=price_per_unit,
@@ -365,15 +374,13 @@ class ProductController:
         )
         return self.repo.add_product(product)
 
-    def update_product(self, product_id: int, name: str = None, description: str = None, price_per_unit: float = None, category: str = None):
+    def update_product(self, product_id: int, name: str = None, price_per_unit: float = None, category: str = None):
         product = self.repo.get_product_by_id(product_id)
         if not product:
             raise ValueError("Product not found")
 
         if name:
             product.name = name
-        if description:
-            product.description = description
         if price_per_unit:
             product.price_per_unit = price_per_unit
         if category:
