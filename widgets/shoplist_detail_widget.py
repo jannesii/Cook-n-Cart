@@ -59,6 +59,8 @@ class ShoplistDetailWidget(QWidget):
         
         # List of products already in the shopping list
         self.product_list = QListWidget()
+        # Connect itemChanged signal so that toggling the checkbox updates the purchase status.
+        self.product_list.itemChanged.connect(self._on_item_changed)
         layout.addWidget(self.product_list)
         
         # --- New Button: Import from Recipe ---
@@ -70,7 +72,6 @@ class ShoplistDetailWidget(QWidget):
         self.add_product_btn = QPushButton("Lisää tuote")
         self.add_product_btn.clicked.connect(self._open_add_products_widget)
         layout.addWidget(self.add_product_btn)
-        
         
         # Delete and Back buttons
         self.delete_btn = QPushButton("Poista ostoslista")
@@ -89,23 +90,48 @@ class ShoplistDetailWidget(QWidget):
         self.shoppinglist = shopping_list
         self.shoplist_label.setText(shopping_list.title)
         self._refresh_product_list()
-    
+        
     def _refresh_product_list(self):
-        """Refreshes the shopping list's product list."""
+        """Refreshes the shopping list's product list and sets up checkable items."""
         if not self.shoppinglist:
             return
 
+        # Block signals to avoid triggering itemChanged during population.
+        self.product_list.blockSignals(True)
         self.product_list.clear()
         shopping_list_items = self.shoplist_controller.repo.get_items_by_shopping_list_id(self.shoppinglist.id)
 
         for item in shopping_list_items:
             product = PC().get_all_products().get(item.product_id)
             if product:
-                unit_display = item_text = f"{product.name} - {item.quantity} {product.unit} - {product.price_per_unit:.2f}"# {currency}"
-                item_text = f"{unit_display}"
-                list_item = QListWidgetItem(item_text)
+                # If the item is marked as purchased, prefix with "[Ostettu] "
+                purchased_prefix = "[Ostettu] " if item.is_purchased else ""
+                text = f"{purchased_prefix}{product.name} - {item.quantity} {product.unit} - {product.price_per_unit:.2f}"
+                list_item = QListWidgetItem(text)
                 list_item.setData(Qt.UserRole, item)
+                # Make the list item checkable
+                list_item.setFlags(list_item.flags() | Qt.ItemIsUserCheckable)
+                # Set check state based on is_purchased flag
+                list_item.setCheckState(Qt.Checked if item.is_purchased else Qt.Unchecked)
                 self.product_list.addItem(list_item)
+        self.product_list.blockSignals(False)
+        
+    def _on_item_changed(self, list_item: QListWidgetItem):
+        """
+        Called when a list item's check state changes.
+        Updates the corresponding shopping list item’s is_purchased status in the database.
+        """
+        shopping_list_item = list_item.data(Qt.UserRole)
+        new_state = list_item.checkState() == Qt.Checked
+        if shopping_list_item.is_purchased != new_state:
+            shopping_list_item.is_purchased = new_state
+            # Update the shopping list item in the repository (using your update_shopping_list_items method)
+            self.shoplist_controller.repo.update_shopping_list_items([shopping_list_item])
+            # Update the displayed text to include the [Ostettu] prefix if purchased
+            product = PC().get_all_products().get(shopping_list_item.product_id)
+            if product:
+                purchased_prefix = "[Ostettu] " if new_state else ""
+                list_item.setText(f"{purchased_prefix}{product.name} - {shopping_list_item.quantity} {product.unit} - {product.price_per_unit:.2f}")
     
     def _open_add_products_widget(self):
         if not self.shoppinglist:
