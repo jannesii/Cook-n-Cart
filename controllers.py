@@ -1,4 +1,8 @@
 # controllers.py
+from widgets.conversion_service import ConversionService
+from repositories import ProductRepository
+from models import Product, ShoppingListItem
+from typing import Dict, List
 import json
 from models import Recipe, RecipeIngredient, Product, ShoppingList, ShoppingListItem
 from repositories import RecipeRepository, ProductRepository, ShoppingListRepository
@@ -86,6 +90,7 @@ class ShoppingListController:
     def __init__(self):
         self.repo = ShoppingListRepository()
         self.product_repo = ProductRepository()
+        self.conversion_service = ConversionService("EUR")  # Base currency EUR
         self.weight_unit, self.volume_unit = self.load_units()
 
     def load_units(self):
@@ -121,17 +126,8 @@ class ShoppingListController:
         self.save_units()
 
     def convert_to_standard_unit(self, unit: str, quantity: float) -> float:
-        weight_conversion = {"kg": 1, "g": 0.001,
-                             "lb": 0.453592, "oz": 0.0283495}
-        volume_conversion = {"l": 1, "ml": 0.001,
-                             "fl oz": 0.0295735, "gal": 3.78541}
-
-        if unit in weight_conversion:
-            return quantity * weight_conversion[unit]
-        elif unit in volume_conversion:
-            return quantity * volume_conversion[unit]
-        else:
-            return quantity  # Jos yksikköä ei tunnisteta, palautetaan alkuperäinen arvo
+        # All conversion is now done via the ConversionService’s unit_converter.
+        return self.conversion_service.convert_unit(unit, quantity)
 
     def calculate_total_cost(self, shopping_list_id: int):
 
@@ -141,8 +137,8 @@ class ShoppingListController:
         for item in items:
             product = self.product_repo.get_product_by_id(item.product_id)
             if product:
-                standard_quantity = self.convert_to_standard_unit(
-                    product.unit, item.quantity)
+                # Use the standardized conversion from the ProductController.
+                standard_quantity = self.conversion_service.convert_unit(product.unit, item.quantity)
                 total_cost += product.price_per_unit * standard_quantity
 
         total_cost = round(total_cost, 2)
@@ -155,12 +151,12 @@ class ShoppingListController:
         shopping_lists = self.repo.get_all_shopping_lists()
 
         # Populate items for each shopping list
-        for shopping_list in shopping_lists.values():
+        for shopping_list in shopping_lists.values(): 
             shopping_list.items = self.repo.get_items_by_shopping_list_id(
                 shopping_list.id)
 
         return shopping_lists
-    
+
     def get_shopping_list_with_prices(self, shopping_list_id: int):
 
         shopping_list = self.repo.get_shopping_list_by_id(ShoppingList)
@@ -173,22 +169,21 @@ class ShoppingListController:
             if product:
                 total_price = round(product.price_per_unit * item.quantity, 2)
                 items_with_prices.append({
-                "product_id": item.product_id,
-                "name": product.name,
-                "unit": product.unit,
-                "price_per_unit": product.price_per_unit,
-                "quantity": item.quantity,
-                "total_price": total_price,  # Kokonaishinta
-                "is_purchased": item.is_purchased
-            })
+                    "product_id": item.product_id,
+                    "name": product.name,
+                    "unit": product.unit,
+                    "price_per_unit": product.price_per_unit,
+                    "quantity": item.quantity,
+                    "total_price": total_price,  # Kokonaishinta
+                    "is_purchased": item.is_purchased
+                })
 
         return {
-        "shopping_list_id": shopping_list,
-        "title": shopping_list.title,
-        "items": items_with_prices,
-        "total_sum": shopping_list.total_sum
-    }
-
+            "shopping_list_id": shopping_list,
+            "title": shopping_list.title,
+            "items": items_with_prices,
+            "total_sum": shopping_list.total_sum
+        }
 
     def get_shopping_list_by_id(self, shopping_list_id: int) -> ShoppingList:
         shopping_list = self.repo.get_shopping_list_by_id(shopping_list_id)
@@ -196,7 +191,7 @@ class ShoppingListController:
             shopping_list.total_sum = self.calculate_total_cost(
                 shopping_list_id)
         return shopping_list
-    
+
     def add_shopping_list(self, title: str, items: List[dict]):
         # Create a new ShoppingList object
         shopping_list = ShoppingList(
@@ -231,7 +226,8 @@ class ShoppingListController:
             )
             shopping_list_items.append(shopping_list_item)
 
-        self.repo.add_shopping_list_items(shopping_list_id, shopping_list_items)
+        self.repo.add_shopping_list_items(
+            shopping_list_id, shopping_list_items)
 
         query = "SELECT * FROM shopping_list_items WHERE shopping_list_id = ?"
         rows = self.repo.db.fetchall(query, (shopping_list_id,))
@@ -239,7 +235,6 @@ class ShoppingListController:
         # Fetch items from the database to update the ShoppingList object
         shopping_list.items = self.repo.get_items_by_shopping_list_id(
             shopping_list_id)
-
 
         return shopping_list
 
@@ -257,15 +252,16 @@ class ShoppingListController:
             # Lisätään uudet tuotteet
             for item in items:
                 shopping_list_item = ShoppingListItem(
-                    id=0,  
+                    id=0,
                     shopping_list_id=shopping_list_id,
                     product_id=item['product_id'],
                     quantity=item['quantity'],
                     is_purchased=item.get('is_purchased', False),
-                    created_at=None,  
-                    updated_at=None,  
+                    created_at=None,
+                    updated_at=None,
                 )
-                self.repo.add_shopping_list_items(shopping_list_id, shopping_list_item)
+                self.repo.add_shopping_list_items(
+                    shopping_list_id, shopping_list_item)
 
         # Päivitetään hinta
         shopping_list.total_sum = self.calculate_total_cost(shopping_list_id)
@@ -285,56 +281,49 @@ class ShoppingListController:
         return shoppinglist
 
 
-import json
-from typing import Dict, List
-from models import Product, ShoppingListItem
-from repositories import ProductRepository
-
 CONFIG_FILE = "utils/config.json"
+
 
 class ProductController:
     def __init__(self):
         self.repo = ProductRepository()
+        self.conversion_service = ConversionService("EUR")  # Base currency EUR
         self.weight_unit, self.volume_unit = self.load_units()
         self.currency, self.currency_multiplier = self.load_currency()
+
+    def load_currency(self):
+        try:
+            with open(CONFIG_FILE, "r", encoding="utf-8") as file:
+                settings = json.load(file).get("settings", {})
+                currency = settings.get("currency", "€")
+            # Map symbols to ISO codes:
+            currency_map = {"€": "EUR", "$": "USD", "£": "GBP"}
+            target_currency = currency_map.get(currency, "EUR")
+            # Get dynamic multiplier from the conversion service
+            multiplier = self.conversion_service.currency_converter.get_rate(
+                target_currency)
+            return currency, multiplier
+        except (FileNotFoundError, json.JSONDecodeError):
+            return "€", 1
+
+    def get_price_with_currency(self, price_per_unit: float) -> str:
+        converted_price = price_per_unit * self.currency_multiplier
+        return f"{converted_price:.2f} {self.currency}"
+
+    def convert_quantity(self, unit: str, quantity: float) -> float:
+        return self.conversion_service.convert_unit(unit, quantity)
+
     def load_units(self):
-        """ Lataa asetetut yksiköt config.json-tiedostosta. """
+        # ... (existing unit loading code)
         try:
             with open(CONFIG_FILE, "r", encoding="utf-8") as file:
                 settings = json.load(file).get("settings", {})
                 return settings.get("weight_unit", "kg"), settings.get("volume_unit", "l")
         except (FileNotFoundError, json.JSONDecodeError):
-            return "kg", "l"  # Oletusyksiköt
-
-    def load_currency(self):
-
-        try:
-            with open(CONFIG_FILE, "r", encoding="utf-8") as file:
-                settings = json.load(file).get("settings", {})
-                currency = settings.get("currency", "€")
-
-            # Käytetään kunnollista if-elif-else rakennetta
-            if currency == "€":
-                multiplier = 1
-            elif currency == "$":
-                multiplier = 1.18 
-            elif currency == "£":
-                multiplier = 1.31
-            else:
-                multiplier = 1  # Oletus, jos tuntematon valuutta
-            return currency, multiplier
-
-        except (FileNotFoundError, json.JSONDecodeError):
-            return "€", 1  # Oletus: Eurot ilman muunnosta
-
-    def get_price_with_currency(self, price_per_unit: float) -> str:
-
-        converted_price = price_per_unit * self.currency_multiplier
-       
-        return f"{converted_price:.2f} {self.currency}"
+            return "kg", "l"  # Default units
 
     def get_all_products(self) -> Dict[int, Product]:
-     
+
         return self.repo.get_all_products()
 
     def get_product_by_id(self, product_id: int):
@@ -347,18 +336,8 @@ class ProductController:
         return self.repo.get_products_by_shoplist_id(shopping_list_id)
 
     def convert_to_standard_unit(self, unit: str, quantity: float) -> float:
-
-        weight_conversion = {"kg": 1, "g": 0.001,
-                             "lb": 0.453592, "oz": 0.0283495}
-        volume_conversion = {"l": 1, "ml": 0.001,
-                             "fl oz": 0.0295735, "gal": 3.78541}
-
-        if unit in weight_conversion:
-            return quantity * weight_conversion[unit]
-        elif unit in volume_conversion:
-            return quantity * volume_conversion[unit]
-        else:
-            return quantity  # Jos yksikköä ei tunnisteta, palautetaan alkuperäinen arvo
+        # All conversion is now done via the ConversionService’s unit_converter.
+        return self.conversion_service.convert_unit(unit, quantity)
 
     def calculate_total_cost(self, product_id: int, quantity: float):
 
