@@ -1,34 +1,31 @@
-# conversion_service.py
-import time
+# File: conversion_service.py
 import requests
 
 class CurrencyConverter:
-    def __init__(self, base_currency="EUR", cache_expiry=3600):
+    def __init__(self, base_currency="EUR"):
         self.base_currency = base_currency.upper()
-        self.cache = {}  # {target_currency: (rate, timestamp)}
-        self.cache_expiry = cache_expiry  # seconds
+        self.rates = {}
+        self._fetch_rates()
+        self.i = 0
 
-    def get_rate(self, target_currency: str) -> float:
-        target_currency = target_currency.upper()
-        current_time = time.time()
-        # Use cached rate if still valid
-        if target_currency in self.cache:
-            rate, timestamp = self.cache[target_currency]
-            if current_time - timestamp < self.cache_expiry:
-                return rate
-        # Otherwise, fetch new rate from an external API
+    def _fetch_rates(self):
+        """Fetches exchange rates once at initialization and stores them."""
         api_url = f"https://api.exchangerate-api.com/v4/latest/{self.base_currency}"
         try:
             response = requests.get(api_url)
             data = response.json()
-            rate = data["rates"].get(target_currency)
-            if rate is None:
-                raise ValueError(f"Exchange rate for {target_currency} not found.")
-            self.cache[target_currency] = (rate, current_time)
-            return rate
+            self.rates = data.get("rates", {})
+            print(f"Fetched exchange rates")
         except Exception as e:
-            print(f"Error fetching exchange rate: {e}")
-            return 1.0  # Fallback to 1.0 if error occurs
+            print(f"Error fetching exchange rates during initialization: {e}")
+            # Fallback: use a default rate of 1.0 for any currency.
+            self.rates = {}
+
+    def get_rate(self, target_currency: str) -> float:
+        """Returns the stored rate for the target currency or 1.0 if not found."""
+        target_currency = target_currency.upper()
+        return self.rates.get(target_currency, 1.0)
+
 
 class UnitConverter:
     def __init__(self):
@@ -45,6 +42,7 @@ class UnitConverter:
             return quantity * self.volume_conversion[unit_lower]
         else:
             return quantity  # If unknown, no conversion
+
 
 class ConversionService:
     def __init__(self, base_currency="EUR"):
