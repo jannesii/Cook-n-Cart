@@ -177,7 +177,7 @@ class ShoplistDetailWidget(QWidget):
             print("No shopping list is set.")
             return
 
-        existing_items = self.shoplist_controller.repo.get_items_by_shopping_list_id(self.shoppinglist.id)
+        existing_items = self.shoplist_controller.get_items_by_shopping_list_id(self.shoppinglist.id)
         existing_items_dict = {item.product_id: item for item in existing_items}
 
         new_items = []
