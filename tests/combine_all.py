@@ -36,7 +36,7 @@ def main():
     directories_to_combine.append(root_dir)
     directories_to_combine.append(views_dir)
     directories_to_combine.append(widgets_dir)
-    # directories_to_combine.append(utils_dir)
+    directories_to_combine.append(utils_dir)
 
     extensions_to_include = (".py", ".qss")
 

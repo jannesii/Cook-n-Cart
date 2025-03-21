@@ -128,17 +128,20 @@ class ShoplistDetailWidget(QWidget):
                 if prod_unit == "kpl":
                     converted_quantity = item.quantity
                 # For weight-based products
+                    print("Conversion:", item.quantity, converted_quantity)
                 elif prod_unit in ["kg", "g", "lb", "oz"]:
                     # Get conversion factors from the conversion service's weight table.
                     factor_user = cs.unit_converter.weight_conversion.get(user_weight_unit, 1)
                     factor_product = cs.unit_converter.weight_conversion.get(prod_unit, 1)
                     # Convert the quantity entered in the user's preferred weight unit to the product's unit.
                     converted_quantity = item.quantity * (factor_user / factor_product)
+                    print("Conversion:", prod_unit, factor_user, factor_product, item.quantity, converted_quantity)
                 # For volume-based products
                 elif prod_unit in ["l", "ml", "fl oz", "gal"]:
                     factor_user = cs.unit_converter.volume_conversion.get(user_volume_unit, 1)
                     factor_product = cs.unit_converter.volume_conversion.get(prod_unit, 1)
                     converted_quantity = item.quantity * (factor_user / factor_product)
+                    print("Conversion:", prod_unit, factor_user, factor_product, item.quantity, converted_quantity)
                 else:
                     # If the unit is unknown, fall back to the raw quantity
                     converted_quantity = item.quantity
@@ -146,6 +149,7 @@ class ShoplistDetailWidget(QWidget):
                 # Calculate the cost for this item.
                 # If the item is marked as purchased, skip adding its cost.
                 total_price = product.price_per_unit * converted_quantity
+                print(total_price, product.price_per_unit, converted_quantity)
                 if not item.is_purchased:
                     total_cost += total_price
 

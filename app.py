@@ -2,8 +2,9 @@
 import sys
 from PySide6.QtWidgets import QApplication
 from views.main_window import MainWindow
+import os
 
-def load_stylesheet(app, path=r"utils\\styles.qss"):
+def load_stylesheet(app, path):
     try:
         with open(path, "r", encoding="utf-8") as f:
             qss = f.read()
@@ -18,7 +19,8 @@ def load_stylesheet(app, path=r"utils\\styles.qss"):
 
 def main():
     app = QApplication(sys.argv)
-    load_stylesheet(app, r"utils\\styles.qss")  # Jos tiedosto sijaitsee utils-kansiossa
+    styles_dir = os.path.join(os.getcwd(), "utils", "styles.qss")
+    load_stylesheet(app, styles_dir)  # Jos tiedosto sijaitsee utils-kansiossa
     window = MainWindow()
     window.show()
     sys.exit(app.exec())
