@@ -170,3 +170,4 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 tests/combined/all_combined.py
+*.apk
