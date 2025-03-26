@@ -7,12 +7,12 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import QTimer
 
-from controllers import ProductController as PC
-from controllers import ShoppingListController as SLC
-from controllers import RecipeController as RC
-from widgets.add_recipe_widget import AddRecipeWidget
-from widgets.recipe_detail_widget import RecipeDetailWidget
-from widgets.edit_recipe_widget import EditRecipeWidget  # New dedicated edit widget
+from cookncart.controllers import ProductController as PC
+from cookncart.controllers import ShoppingListController as SLC
+from cookncart.controllers import RecipeController as RC
+from cookncart.widgets.add_recipe_widget import AddRecipeWidget
+from cookncart.widgets.recipe_detail_widget import RecipeDetailWidget
+from cookncart.widgets.edit_recipe_widget import EditRecipeWidget  # New dedicated edit widget
 
 TURKOOSI = "#00B0F0"
 HARMAA = "#808080"

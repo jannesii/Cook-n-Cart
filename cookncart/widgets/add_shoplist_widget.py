@@ -3,9 +3,8 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QLineEdit, QPushButton, QLabel, QHBoxLayout
 from PySide6.QtCore import Signal
 
-from models import ShoppingList
-from widgets.add_products_widget import AddProductsWidget
-from controllers import ProductController as PC
+from cookncart.widgets.add_products_widget import AddProductsWidget
+from cookncart.controllers import ProductController as PC
 
 class AddShoplistWidget(QWidget):
     """

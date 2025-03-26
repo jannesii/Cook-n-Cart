@@ -1,7 +1,7 @@
 # repositories.py
 
-from database import DatabaseManager
-from models import Recipe, Product, RecipeIngredient, ShoppingList, ShoppingListItem
+from cookncart.database import DatabaseManager
+from cookncart.models import Recipe, Product, RecipeIngredient, ShoppingList, ShoppingListItem
 from typing import List, Dict
 
 

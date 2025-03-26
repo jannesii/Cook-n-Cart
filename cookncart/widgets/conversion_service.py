@@ -1,5 +1,4 @@
 # File: conversion_service.py
-import requests
 
 class CurrencyConverter:
     def __init__(self, base_currency="EUR"):
@@ -9,20 +8,17 @@ class CurrencyConverter:
         self.i = 0
 
     def _fetch_rates(self):
-        """Fetches exchange rates once at initialization and stores them."""
-        api_url = f"https://api.exchangerate-api.com/v4/latest/{self.base_currency}"
-        try:
-            response = requests.get(api_url)
-            data = response.json()
-            self.rates = data.get("rates", {})
-            print(f"Fetched exchange rates")
-        except Exception as e:
-            print(f"Error fetching exchange rates during initialization: {e}")
-            # Fallback: use a default rate of 1.0 for any currency.
-            self.rates = {}
+        # Without external modules, we can't fetch rates from an API.
+        # Instead, we use default exchange rates.
+        self.rates = {
+            "EUR": 1.0,
+            "USD": 1.1,   # Example default values
+            "GBP": 0.9,
+            # Add more currencies as needed.
+        }
+        print("Using default exchange rates")
 
     def get_rate(self, target_currency: str) -> float:
-        """Returns the stored rate for the target currency or 1.0 if not found."""
         target_currency = target_currency.upper()
         return self.rates.get(target_currency, 1.0)
 

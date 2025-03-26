@@ -1,7 +1,6 @@
 # database.py
 
 import sqlite3
-from models import Recipe, Product, RecipeIngredient, ShoppingList, ShoppingListItem
 from typing import List, Dict
 import os
 
@@ -9,7 +8,7 @@ import os
 class DatabaseManager:
     _instance = None
 
-    def __init__(self, db_path=os.path.join(os.getcwd(), "utils", "cook_and_cart.db")):
+    def __init__(self, db_path="cookncart/utils/cook_and_cart.db"):
         if DatabaseManager._instance is not None:
             raise Exception("This class is a singleton!")
         else:

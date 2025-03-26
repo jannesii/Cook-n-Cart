@@ -4,7 +4,7 @@ from PySide6.QtWidgets import (
     QPushButton, QListWidget, QListWidgetItem, QStackedWidget, QMessageBox
 )
 from PySide6.QtCore import Signal, Qt
-from controllers import RecipeController, ProductController
+from cookncart.controllers import RecipeController, ProductController
 
 class ImportRecipeWidget(QWidget):
     # Signal emitted with a list of selected product dictionaries (each with id, quantity, unit)

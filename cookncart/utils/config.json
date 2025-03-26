@@ -1,0 +1,7 @@
+{
+    "settings": {
+        "currency": "$",
+        "weight_unit": "lb",
+        "volume_unit": "ml"
+    }
+}

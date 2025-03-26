@@ -5,9 +5,9 @@ from PySide6.QtWidgets import (
     QScrollArea, QStackedWidget, QFrame, QLineEdit
 )
 from PySide6.QtCore import Qt
-from widgets.add_shoplist_widget import AddShoplistWidget
-from widgets.shoplist_detail_widget import ShoplistDetailWidget
-from controllers import ProductController, ShoppingListController
+from cookncart.widgets.add_shoplist_widget import AddShoplistWidget
+from cookncart.widgets.shoplist_detail_widget import ShoplistDetailWidget
+from cookncart.controllers import ProductController, ShoppingListController
 
 TURKOOSI = "#00B0F0"
 HARMAA = "#808080"

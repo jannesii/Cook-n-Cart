@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "CookAndCart"
+version = "1.0.0"
+description = "A Python application for managing recipes and shopping lists"
+readme = "README.md"
+requires-python = ">=3.6"
+dependencies = [
+    "PySide6",
+    # add any other dependencies
+]

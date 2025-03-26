@@ -4,10 +4,10 @@ from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout,
     QHBoxLayout, QPushButton, QStackedWidget
 )
-from views.ostoslistat_page import OstolistatPage
-from views.reseptit_page import ReseptitPage
-from views.tuotteet_page import TuotteetPage
-from views.asetukset_page import AsetuksetPage
+from cookncart.views.ostoslistat_page import OstolistatPage
+from cookncart.views.reseptit_page import ReseptitPage
+from cookncart.views.tuotteet_page import TuotteetPage
+from cookncart.views.asetukset_page import AsetuksetPage
 
 
 TURKOOSI = "#00B0F0"

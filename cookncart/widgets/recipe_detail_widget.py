@@ -1,7 +1,7 @@
 # recipe_detail_widget.py
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QHBoxLayout
 from PySide6.QtCore import Qt, Signal
-from controllers import ProductController as PC  # Ensure this import exists
+from cookncart.controllers import ProductController as PC  # Ensure this import exists
 
 TURKOOSI = "#00B0F0"
 HARMAA = "#808080"

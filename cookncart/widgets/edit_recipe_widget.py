@@ -4,7 +4,7 @@ from PySide6.QtWidgets import (
     QLineEdit, QComboBox, QPushButton, QListWidget, QListWidgetItem, QTextEdit
 )
 from PySide6.QtCore import Signal
-from controllers import RecipeController, ProductController
+from cookncart.controllers import RecipeController, ProductController
 
 class EditRecipeWidget(QWidget):
     # Signal that emits the updated recipe object after saving

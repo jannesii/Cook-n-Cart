@@ -3,7 +3,7 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QMessageBox
 )
 from PySide6.QtCore import Signal, Qt
-from controllers import ProductController
+from cookncart.controllers import ProductController
 
 class EditProductWidget(QWidget):
     # Signal to emit the updated product after saving.

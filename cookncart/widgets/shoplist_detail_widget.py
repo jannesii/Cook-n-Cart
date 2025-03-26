@@ -7,11 +7,11 @@ from PySide6.QtWidgets import (
     QDialog
 )
 from PySide6.QtCore import Qt, Signal
-from controllers import ProductController as PC
-from controllers import ShoppingListController as SLC
-from models import ShoppingList, ShoppingListItem
-from widgets.add_products_widget import AddProductsWidget
-from widgets.import_recipe_widget import ImportRecipeWidget
+from cookncart.controllers import ProductController as PC
+from cookncart.controllers import ShoppingListController as SLC
+from cookncart.models import ShoppingList, ShoppingListItem
+from cookncart.widgets.add_products_widget import AddProductsWidget
+from cookncart.widgets.import_recipe_widget import ImportRecipeWidget
 
 TURKOOSI = "#00B0F0"
 HARMAA = "#808080"

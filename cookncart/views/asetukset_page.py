@@ -7,14 +7,14 @@ from PySide6.QtWidgets import (
     QLabel, QComboBox, QFrame, 
 )
 
-from controllers import ProductController as PC
-from controllers import ShoppingListController as SLC
-from controllers import RecipeController as RC
+from cookncart.controllers import ProductController as PC
+from cookncart.controllers import ShoppingListController as SLC
+from cookncart.controllers import RecipeController as RC
 
 
 TURKOOSI = "#00B0F0"
 HARMAA = "#808080"
-CONFIG_FILE = "utils/config.json"
+CONFIG_FILE = "cookncart/utils/config.json"
 
 RecipeController = RC()
 ProductController = PC()

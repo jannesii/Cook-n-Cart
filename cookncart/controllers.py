@@ -1,12 +1,11 @@
 # controllers.py
-from widgets.conversion_service import ConversionService
-from repositories import ProductRepository
-from models import Product, ShoppingListItem
 from typing import Dict, List
 import json
-from models import Recipe, RecipeIngredient, Product, ShoppingList, ShoppingListItem
-from repositories import RecipeRepository, ProductRepository, ShoppingListRepository
 from typing import List, Dict
+
+from cookncart.widgets.conversion_service import ConversionService
+from cookncart.models import Recipe, RecipeIngredient, Product, ShoppingList, ShoppingListItem
+from cookncart.repositories import RecipeRepository, ProductRepository, ShoppingListRepository
 CONFIG_FILE = "utils/config.json"
 
 cs = ConversionService("EUR")

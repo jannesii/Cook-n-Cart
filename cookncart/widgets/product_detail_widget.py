@@ -5,11 +5,11 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QPushButton, QHBoxLayout, QStackedWidget
 )
 from PySide6.QtCore import Qt
-from controllers import ProductController, ShoppingListController, RecipeController
-from models import Product
+from cookncart.controllers import ProductController, ShoppingListController, RecipeController
+from cookncart.models import Product
 
 # Import the new edit product widget (make sure this file exists)
-from widgets.edit_product_widget import EditProductWidget
+from cookncart.widgets.edit_product_widget import EditProductWidget
 
 class ProductDetailWidget(QWidget):
     def __init__(self, parent=None):

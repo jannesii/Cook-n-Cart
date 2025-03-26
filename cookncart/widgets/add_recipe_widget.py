@@ -44,7 +44,7 @@ class AddRecipeWidget(QWidget):
         self.form_page.setLayout(self._create_form_layout())
 
         # Page 1: Tuotteiden valinta (oletetaan, että AddProductsWidget on jo toteutettu)
-        from widgets.add_products_widget import AddProductsWidget
+        from cookncart.widgets.add_products_widget import AddProductsWidget
         self.products_page = AddProductsWidget(
             product_controller=self.product_controller,
             parent=self
@@ -52,7 +52,7 @@ class AddRecipeWidget(QWidget):
         self.products_page.finished.connect(self.on_products_selected)
 
         # Page 2: Tagien valinta
-        from widgets.add_tags_widget import AddTagsWidget
+        from cookncart.widgets.add_tags_widget import AddTagsWidget
         self.tags_page = AddTagsWidget(
             recipe_controller=self.recipe_controller,
             parent=self
