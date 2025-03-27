@@ -56,6 +56,7 @@ class AsetuksetPage(QWidget):
         def load_settings():
             """ Lataa asetukset config.json-tiedostosta. """
             try:
+                return {"currency": "€", "weight_unit": "kg", "volume_unit": "l"}  # Oletusasetukset
                 with open(CONFIG_FILE, "r", encoding="utf-8") as file:
                     return json.load(file).get("settings", {})
             except (FileNotFoundError, json.JSONDecodeError):
@@ -83,7 +84,7 @@ class AsetuksetPage(QWidget):
         currency_label.setObjectName("asetukset_label")
 
         self.currency_combo = QComboBox()
-        self.currency_combo.addItems(["€", "$", "£"])
+        self.currency_combo.addItems(["€"])
         self.currency_combo.setObjectName("asetukset_combobox")
 
 
@@ -103,7 +104,7 @@ class AsetuksetPage(QWidget):
         weight_label.setObjectName("asetukset_label")
 
         self.weight_combo = QComboBox()
-        self.weight_combo.addItems(["kg", "g", "lb", "oz"])
+        self.weight_combo.addItems(["kg"])
         self.weight_combo.setObjectName("asetukset_combobox")
 
         self.weight_combo.setCurrentText(self.settings.get("weight_unit", "kg"))
@@ -130,7 +131,7 @@ class AsetuksetPage(QWidget):
         volume_label.setObjectName("asetukset_label")
 
         self.volume_combo = QComboBox()
-        self.volume_combo.addItems(["l", "ml", "gallon", "fl oz"])
+        self.volume_combo.addItems(["l"])
         self.volume_combo.setObjectName("asetukset_combobox")
 
         self.volume_combo.setCurrentText(self.settings.get("volume_unit", "l"))

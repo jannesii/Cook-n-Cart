@@ -3,12 +3,11 @@ from typing import Dict, List
 import json
 from typing import List, Dict
 
-from widgets_conversion_service import ConversionService
 from root_models import Recipe, RecipeIngredient, Product, ShoppingList, ShoppingListItem
 from root_repositories import RecipeRepository, ProductRepository, ShoppingListRepository
 CONFIG_FILE = "utils/config.json"
 
-cs = ConversionService("EUR")
+
 class RecipeController:
     def __init__(self):
         self.repo = RecipeRepository()
@@ -89,7 +88,6 @@ class ShoppingListController:
     def __init__(self):
         self.repo = ShoppingListRepository()
         self.product_repo = ProductRepository()
-        self.conversion_service = cs  # Base currency EUR
         self.weight_unit, self.volume_unit = self.load_units()
 
     def load_units(self):
@@ -124,10 +122,6 @@ class ShoppingListController:
         self.volume_unit = new_unit
         self.save_units()
 
-    def convert_to_standard_unit(self, unit: str, quantity: float) -> float:
-        # All conversion is now done via the ConversionService’s unit_converter.
-        return self.conversion_service.convert_unit(unit, quantity)
-
     def calculate_total_cost(self, shopping_list_id: int):
 
         items = self.repo.get_items_by_shopping_list_id(shopping_list_id)
@@ -137,8 +131,7 @@ class ShoppingListController:
             product = self.product_repo.get_product_by_id(item.product_id)
             if product:
                 # Use the standardized conversion from the ProductController.
-                standard_quantity = self.conversion_service.convert_unit(product.unit, item.quantity)
-                total_cost += product.price_per_unit * standard_quantity
+                total_cost += product.price_per_unit * item.quantity
 
         total_cost = round(total_cost, 2)
         # self.repo.update_total_sum(shopping_list_id, total_cost)
@@ -150,7 +143,7 @@ class ShoppingListController:
         shopping_lists = self.repo.get_all_shopping_lists()
 
         # Populate items for each shopping list
-        for shopping_list in shopping_lists.values(): 
+        for shopping_list in shopping_lists.values():
             shopping_list.items = self.repo.get_items_by_shopping_list_id(
                 shopping_list.id)
 
@@ -280,13 +273,9 @@ class ShoppingListController:
         return shoppinglist
 
 
-CONFIG_FILE = "utils/config.json"
-
-
 class ProductController:
     def __init__(self):
         self.repo = ProductRepository()
-        self.conversion_service = cs  # Base currency EUR
         self.weight_unit, self.volume_unit = self.load_units()
         self.currency, self.currency_multiplier = self.load_currency()
 
@@ -295,12 +284,8 @@ class ProductController:
             with open(CONFIG_FILE, "r", encoding="utf-8") as file:
                 settings = json.load(file).get("settings", {})
                 currency = settings.get("currency", "€")
-            # Map symbols to ISO codes:
-            currency_map = {"€": "EUR", "$": "USD", "£": "GBP"}
-            target_currency = currency_map.get(currency, "EUR")
-            # Get dynamic multiplier from the conversion service
-            multiplier = self.conversion_service.currency_converter.get_rate(
-                target_currency)
+
+            multiplier = 1
             return currency, multiplier
         except (FileNotFoundError, json.JSONDecodeError):
             return "€", 1
@@ -308,9 +293,6 @@ class ProductController:
     def get_price_with_currency(self, price_per_unit: float) -> str:
         converted_price = price_per_unit * self.currency_multiplier
         return f"{converted_price:.2f} {self.currency}"
-
-    def convert_quantity(self, unit: str, quantity: float) -> float:
-        return self.conversion_service.convert_unit(unit, quantity)
 
     def load_units(self):
         # ... (existing unit loading code)
@@ -333,10 +315,6 @@ class ProductController:
 
     def get_items_by_shopping_list_id(self, shopping_list_id: int) -> List[ShoppingListItem]:
         return self.repo.get_products_by_shoplist_id(shopping_list_id)
-
-    def convert_to_standard_unit(self, unit: str, quantity: float) -> float:
-        # All conversion is now done via the ConversionService’s unit_converter.
-        return self.conversion_service.convert_unit(unit, quantity)
 
     def calculate_total_cost(self, product_id: int, quantity: float):
 

@@ -11,6 +11,7 @@ from root_models import Product
 # Import the new edit product widget (make sure this file exists)
 from widgets_edit_product_widget import EditProductWidget
 
+
 class ProductDetailWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -82,16 +83,8 @@ class ProductDetailWidget(QWidget):
             weight_unit = self.shoplist_controller.weight_unit
             volume_unit = self.shoplist_controller.volume_unit
 
-            # Determine unit conversion
-            if product.unit.lower() in ["kg", "g", "lb", "oz"]:
-                converted_quantity = self.product_controller.convert_to_standard_unit(product.unit, 1)
-                unit_display = f"{converted_quantity} {weight_unit}"
-            elif product.unit.lower() in ["l", "ml", "fl oz", "gal"]:
-                converted_quantity = self.product_controller.convert_to_standard_unit(product.unit, 1)
-                unit_display = f"{converted_quantity} {volume_unit}"
-            else:
-                converted_quantity = 1
-                unit_display = product.unit
+            converted_quantity = 1
+            unit_display = product.unit
 
             # Convert price based on standardized unit
             converted_price = product.price_per_unit * converted_quantity
@@ -99,7 +92,8 @@ class ProductDetailWidget(QWidget):
 
             # Update detail view labels
             self.name_label.setText(f"Nimi: {product.name}")
-            self.price_label.setText(f"Hinta: {self.product_controller.get_price_with_currency(product.price_per_unit)}")
+            self.price_label.setText(
+                f"Hinta: {price_text}")
             self.category_label.setText(f"Kategoria: {product.category}")
             self.unit_label.setText(f"Yksikkö: {unit_display}")
             self.created_at_label.setText(f"Luotu: {product.created_at}")

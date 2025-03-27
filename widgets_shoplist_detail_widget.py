@@ -32,7 +32,6 @@ class ShoplistDetailWidget(QWidget):
         self.layout.addWidget(self.stacked_widget)
         
         self.pc = PC()
-        self.cs = self.pc.conversion_service
         
         # Page 0: Detail view
         self.detail_page = QWidget()
@@ -113,8 +112,6 @@ class ShoplistDetailWidget(QWidget):
 
         self.product_list.blockSignals(True)  # Block signals during list update
 
-        # Get a ProductController instance and its conversion service
-        cs = self.cs  # ConversionService instance
         # User’s preferred units from ShoppingListController
         user_weight_unit = self.shoplist_controller.weight_unit.lower()
         user_volume_unit = self.shoplist_controller.volume_unit.lower()
@@ -131,15 +128,15 @@ class ShoplistDetailWidget(QWidget):
                     print("Conversion:", item.quantity, converted_quantity)
                 elif prod_unit in ["kg", "g", "lb", "oz"]:
                     # Get conversion factors from the conversion service's weight table.
-                    factor_user = cs.unit_converter.weight_conversion.get(user_weight_unit, 1)
-                    factor_product = cs.unit_converter.weight_conversion.get(prod_unit, 1)
+                    factor_user = 1
+                    factor_product = 1
                     # Convert the quantity entered in the user's preferred weight unit to the product's unit.
                     converted_quantity = item.quantity * (factor_user / factor_product)
                     print("Conversion:", prod_unit, factor_user, factor_product, item.quantity, converted_quantity)
                 # For volume-based products
                 elif prod_unit in ["l", "ml", "fl oz", "gal"]:
-                    factor_user = cs.unit_converter.volume_conversion.get(user_volume_unit, 1)
-                    factor_product = cs.unit_converter.volume_conversion.get(prod_unit, 1)
+                    factor_user = 1
+                    factor_product = 1
                     converted_quantity = item.quantity * (factor_user / factor_product)
                     print("Conversion:", prod_unit, factor_user, factor_product, item.quantity, converted_quantity)
                 else:
@@ -228,13 +225,13 @@ class ShoplistDetailWidget(QWidget):
                     converted_quantity = item.quantity
                 # Weight-based products: convert using weight factors.
                 elif prod_unit in ["kg", "g", "lb", "oz"]:
-                    factor_user = cs.unit_converter.weight_conversion.get(user_weight_unit, 1)
-                    factor_product = cs.unit_converter.weight_conversion.get(prod_unit, 1)
+                    factor_user = 1
+                    factor_product = 1
                     converted_quantity = item.quantity * (factor_user / factor_product)
                 # Volume-based products: convert using volume factors.
                 elif prod_unit in ["l", "ml", "fl oz", "gal"]:
-                    factor_user = cs.unit_converter.volume_conversion.get(user_volume_unit, 1)
-                    factor_product = cs.unit_converter.volume_conversion.get(prod_unit, 1)
+                    factor_user = 1
+                    factor_product = 1
                     converted_quantity = item.quantity * (factor_user / factor_product)
                 else:
                     converted_quantity = item.quantity
