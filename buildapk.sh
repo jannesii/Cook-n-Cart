@@ -1,5 +1,5 @@
 pyside6-android-deploy --name "Cook-n-Cart" \
-	--wheel-pyside=/home/jannesi/Cook-n-Cart1/whl/PySide6-6.8.0.2-6.8.0-cp311-cp311-android_aarch64.whl \
-	--wheel-shiboken=/home/jannesi/Cook-n-Cart1/whl/shiboken6-6.8.0.2-6.8.0-cp311-cp311-android_aarch64.whl \
-	--ndk-path=/home/jannesi/.pyside6_android_deploy/android-ndk/android-ndk-r26b/ \
-	--sdk-path=/home/jannesi/.pyside6_android_deploy/android-sdk/
+	--wheel-pyside=~/Cook-n-Cart/whl/PySide6-6.8.0.2-6.8.0-cp311-cp311-android_aarch64.whl \
+	--wheel-shiboken=~/Cook-n-Cart/whl/shiboken6-6.8.0.2-6.8.0-cp311-cp311-android_aarch64.whl \
+	--ndk-path=~/.pyside6_android_deploy/android-ndk/android-ndk-r26b/ \
+	--sdk-path=~/.pyside6_android_deploy/android-sdk/
