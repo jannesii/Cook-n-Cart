@@ -1,0 +1,6 @@
+<rules><dependencies>
+<lib name="Qt6Nfc_arm64-v8a"><depends>
+<jar bundling="1" file="jar/Qt6AndroidNfc.jar"  />
+<permission name="android.permission.NFC" />
+</depends></lib>
+</dependencies></rules>

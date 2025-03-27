@@ -1,0 +1,6 @@
+<rules><dependencies>
+<lib name="Qt6Quick_arm64-v8a"><depends>
+<jar bundling="1" file="jar/Qt6AndroidQuick.jar"  />
+<bundled file="plugins/scenegraph" type="plugin_dir"/>
+</depends></lib>
+</dependencies></rules>
