@@ -46,37 +46,21 @@ class ReseptitPage(QWidget):
         self.page_list = QWidget()
         self.page_list.setLayout(self._create_list_layout())
 
-        # Page 1: Detail view
-        self.page_detail = RecipeDetailWidget()
-        self.page_detail.back_btn.clicked.connect(self.back_to_list)
-        # When the edit button is clicked in the detail view,
-        # emit a signal with the current recipe.
-        self.page_detail.edit_recipe_requested.connect(self.open_edit_recipe)
-        self.page_detail.delete_recipe_requested.connect(self.handle_delete_recipe)
 
-        # Page 2: Add recipe view (for creating new recipes)
-        self.page_add_recipe = AddRecipeWidget(
-            recipe_controller=RecipeController,
-            product_controller=ProductController,
-            parent=self
-        )
-        self.page_add_recipe.recipe_added.connect(self.on_recipe_added)
-        self.page_add_recipe.cancel_btn.clicked.connect(self.back_to_list)
 
-        # Page 3: Edit recipe view (separate widget for editing)
-        self.page_edit_recipe = EditRecipeWidget(parent=self)
-        self.page_edit_recipe.recipe_updated.connect(self.on_recipe_updated)
-        self.page_edit_recipe.cancel_btn.clicked.connect(self.back_to_recipe_detail)
-        # (Optionally, connect a cancel button in EditRecipeWidget to back_to_list)
 
+
+
+
+        self.page_detail = None
+        self.page_add_recipe = None
+        self.page_edit_recipe = None
+        
         # Add pages to the stacked widget
         self.stacked.addWidget(self.page_list)         # index 0
-        self.stacked.addWidget(self.page_detail)         # index 1
-        self.stacked.addWidget(self.page_add_recipe)       # index 2
-        self.stacked.addWidget(self.page_edit_recipe)      # index 3
 
         # Set default page to recipe list
-        self.stacked.setCurrentIndex(0)
+        self.stacked.setCurrentWidget(self.page_list)
         main_layout.addWidget(self.stacked, 1)
         self.setLayout(main_layout)
 
@@ -161,26 +145,52 @@ class ReseptitPage(QWidget):
         """
         Loads the recipe into the detail view and switches to it.
         """
+        # Page 1: Detail view
+        self.page_detail = RecipeDetailWidget()
+        self.page_detail.back_btn.clicked.connect(self.back_to_list)
+        # When the edit button is clicked in the detail view,
+        # emit a signal with the current recipe.
+        self.page_detail.edit_recipe_requested.connect(self.open_edit_recipe)
+        self.page_detail.delete_recipe_requested.connect(self.handle_delete_recipe)
+        self.stacked.addWidget(self.page_detail)         # index 1
         self.page_detail.set_recipe(recipe)
-        self.stacked.setCurrentIndex(1)
+        self.stacked.setCurrentWidget(self.page_detail)
     
     def back_to_recipe_detail(self):
         # Switch back to the recipe detail view (index 1)
-        self.stacked.setCurrentIndex(1)
+        self.stacked.setCurrentWidget(self.page_detail)
+        
+        
 
     def open_add_recipe_page(self):
         """
         Opens the add recipe view and resets its fields.
         """
+        # Page 2: Add recipe view (for creating new recipes)
+        self.page_add_recipe = AddRecipeWidget(
+            recipe_controller=RecipeController,
+            product_controller=ProductController,
+            parent=self
+        )
+        self.page_add_recipe.recipe_added.connect(self.on_recipe_added)
+        self.page_add_recipe.cancel_btn.clicked.connect(self.back_to_list)
+        self.stacked.addWidget(self.page_add_recipe)       # index 2
+        
         self.page_add_recipe.setFieldsToDefaults()
-        self.stacked.setCurrentIndex(2)
+        self.stacked.setCurrentWidget(self.page_add_recipe)
 
     def open_edit_recipe(self, recipe):
         """
         Opens the edit recipe view with the selected recipe prepopulated.
         """
+        # Page 3: Edit recipe view (separate widget for editing)
+        self.page_edit_recipe = EditRecipeWidget(parent=self)
+        self.page_edit_recipe.recipe_updated.connect(self.on_recipe_updated)
+        self.page_edit_recipe.cancel_btn.clicked.connect(self.back_to_recipe_detail)
+        self.stacked.addWidget(self.page_edit_recipe)      # index 3
+        
         self.page_edit_recipe.set_recipe(recipe)
-        self.stacked.setCurrentIndex(3)
+        self.stacked.setCurrentWidget(self.page_edit_recipe)
 
     def back_to_list(self):
         """
@@ -188,7 +198,30 @@ class ReseptitPage(QWidget):
         """
         self.update_recipes_dict()
         self.populate_recipe_list()
-        self.stacked.setCurrentIndex(0)
+        self.stacked.setCurrentWidget(self.page_list)
+        
+        # Remove the detail and add recipe pages from the stack
+        if self.page_detail:
+            print("Removing page_detail")
+            self.stacked.removeWidget(self.page_detail)
+            self.page_detail.deleteLater()
+            del self.page_detail
+            self.page_detail = None
+            
+        if self.page_add_recipe:
+            print("Removing page_add_recipe")
+            self.stacked.removeWidget(self.page_add_recipe)
+            self.page_add_recipe.deleteLater()
+            del self.page_add_recipe
+            self.page_add_recipe = None
+        
+        if self.page_edit_recipe:
+            print("Removing page_edit_recipe")
+            self.stacked.removeWidget(self.page_edit_recipe)
+            self.page_edit_recipe.deleteLater()
+            del self.page_edit_recipe
+            self.page_edit_recipe = None
+            
 
     def on_recipe_added(self, recipe):
         """

@@ -35,28 +35,17 @@ class OstolistatPage(QWidget):
         # Page 0: List view
         self.page_list = QWidget()
         self.page_list.setLayout(self._create_list_layout())
+        self.stacked.addWidget(self.page_list)
         
         # Page 1: Add shopping list view
-        self.page_add_shoplist = AddShoplistWidget(
-            shoplist_controller=self.shoplist_controller,
-            product_controller=self.product_controller,
-            parent=self
-        )
-        self.page_add_shoplist.shoplist_created.connect(self.on_shoplist_created)
-        self.page_add_shoplist.cancel_btn.clicked.connect(self.back_to_list)
-        
+        self.page_add_shoplist = None
+
         # Page 2: Detail view
-        self.page_detail = ShoplistDetailWidget()
-        # When finished (e.g. after deletion or when user clicks back), return to list view.
-        self.page_detail.finished.connect(self.back_to_list)
-        
-        self.stacked.addWidget(self.page_list)       # index 0: List view
-        self.stacked.addWidget(self.page_add_shoplist) # index 1: Add view
-        self.stacked.addWidget(self.page_detail)       # index 2: Detail view
+        self.page_detail = None
         
         main_layout.addWidget(self.stacked, 1)
         self.setLayout(main_layout)
-        self.stacked.setCurrentIndex(0)
+        self.stacked.setCurrentWidget(self.page_list)
     
     def _create_list_layout(self):
         layout = QVBoxLayout()
@@ -126,18 +115,58 @@ class OstolistatPage(QWidget):
             if widget:
                 widget.setVisible(search_text in widget.text().lower())
     
-    def display_shoplist_detail(self, shoplist_id):
-        shoplist = self.shoplist_controller.get_shopping_list_by_id(shoplist_id)
-        self.page_detail.set_shopping_list(shoplist)
-        self.stacked.setCurrentIndex(2)
     
     def open_add_shoplist_page(self):
-        self.stacked.setCurrentIndex(1)
+        self.page_add_shoplist = AddShoplistWidget(
+            shoplist_controller=self.shoplist_controller,
+            product_controller=self.product_controller,
+            parent=self
+        )
+        self.page_add_shoplist.shoplist_created.connect(self.on_shoplist_created)
+        self.page_add_shoplist.cancel_btn.clicked.connect(self.back_to_list)
+        self.stacked.addWidget(self.page_add_shoplist)
+        self.stacked.setCurrentWidget(self.page_add_shoplist)
+        
+    def display_shoplist_detail(self, shoplist_id):
+        shoplist = self.shoplist_controller.get_shopping_list_by_id(shoplist_id) 
+        self.page_detail = ShoplistDetailWidget()
+        self.page_detail.set_shopping_list(shoplist)
+        # When finished (e.g. after deletion or when user clicks back), return to list view.
+        self.page_detail.finished.connect(self.back_to_list)
+        self.stacked.addWidget(self.page_detail)
+        self.stacked.setCurrentWidget(self.page_detail)
     
     def back_to_list(self):
+        self.rm_add_shoplist_widget()
+        self.rm_shoplist_detail_widget()
         self.update_shopping_lists()
         self.populate_shopping_list()
-        self.stacked.setCurrentIndex(0)
+        self.stacked.setCurrentWidget(self.page_list)
     
     def on_shoplist_created(self, shoplist_id):
         self.back_to_list()
+        
+    def rm_page_list(self):
+        if self.page_list:
+            print("Removing page_list")
+            self.stacked.removeWidget(self.page_list)
+            self.page_list.deleteLater()
+            del self.page_list
+            self.page_list = None
+        
+    def rm_add_shoplist_widget(self):
+        if self.page_add_shoplist:
+            print("Removing page_add_shoplist")
+            self.stacked.removeWidget(self.page_add_shoplist)
+            self.page_add_shoplist.deleteLater()
+            del self.page_add_shoplist
+            self.page_add_shoplist = None
+        
+    def rm_shoplist_detail_widget(self):
+        if self.page_detail:
+            print("Removing page_detail")
+            self.stacked.removeWidget(self.page_detail)
+            self.page_detail.deleteLater()
+            del self.page_detail
+            self.page_detail = None
+

@@ -1,12 +1,9 @@
-# File: add_products_widget.py
-
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QLineEdit, QListWidget, QListWidgetItem, QFormLayout, QComboBox, QCheckBox, QMessageBox
+    QLineEdit, QListWidget, QListWidgetItem, QComboBox, QCheckBox, QMessageBox
 )
 from PySide6.QtGui import QDoubleValidator
 from PySide6.QtCore import Signal, Qt, QTimer
-from PySide6.QtCore import QStringListModel
 
 TURKOOSI = "#00B0F0"
 HARMAA = "#808080"
@@ -38,12 +35,12 @@ class ProductItemWidget(QWidget):
         self.quantity_edit = QLineEdit("1.0")
         self.quantity_edit.setFixedWidth(50)
         validator = QDoubleValidator(0, 10000, 2, self)
-        #self.quantity_edit.setValidator(validator)
+        # self.quantity_edit.setValidator(validator)
         layout.addWidget(self.quantity_edit)
         
         # Unit selection drop-down
         self.unit_combo = QComboBox()
-        self.unit_combo.addItems(["kpl", "g", "kg", "ml", "l", "oz", "lb"])
+        self.unit_combo.addItems(["kpl", "g", "kg", "ml", "l"])
         layout.addWidget(self.unit_combo)
         
         self.setLayout(layout)
@@ -86,6 +83,12 @@ class AddProductsWidget(QWidget):
         self.product_list = QListWidget()
         self.outer_layout.addWidget(self.product_list, 1)
         
+        # Set up lazy loading variables
+        self.load_increment = 50  # how many items to load at a time
+        self.items_loaded = 0
+        self.current_sorted_products = []
+        self.product_list.verticalScrollBar().valueChanged.connect(self._on_scroll)
+        
         # --- Buttons at the bottom ---
         btn_layout = QHBoxLayout()
         add_btn = QPushButton("Lisää tuote (uusi)")
@@ -102,7 +105,7 @@ class AddProductsWidget(QWidget):
         
         self.setLayout(self.outer_layout)
         
-        # Initially populate the product list.
+        # Initially populate the product list (lazy loading only the first batch)
         self._refresh_product_list()
 
     def _on_search_timeout(self):
@@ -118,10 +121,7 @@ class AddProductsWidget(QWidget):
             self._refresh_product_list(filtered_products=filtered)
 
     def _refresh_product_list(self, filtered_products=None):
-        """Rebuilds the product list display.
-        
-        Selected products are sorted to appear at the top.
-        """
+        """Rebuilds the product list display using lazy loading."""
         self.product_list.clear()
         products_to_show = filtered_products if filtered_products is not None else list(self.all_products.values())
         
@@ -132,8 +132,15 @@ class AddProductsWidget(QWidget):
             products_to_show,
             key=lambda p: (0 if p.id in selected_ids else 1, p.name.lower())
         )
-        
-        for product in sorted_products:
+        self.current_sorted_products = sorted_products
+        self.items_loaded = 0
+        self._load_next_items()
+
+    def _load_next_items(self):
+        """Loads the next batch of items into the list."""
+        start = self.items_loaded
+        end = min(self.items_loaded + self.load_increment, len(self.current_sorted_products))
+        for product in self.current_sorted_products[start:end]:
             # Check if this product is already selected.
             selection = next((sp for sp in self.selected_products if sp.get("id") == product.id), None)
             selected = bool(selection)
@@ -145,11 +152,19 @@ class AddProductsWidget(QWidget):
                 index = widget.unit_combo.findText(current_unit)
                 if index != -1:
                     widget.unit_combo.setCurrentIndex(index)
-            item = QListWidgetItem(self.product_list)
+            item = QListWidgetItem()
             # Set the item's text to the product name (helps with sorting)
             item.setText(product.name)
             item.setSizeHint(widget.sizeHint())
+            self.product_list.addItem(item)
             self.product_list.setItemWidget(item, widget)
+        self.items_loaded = end
+
+    def _on_scroll(self, value):
+        """Loads more items when the user scrolls to the bottom."""
+        if value == self.product_list.verticalScrollBar().maximum():
+            if self.items_loaded < len(self.current_sorted_products):
+                self._load_next_items()
 
     def _finish_selection(self):
         """Gathers all checked products and emits the finished signal with a list of dicts."""

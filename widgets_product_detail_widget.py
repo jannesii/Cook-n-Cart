@@ -34,10 +34,8 @@ class ProductDetailWidget(QWidget):
         self.stacked.addWidget(self.detail_view)  # index 0
 
         # Page 1: Edit product view
-        self.edit_view = EditProductWidget()
-        self.edit_view.product_updated.connect(self._on_product_updated)
-        self.edit_view.edit_cancelled.connect(self._on_edit_cancelled)
-        self.stacked.addWidget(self.edit_view)  # index 1
+        self.edit_view = None
+
 
         self.setLayout(self.main_layout)
 
@@ -105,21 +103,36 @@ class ProductDetailWidget(QWidget):
             self.unit_label.setText("")
             self.created_at_label.setText("")
             self.updated_at_label.setText("")
-        # Also update the edit view with current product data
-        self.edit_view.set_product(product)
         # Ensure the detail view is shown
         self.stacked.setCurrentIndex(0)
 
     def _switch_to_edit_view(self):
         """Switches the stacked widget to display the edit product view."""
-        self.stacked.setCurrentIndex(1)
+        self.edit_view = EditProductWidget()
+        self.edit_view.product_updated.connect(self._on_product_updated)
+        self.edit_view.edit_cancelled.connect(self._on_edit_cancelled)
+        self.stacked.addWidget(self.edit_view)  # index 1
+        self.edit_view.set_product(self.product)
+        
+        self.stacked.setCurrentWidget(self.edit_view)
 
     def _on_product_updated(self, updated_product):
         """Called when the product is updated via the edit widget."""
         self.set_product(updated_product)
         # Switch back to the detail view
-        self.stacked.setCurrentIndex(0)
+        self.stacked.setCurrentWidget(self.detail_view)
+        self.rm_edit_view()
 
     def _on_edit_cancelled(self):
         """Called when editing is cancelled; returns to the detail view."""
-        self.stacked.setCurrentIndex(0)
+        self.stacked.setCurrentWidget(self.detail_view)
+        self.rm_edit_view()
+
+    def rm_edit_view(self):
+        """Removes the edit view from the stacked widget."""
+        if self.edit_view:
+            print("Removing edit_view")
+            self.stacked.removeWidget(self.edit_view)
+            self.edit_view.deleteLater()
+            del self.edit_view
+            self.edit_view = None

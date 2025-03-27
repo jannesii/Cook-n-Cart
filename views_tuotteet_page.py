@@ -2,8 +2,8 @@
 
 import sys
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
-    QPushButton, QScrollArea, QStackedWidget, 
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel,
+    QPushButton, QScrollArea, QStackedWidget,
     QFrame, QLineEdit, QCompleter, QFormLayout
 )
 from PySide6.QtCore import Qt, QStringListModel
@@ -19,6 +19,7 @@ HARMAA = "#808080"
 RecipeController = RC()
 ProductController = PC()
 ShoppingListController = SLC()
+
 
 class TuotteetPage(QWidget):
     """
@@ -41,22 +42,17 @@ class TuotteetPage(QWidget):
         self.page_list = QWidget()
         self.page_list.setLayout(self._create_list_layout())
 
-        # Page 1 (add product view)
-        self.page_add_form = QWidget()
-        self.page_add_form.setLayout(self._create_add_form_layout())
+        self.page_add_form = None
+        self.page_detail = None
 
-        # page 2 (detail view)
-        self.page_detail = ProductDetailWidget()
-        #hook the "Back" button in ProductDetailWidget
-        self.page_detail.back_btn.clicked.connect(self.back_to_list)
+
 
         self.stacked.addWidget(self.page_list)      # index 0
-        self.stacked.addWidget(self.page_add_form)  # index 1
-        self.stacked.addWidget(self.page_detail)    # index 2
         # Start with the list page
-        self.stacked.setCurrentIndex(0)
 
+        self.setLayout(main_layout)
         main_layout.addWidget(self.stacked, 1)
+        self.stacked.setCurrentWidget(self.page_list)
 
     def _create_list_layout(self):
         layout = QVBoxLayout()
@@ -74,7 +70,6 @@ class TuotteetPage(QWidget):
         self.new_button.clicked.connect(self.display_add_product)
 
         self.search_bar.setObjectName("top_bar_search_bar")
-
 
         top_bar_layout.addWidget(self.title_label)
         top_bar_layout.addStretch()
@@ -112,7 +107,8 @@ class TuotteetPage(QWidget):
 
         # Fetch all categories and ensure uniqueness
         all_categories = ProductController.get_all_categories()
-        unique_categories = sorted(set(all_categories))  # Ensures unique and sorted categories
+        # Ensures unique and sorted categories
+        unique_categories = sorted(set(all_categories))
 
         categories_completer = QCompleter(unique_categories)
         categories_completer.setCaseSensitivity(Qt.CaseInsensitive)
@@ -134,7 +130,7 @@ class TuotteetPage(QWidget):
 
         back_btn = QPushButton("Takaisin")
         back_btn.setObjectName("gray_button")
-        back_btn.clicked.connect(self._back_to_product_list)
+        back_btn.clicked.connect(self.back_to_list)
 
         btn_layout.addWidget(save_btn)
         btn_layout.addWidget(back_btn)
@@ -182,7 +178,7 @@ class TuotteetPage(QWidget):
         self.category_edit.clear()
 
         # Go back to page 0 and refresh the product list
-        self._back_to_product_list()
+        self.back_to_list()
 
     def _update_category_completer(self):
         """
@@ -191,15 +187,6 @@ class TuotteetPage(QWidget):
         all_categories = ProductController.get_all_categories()
         unique_categories = sorted(set(all_categories))
         self.category_edit.completer().setModel(QStringListModel(unique_categories))
-
-    def _back_to_product_list(self):
-        """
-        Switch from add form (page 1) back to list (page 0).
-        """
-        self.stacked.setCurrentIndex(0)
-
-    def display_add_product(self):
-        self.stacked.setCurrentIndex(1)
 
     def update_products_dict(self):
         """
@@ -222,7 +209,8 @@ class TuotteetPage(QWidget):
                     widget.hide()
             else:
                 # Optionally, log or handle the unexpected None widget
-                print(f"Warning: No widget found at index {i} during filtering.")
+                print(
+                    f"Warning: No widget found at index {i} during filtering.")
 
     def populate_product_list(self):
         """
@@ -238,7 +226,7 @@ class TuotteetPage(QWidget):
                 # If the item is a layout or spacer, just remove it
                 if item.layout():
                     self._clear_layout(item.layout())
-        
+
         # Sort products by name (case-insensitive)
         sorted_products = sorted(
             self.products_dict.values(),
@@ -250,7 +238,8 @@ class TuotteetPage(QWidget):
             btn = QPushButton(f"{product.name}")
             btn.setObjectName("main_list_button")
             # Connect the button to a detailed view
-            btn.clicked.connect(lambda checked=False, p=product: self.show_product_details(p))
+            btn.clicked.connect(lambda checked=False,
+                                p=product: self.show_product_details(p))
             self.scroll_layout.addWidget(btn)
             # Optionally, connect the button to a detailed view or action
             # btn.clicked.connect(lambda checked, p=product: self.view_product_details(p))
@@ -259,23 +248,53 @@ class TuotteetPage(QWidget):
         # Ensure only one stretch is present
         self.scroll_layout.addStretch()
 
+    def display_add_product(self):
+        # Page 1 (add product view)
+        self.page_add_form = QWidget()
+        self.page_add_form.setLayout(self._create_add_form_layout())
+        self.stacked.addWidget(self.page_add_form)  # index 1
+        self.stacked.setCurrentWidget(self.page_add_form)
+
     def show_product_details(self, product):
         """
         Switch to the detail page and show the details of the given product.
         """
+        # page 2 (detail view)
+        self.page_detail = ProductDetailWidget()
+        # hook the "Back" button in ProductDetailWidget
+        self.page_detail.back_btn.clicked.connect(self.back_to_list)
+        self.stacked.addWidget(self.page_detail)    # index 2
+        
         self.page_detail.set_product(product)
         self.page_detail.back_btn.clicked.connect(self.back_to_list)
-        self.page_detail.remove_btn.clicked.connect(lambda: self.remove_product(product))
-        self.stacked.setCurrentIndex(2)
+        self.page_detail.remove_btn.clicked.connect(
+            lambda: self.remove_product(product))
+        self.stacked.setCurrentWidget(self.page_detail)
+
+    def back_to_list(self):
+        self.stacked.setCurrentWidget(self.page_list)
+        
+        # Clear the add form if it exists
+        if self.page_add_form:
+            print("Removing page_add_form")
+            self.stacked.removeWidget(self.page_add_form)
+            self.page_add_form.deleteLater()
+            del self.page_add_form
+            self.page_add_form = None
+            
+        # Clear the detail view if it exists
+        if self.page_detail:
+            print("Removing page_detail")
+            self.stacked.removeWidget(self.page_detail)
+            self.page_detail.deleteLater()
+            del self.page_detail
+            self.page_detail = None
 
     def remove_product(self, product):
         ProductController.delete_product(product.id)
         self.update_products_dict()
         self.populate_product_list()
         self.back_to_list()
-
-    def back_to_list(self):
-        self.stacked.setCurrentIndex(0)
 
     def _clear_layout(self, layout):
         """
