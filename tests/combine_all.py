@@ -34,11 +34,11 @@ def main():
     # Combine all files with the specified extensions into one
     directories_to_combine = []
     directories_to_combine.append(root_dir)
-    directories_to_combine.append(views_dir)
-    directories_to_combine.append(widgets_dir)
-    directories_to_combine.append(utils_dir)
+    #directories_to_combine.append(views_dir)
+    #directories_to_combine.append(widgets_dir)
+    #directories_to_combine.append(utils_dir)
 
-    extensions_to_include = (".py", ".qss")
+    extensions_to_include = (".py")
 
     combine_files(directories_to_combine, output_file,
                   extensions=extensions_to_include)
