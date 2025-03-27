@@ -1,0 +1,14 @@
+<rules><dependencies>
+<lib name="Qt6Gui_arm64-v8a"><depends>
+<bundled file="plugins/accessiblebridge" type="plugin_dir"/>
+<bundled file="plugins/platforms" type="plugin_dir"/>
+<bundled file="plugins/platforms_darwin" type="plugin_dir"/>
+<bundled file="plugins/xcbglintegrations" type="plugin_dir"/>
+<bundled file="plugins/platformthemes" type="plugin_dir"/>
+<bundled file="plugins/platforminputcontexts" type="plugin_dir"/>
+<bundled file="plugins/generic" type="plugin_dir"/>
+<bundled file="plugins/iconengines" type="plugin_dir"/>
+<bundled file="plugins/imageformats" type="plugin_dir"/>
+<bundled file="plugins/egldeviceintegrations" type="plugin_dir"/>
+</depends></lib>
+</dependencies></rules>

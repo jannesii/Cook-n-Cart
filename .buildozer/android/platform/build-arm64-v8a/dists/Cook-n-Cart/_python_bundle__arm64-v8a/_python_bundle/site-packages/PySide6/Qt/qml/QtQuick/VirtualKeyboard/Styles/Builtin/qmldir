@@ -1,0 +1,7 @@
+module QtQuick.VirtualKeyboard.Styles.Builtin
+linktarget Qt6::qtvkbbuiltinstylesplugin
+plugin qml_QtQuick_VirtualKeyboard_Styles_Builtin_qtvkbbuiltinstylesplugin
+classname QtQuickVirtualKeyboardStylesBuiltinPlugin
+typeinfo plugins.qmltypes
+prefer :/qt-project.org/imports/QtQuick/VirtualKeyboard/Styles/Builtin/
+

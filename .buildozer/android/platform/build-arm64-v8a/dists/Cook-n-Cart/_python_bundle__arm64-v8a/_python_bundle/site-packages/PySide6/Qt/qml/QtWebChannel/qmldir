@@ -1,0 +1,7 @@
+module QtWebChannel
+linktarget Qt6::WebChannelQuickplugin
+optional plugin qml_QtWebChannel_webchannelquickplugin
+classname QtWebChannelPlugin
+typeinfo plugins.qmltypes
+prefer :/qt-project.org/imports/QtWebChannel/
+
