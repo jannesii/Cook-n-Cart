@@ -5,10 +5,10 @@ title = CooknCart
 
 # project directory. the general assumption is that project_dir is the parent directory
 # of input_file
-project_dir = ~/Cook-n-Cart
+project_dir = /home/jannesi/Cook-n-Cart
 
 # source file path
-input_file = ~/Cook-n-Cart/main.py
+input_file = /home/jannesi/Cook-n-Cart/main.py
 
 # directory where the executable output is generated
 exec_directory = .
@@ -17,12 +17,12 @@ exec_directory = .
 project_file = 
 
 # application icon
-icon = ~/venv/lib/python3.11/site-packages/PySide6/scripts/deploy_lib/pyside_icon.jpg
+icon = /home/jannesi/venv/lib/python3.11/site-packages/PySide6/scripts/deploy_lib/pyside_icon.jpg
 
 [python]
 
 # python path
-python_path = ~/venv/bin/python3
+python_path = /home/jannesi/venv/bin/python3
 
 # python packages to install
 packages = Nuitka==2.5.1, requests
@@ -49,10 +49,10 @@ plugins =
 [android]
 
 # path to pyside wheel
-wheel_pyside = ~/Cook-n-Cart/whl/PySide6-6.8.0.2-6.8.0-cp311-cp311-android_aarch64.whl
+wheel_pyside = /home/jannesi/Cook-n-Cart/whl/PySide6-6.8.0.2-6.8.0-cp311-cp311-android_aarch64.whl
 
 # path to shiboken wheel
-wheel_shiboken = ~/Cook-n-Cart/whl/shiboken6-6.8.0.2-6.8.0-cp311-cp311-android_aarch64.whl
+wheel_shiboken = /home/jannesi/Cook-n-Cart/whl/shiboken6-6.8.0.2-6.8.0-cp311-cp311-android_aarch64.whl
 
 # plugins to be copied to libs folder of the packaged application. comma separated
 plugins = platforms_qtforandroid
@@ -78,16 +78,16 @@ extra_args = --quiet --noinclude-qt-translations --include-module=requests
 mode = debug
 
 # contrains path to pyside6 and shiboken6 recipe dir
-recipe_dir = ~/Cook-n-Cart/deployment/recipes
+recipe_dir = /home/jannesi/Cook-n-Cart/deployment/recipes
 
 # path to extra qt android jars to be loaded by the application
-jars_dir = ~/Cook-n-Cart/deployment/jar/PySide6/jar
+jars_dir = /home/jannesi/Cook-n-Cart/deployment/jar/PySide6/jar
 
 # if empty uses default ndk path downloaded by buildozer
-ndk_path = ~/.pyside6_android_deploy/android-ndk/android-ndk-r26b
+ndk_path = /home/jannesi/.pyside6_android_deploy/android-ndk/android-ndk-r26b
 
 # if empty uses default sdk path downloaded by buildozer
-sdk_path = ~/.pyside6_android_deploy/android-sdk
+sdk_path = /home/jannesi/.pyside6_android_deploy/android-sdk
 
 # other libraries to be loaded. comma separated.
 # loaded at app startup
