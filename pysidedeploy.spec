@@ -49,10 +49,10 @@ plugins =
 [android]
 
 # path to pyside wheel
-wheel_pyside = /home/jannesi/Cook-n-Cart/whl/PySide6-6.8.0.2-6.8.0-cp311-cp311-android_aarch64.whl
+wheel_pyside = /home/jannesi/Cook-n-Cart/whl/PySide6-6.8.0.2-6.8.0-cp311-cp311-android_x86_64.whl
 
 # path to shiboken wheel
-wheel_shiboken = /home/jannesi/Cook-n-Cart/whl/shiboken6-6.8.0.2-6.8.0-cp311-cp311-android_aarch64.whl
+wheel_shiboken = /home/jannesi/Cook-n-Cart/whl/shiboken6-6.8.0.2-6.8.0-cp311-cp311-android_x86_64.whl
 
 # plugins to be copied to libs folder of the packaged application. comma separated
 plugins = platforms_qtforandroid
@@ -95,5 +95,5 @@ local_libs = plugins_platforms_qtforandroid
 
 # architecture of deployed platform
 # possible values = ["aarch64", "armv7a", "i686", "x86_64"]
-arch = aarch64
+arch = x86_64
 
