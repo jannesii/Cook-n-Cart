@@ -80,6 +80,9 @@ class TuotteetPage(QWidget):
         self.scroll_area = ScrollViewWidget(list_model_name="tuotteet_list")
         layout.addWidget(self.scroll_area, 1)
 
+        # Connect the QML signal to handle_item_click only once.
+        self.scroll_area.connect_item_clicked(self.handle_item_click)
+
         # Populate the list from the products dictionary.
         self.populate_product_list()
 
@@ -102,7 +105,6 @@ class TuotteetPage(QWidget):
         # Add each product to the QML ListModel via the ScrollViewWidget's add_item() method.
         for product in sorted_products:
             self.scroll_area.add_item(product.name, product.id)
-            self.scroll_area.connect_item_clicked(self.handle_item_click)
     
 
     def handle_item_click(self, product_id):
