@@ -472,7 +472,7 @@ class DatabaseManager:
         ('Vegaaninen korvikejuusto', 'paketti', 3.80, 'Maitotuotteet');
         """
 
-        #cursor.execute(insert_products)
+        cursor.execute(insert_products)
 
         # Commit changes and close the connection
         conn.commit()
