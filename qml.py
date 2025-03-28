@@ -22,15 +22,15 @@ class QmlTextFieldWidget(QWidget):
         Rectangle {{
             id: root
             width: 200
-            height: 25
+            height: 40
             color: "transparent"
 
             TextField {{
                 id: {self.text_field_id}
                 objectName: "{self.text_field_id}"  // Set the objectName so findChild() can locate this element
                 anchors.fill: parent
-                placeholderText: "Enter text..."
                 font.pixelSize: 16
+                placeholderText: "Enter value..."
             }}
         }}
         '''

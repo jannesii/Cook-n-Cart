@@ -4,6 +4,7 @@ from PySide6.QtWidgets import QApplication
 from views_main_window import MainWindow
 
 def load_stylesheet(app, qss):
+    print("Loading stylesheet...")
     try:
         # Replace placeholder tokens with actual values.
         qss = qss.replace("%%TURKOOSI%%", "#00B0F0")
