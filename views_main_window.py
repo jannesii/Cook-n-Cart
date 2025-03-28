@@ -32,15 +32,12 @@ class MainWindow(QMainWindow):
         # --- QStackedWidget - sivut ---
         self.stacked_widget = QStackedWidget()
 
-        self.ostolistat_page = OstolistatPage()
-        self.reseptit_page = ReseptitPage()
-        self.products_page = TuotteetPage()
-        self.asetukset_page = AsetuksetPage()
 
-        self.stacked_widget.addWidget(self.ostolistat_page)  # index 0
-        self.stacked_widget.addWidget(self.reseptit_page)    # index 1
-        self.stacked_widget.addWidget(self.products_page)    # index 2
-        self.stacked_widget.addWidget(self.asetukset_page)   # index 3
+
+        self.ostolistat_page = None
+        self.reseptit_page = None
+        self.products_page = None
+        self.asetukset_page = None
 
         main_layout.addWidget(self.stacked_widget, stretch=1)
 
@@ -53,14 +50,15 @@ class MainWindow(QMainWindow):
         self.btn_asetukset = QPushButton("Asetukset")
 
         # Kytketään napit vaihtamaan QStackedWidgetin sivua
+
         self.btn_ostolistat.clicked.connect(
-            lambda checked: self.stacked_widget.setCurrentIndex(0))
+            lambda checked: self.open_ostolistat())
         self.btn_reseptit.clicked.connect(
-            lambda checked: self.stacked_widget.setCurrentIndex(1))
+            lambda checked: self.open_reseptit())
         self.btn_tuotteet.clicked.connect(
-            lambda checked: self.stacked_widget.setCurrentIndex(2))
+            lambda checked: self.open_tuotteet())
         self.btn_asetukset.clicked.connect(
-            lambda checked: self.stacked_widget.setCurrentIndex(3))
+            lambda checked: self.open_asetukset())
 
         # Voit halutessasi säätää alapalkin tyylin
         for btn in [self.btn_ostolistat, self.btn_reseptit, self.btn_tuotteet, self.btn_asetukset]:
@@ -74,4 +72,57 @@ class MainWindow(QMainWindow):
         main_layout.addLayout(bottom_bar_layout)
 
         # Asetetaan oletussivuksi Ostolistat (index 0)
-        self.stacked_widget.setCurrentIndex(0)
+        self.open_ostolistat()
+
+    def open_ostolistat(self):
+        self.clearMemory()
+        self.ostolistat_page = OstolistatPage()
+        self.stacked_widget.addWidget(self.ostolistat_page)  # index 0
+        self.stacked_widget.setCurrentWidget(self.ostolistat_page)
+
+    def open_reseptit(self):
+        self.clearMemory()
+        self.reseptit_page = ReseptitPage()
+        self.stacked_widget.addWidget(self.reseptit_page)    # index 1
+        self.stacked_widget.setCurrentWidget(self.reseptit_page)
+
+    def open_tuotteet(self):
+        self.clearMemory()
+        self.products_page = TuotteetPage()
+        self.stacked_widget.addWidget(self.products_page)    # index 2
+        self.stacked_widget.setCurrentWidget(self.products_page)
+
+    def open_asetukset(self):
+        self.clearMemory()
+        self.asetukset_page = AsetuksetPage()
+        self.stacked_widget.addWidget(self.asetukset_page)   # index 3
+        self.stacked_widget.setCurrentWidget(self.asetukset_page)
+
+    def clearMemory(self):
+        if self.ostolistat_page:
+            print("Removing ostolistat_page")
+            self.stacked_widget.removeWidget(self.ostolistat_page)
+            self.ostolistat_page.deleteLater()
+            del self.ostolistat_page
+            self.ostolistat_page = None
+        if self.reseptit_page:
+            print("Removing reseptit_page")
+            self.stacked_widget.removeWidget(self.reseptit_page)
+            self.reseptit_page.deleteLater()
+            del self.reseptit_page
+            self.reseptit_page = None
+        if self.products_page:
+            print("Removing products_page")
+            self.stacked_widget.removeWidget(self.products_page)
+            self.products_page.deleteLater()
+            del self.products_page
+            self.products_page = None
+        if self.asetukset_page:
+            print("Removing asetukset_page")
+            self.stacked_widget.removeWidget(self.asetukset_page)
+            self.asetukset_page.deleteLater()
+            del self.asetukset_page
+            self.asetukset_page = None
+            
+            
+            
