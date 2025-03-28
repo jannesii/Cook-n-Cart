@@ -1,7 +1,7 @@
 [app]
 
 # title of your application
-title = Cook-n-Cart
+title = CookAndCart
 
 # project directory. the general assumption is that project_dir is the parent directory
 # of input_file
