@@ -38,21 +38,15 @@ class TuotteetPage(QWidget):
 
         self.stacked = QStackedWidget()
 
-        # Page 0 (list view)
-        self.page_list = QWidget()
-        self.page_list.setLayout(self._create_list_layout())
-
+        self.page_list = None
         self.page_add_form = None
         self.page_detail = None
 
-
-
-        self.stacked.addWidget(self.page_list)      # index 0
         # Start with the list page
 
         self.setLayout(main_layout)
         main_layout.addWidget(self.stacked, 1)
-        self.stacked.setCurrentWidget(self.page_list)
+        self.back_to_list()
 
     def _create_list_layout(self):
         layout = QVBoxLayout()
@@ -250,6 +244,7 @@ class TuotteetPage(QWidget):
 
     def display_add_product(self):
         # Page 1 (add product view)
+        self.rm_page_list()
         self.page_add_form = QWidget()
         self.page_add_form.setLayout(self._create_add_form_layout())
         self.stacked.addWidget(self.page_add_form)  # index 1
@@ -259,12 +254,13 @@ class TuotteetPage(QWidget):
         """
         Switch to the detail page and show the details of the given product.
         """
+        self.rm_page_list()
         # page 2 (detail view)
         self.page_detail = ProductDetailWidget()
         # hook the "Back" button in ProductDetailWidget
         self.page_detail.back_btn.clicked.connect(self.back_to_list)
         self.stacked.addWidget(self.page_detail)    # index 2
-        
+
         self.page_detail.set_product(product)
         self.page_detail.back_btn.clicked.connect(self.back_to_list)
         self.page_detail.remove_btn.clicked.connect(
@@ -272,8 +268,15 @@ class TuotteetPage(QWidget):
         self.stacked.setCurrentWidget(self.page_detail)
 
     def back_to_list(self):
+        self.rm_page_add()
+        self.rm_page_detail()
+        # Page 0 (list view)
+        self.page_list = QWidget()
+        self.page_list.setLayout(self._create_list_layout())
+        self.stacked.addWidget(self.page_list)     # index 0
         self.stacked.setCurrentWidget(self.page_list)
-        
+
+    def rm_page_add(self):
         # Clear the add form if it exists
         if self.page_add_form:
             print("Removing page_add_form")
@@ -281,7 +284,8 @@ class TuotteetPage(QWidget):
             self.page_add_form.deleteLater()
             del self.page_add_form
             self.page_add_form = None
-            
+
+    def rm_page_detail(self):
         # Clear the detail view if it exists
         if self.page_detail:
             print("Removing page_detail")
@@ -289,6 +293,14 @@ class TuotteetPage(QWidget):
             self.page_detail.deleteLater()
             del self.page_detail
             self.page_detail = None
+
+    def rm_page_list(self):
+        if self.page_list:
+            print("Removing page_list")
+            self.stacked.removeWidget(self.page_list)
+            self.page_list.deleteLater()
+            del self.page_list
+            self.page_list = None
 
     def remove_product(self, product):
         ProductController.delete_product(product.id)
