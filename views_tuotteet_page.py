@@ -4,7 +4,8 @@ import sys
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QPushButton, QScrollArea, QStackedWidget,
-    QFrame, QLineEdit, QCompleter, QFormLayout
+    QFrame, QLineEdit, QCompleter, QFormLayout,
+    QMessageBox
 )
 from PySide6.QtCore import Qt, QStringListModel
 
@@ -12,7 +13,7 @@ from root_controllers import ProductController as PC
 from root_controllers import ShoppingListController as SLC
 from root_controllers import RecipeController as RC
 from widgets_product_detail_widget import ProductDetailWidget
-from qml import QmlTextFieldWidget as QmlTextField
+from qml import NormalTextField, MainSearchTextField, ScrollViewWidget
 
 TURKOOSI = "#00B0F0"
 HARMAA = "#808080"
@@ -26,7 +27,7 @@ class TuotteetPage(QWidget):
     """
     Tuotteet-näkymä:
       - Yläpalkki: 'Tuotteet' -otsikko vasemmalla, 'Hae tuotetta' ja 'Uusi tuote' -napit oikealla
-      - Keskialue: Scrollattava lista tuotteista
+      - Keskialue: QML ScrollViewWidget displaying a list of products
     """
 
     def __init__(self, parent=None):
@@ -44,31 +45,27 @@ class TuotteetPage(QWidget):
         self.page_detail = None
 
         # Start with the list page
-
         self.setLayout(main_layout)
         main_layout.addWidget(self.stacked, 1)
         self.back_to_list()
 
     def _create_list_layout(self):
         layout = QVBoxLayout()
-        # -- Yläpalkki --
+        # -- Top Bar --
         top_bar_layout = QHBoxLayout()
-
         self.title_label = QLabel("Tuotteet")
         self.title_label.setObjectName("top_bar_title_label")
-
-        self.search_bar = QLineEdit()
-        self.search_bar.setPlaceholderText("Hae tuotetta")
-        self.search_bar.textChanged.connect(self.filter_products)
-
+        top_bar_search_layout = QHBoxLayout()
+        self.search_bar = MainSearchTextField(
+            text_field_id="top_bar_search_bar",
+            placeholder_text="Hae tuotetta..."
+        )
         self.new_button = QPushButton("Uusi tuote")
         self.new_button.clicked.connect(self.display_add_product)
 
-        self.search_bar.setObjectName("top_bar_search_bar")
-
         top_bar_layout.addWidget(self.title_label)
         top_bar_layout.addStretch()
-        top_bar_layout.addWidget(self.search_bar)
+        top_bar_search_layout.addWidget(self.search_bar)
         top_bar_layout.addWidget(self.new_button)
 
         top_bar_frame = QFrame()
@@ -76,164 +73,25 @@ class TuotteetPage(QWidget):
         top_bar_frame.setObjectName("top_bar_frame")
 
         layout.addWidget(top_bar_frame, 0)
+        layout.addLayout(top_bar_search_layout)
 
-        # -- Scrollattava lista keskellä --
-        self.scroll_area = QScrollArea()
-        self.scroll_area.setWidgetResizable(True)
-
-        self.scroll_content = QWidget()
-        self.scroll_layout = QVBoxLayout(self.scroll_content)
-
-        self.scroll_area.setWidget(self.scroll_content)
+        # -- QML Scrollable List --
+        # Use the QML-based ScrollViewWidget which manages its own ListModel.
+        self.scroll_area = ScrollViewWidget(list_model_name="tuotteet_list")
         layout.addWidget(self.scroll_area, 1)
 
+        # Populate the list from the products dictionary.
         self.populate_product_list()
 
         return layout
-
-    def _create_add_form_layout(self):
-        layout = QVBoxLayout()
-
-        form = QFormLayout()
-        self.name_edit = QmlTextField(text_field_id="name_edit") # QLineEdit()
-        self.desc_edit = QmlTextField(text_field_id="desc_edit") # QLineEdit()
-        self.price_edit = QmlTextField(text_field_id="price_edit") # QLineEdit()
-        self.category_edit = QmlTextField(text_field_id="category_edit") # QLineEdit()
-
-        # Fetch all categories and ensure uniqueness
-        all_categories = ProductController.get_all_categories()
-        # Ensures unique and sorted categories
-        unique_categories = sorted(set(all_categories))
-
-        categories_completer = QCompleter(unique_categories)
-        categories_completer.setCaseSensitivity(Qt.CaseInsensitive)
-        #self.category_edit.setCompleter(categories_completer)
-
-        form.addRow("Nimi:", self.name_edit)
-        form.addRow("Yksikkö:", self.desc_edit)
-        form.addRow("Hinta:", self.price_edit)
-        form.addRow("Kategoria:", self.category_edit)
-
-        layout.addLayout(form)
-
-        # Save/Cancel
-        btn_layout = QHBoxLayout()
-
-        save_btn = QPushButton("Tallenna tuote")
-
-        save_btn.clicked.connect(self._save_new_product)
-
-        back_btn = QPushButton("Takaisin")
-        back_btn.setObjectName("gray_button")
-        back_btn.clicked.connect(self.back_to_list)
-
-        btn_layout.addWidget(save_btn)
-        btn_layout.addWidget(back_btn)
-
-        layout.addLayout(btn_layout)
-
-        layout.addStretch()
-        return layout
-
-    def _save_new_product(self):
-        """
-        Call product_controller.add_product(...) with data from the form,
-        then go back to product list page and refresh.
-        """
-        #name = self.name_edit.text().strip()
-        #desc = self.desc_edit.text().strip()
-        #price_str = self.price_edit.text().strip().replace(",", ".")
-        #try:
-        #    price = float(price_str) if price_str else 0.0
-        #except ValueError:
-        #    price = 0.0  # Default to 0.0 or handle the error as needed
-        #    # Optionally, you can show an error message here
-
-        #cat = self.category_edit.text().strip()
-        
-        name = self.name_edit.get_text().strip()
-        desc = self.desc_edit.get_text().strip()
-        price_str = self.price_edit.get_text().strip().replace(",", ".")
-        try:
-            price = float(price_str) if price_str else 0.0
-        except ValueError:
-            price = 0.0  # Default to 0.0 or handle the error as needed
-            # Optionally, you can show an error message here
-
-        cat = self.category_edit.get_text().strip()
-        
-        print(f"Adding product: {name}, {desc}, {price}, {cat}")
-
-        # Add the new product using the ProductController
-        ProductController.add_product(
-            name=name,
-            unit=desc,
-            price_per_unit=price,
-            category=cat
-        )
-
-        # Update the products dictionary and refresh the product list
-        self.update_products_dict()
-        self.populate_product_list()
-
-        # Update the category completer with unique categories
-        self._update_category_completer()
-
-        # Clear fields
-        #self.name_edit.clear()
-        #self.desc_edit.clear()
-        #self.price_edit.clear()
-        #self.category_edit.clear()
-
-        # Go back to page 0 and refresh the product list
-        self.back_to_list()
-
-    def _update_category_completer(self):
-        """
-        Refresh the category completer to include any new unique categories.
-        """
-        all_categories = ProductController.get_all_categories()
-        unique_categories = sorted(set(all_categories))
-        #self.category_edit.completer().setModel(QStringListModel(unique_categories))
-
-    def update_products_dict(self):
-        """
-        Fetch all products from the ProductController and update the local dictionary.
-        """
-        self.products_dict = ProductController.get_all_products()
-
-    def filter_products(self):
-        """
-        Filter the product buttons based on the search text.
-        """
-        search_text = self.search_bar.text().lower()
-        for i in range(self.scroll_layout.count() - 1):  # Exclude the stretch
-            item = self.scroll_layout.itemAt(i)
-            widget = item.widget() if item else None
-            if widget is not None:
-                if search_text in widget.text().lower():
-                    widget.show()
-                else:
-                    widget.hide()
-            else:
-                # Optionally, log or handle the unexpected None widget
-                print(
-                    f"Warning: No widget found at index {i} during filtering.")
 
     def populate_product_list(self):
         """
-        Populate the scroll area with buttons representing each product.
+        Clear and repopulate the QML ListModel in the ScrollViewWidget
+        with product names.
         """
-        # Clear the current layout
-        while self.scroll_layout.count():
-            item = self.scroll_layout.takeAt(0)
-            widget = item.widget()
-            if widget is not None:
-                widget.deleteLater()
-            else:
-                # If the item is a layout or spacer, just remove it
-                if item.layout():
-                    self._clear_layout(item.layout())
+        # Clear existing items (assumes ScrollViewWidget has a clear_items() method)
+        self.scroll_area.clear_items()
 
         # Sort products by name (case-insensitive)
         sorted_products = sorted(
@@ -241,71 +99,162 @@ class TuotteetPage(QWidget):
             key=lambda p: p.name.lower()
         )
 
-        # Add products to the layout
+        # Add each product to the QML ListModel via the ScrollViewWidget's add_item() method.
         for product in sorted_products:
-            btn = QPushButton(f"{product.name}")
-            btn.setObjectName("main_list_button")
-            # Connect the button to a detailed view
-            btn.clicked.connect(lambda checked=False,
-                                p=product: self.show_product_details(p))
-            self.scroll_layout.addWidget(btn)
-            # Optionally, connect the button to a detailed view or action
-            # btn.clicked.connect(lambda checked, p=product: self.view_product_details(p))
-            self.scroll_layout.addWidget(btn)
+            self.scroll_area.add_item(product.name, product.id)
+            self.scroll_area.connect_item_clicked(self.handle_item_click)
+    
 
-        # Ensure only one stretch is present
-        self.scroll_layout.addStretch()
+    def handle_item_click(self, product_id):
+        """
+        Handle the click event for a product item in the list.
+        This method will be called when a product is clicked.
+        """
+
+        print(f"Product clicked: {product_id}")
+        product = ProductController.get_product_by_id(product_id)
+        if product:
+            self.show_product_details(product)
+
+    def _create_add_form_layout(self):
+        layout = QVBoxLayout()
+        form = QFormLayout()
+        self.name_edit = NormalTextField(
+            text_field_id="name_edit", placeholder_text="Syötä nimi..."
+        )
+        self.desc_edit = NormalTextField(
+            text_field_id="desc_edit", placeholder_text="Syötä yksikkö..."
+        )
+        self.price_edit = NormalTextField(
+            text_field_id="price_edit", placeholder_text="Syötä hinta..."
+        )
+        self.category_edit = NormalTextField(
+            text_field_id="category_edit", placeholder_text="Syötä kategoria..."
+        )
+
+        # Fetch and set up categories if needed
+        all_categories = ProductController.get_all_categories()
+        unique_categories = sorted(set(all_categories))
+        categories_completer = QCompleter(unique_categories)
+        categories_completer.setCaseSensitivity(Qt.CaseInsensitive)
+        # self.category_edit.setCompleter(categories_completer)
+
+        form.addRow("Nimi:", self.name_edit)
+        form.addRow("Yksikkö:", self.desc_edit)
+        form.addRow("Hinta:", self.price_edit)
+        form.addRow("Kategoria:", self.category_edit)
+        layout.addLayout(form)
+
+        # Save/Cancel buttons
+        btn_layout = QHBoxLayout()
+        save_btn = QPushButton("Tallenna tuote")
+        save_btn.clicked.connect(self._save_new_product)
+        back_btn = QPushButton("Takaisin")
+        back_btn.setObjectName("gray_button")
+        back_btn.clicked.connect(self.back_to_list)
+        btn_layout.addWidget(save_btn)
+        btn_layout.addWidget(back_btn)
+        layout.addLayout(btn_layout)
+        layout.addStretch()
+        return layout
+
+    def _save_new_product(self):
+        """
+        Validate fields, add a new product via the ProductController,
+        then update and repopulate the product list.
+        """
+        name = self.name_edit.get_text().strip()
+        desc = self.desc_edit.get_text().strip()
+        price_str = self.price_edit.get_text().strip().replace(",", ".")
+        cat = self.category_edit.get_text().strip()
+
+        # Validate required fields: name, desc and price must not be empty.
+        if not name or not desc or not price_str:
+            QMessageBox.warning(
+                self,
+                "Missing Information",
+                "Please provide a value for Name, Description, and Price."
+            )
+            return
+
+        try:
+            price = float(price_str)
+        except ValueError:
+            QMessageBox.warning(
+                self,
+                "Invalid Price",
+                "Please enter a valid numeric value for Price."
+            )
+            return
+
+        print(f"Adding product: {name}, {desc}, {price}, {cat}")
+
+        # Add the new product using the ProductController.
+        ProductController.add_product(
+            name=name,
+            unit=desc,
+            price_per_unit=price,
+            category=cat
+        )
+
+        # Update products and repopulate the list.
+        self.update_products_dict()
+        self.populate_product_list()
+        self._update_category_completer()
+        self.back_to_list()
+
+    def _update_category_completer(self):
+        all_categories = ProductController.get_all_categories()
+        unique_categories = sorted(set(all_categories))
+        # self.category_edit.completer().setModel(QStringListModel(unique_categories))
+
+    def update_products_dict(self):
+        self.products_dict = ProductController.get_all_products()
+
+    def filter_products(self):
+        """
+        This method may need to be adjusted to work with the QML list model.
+        """
+        search_text = self.search_bar.text().lower()
+        # Filtering would require either modifying the QML ListModel or
+        # repopulating it from Python based on the filter.
+        # (Not implemented here.)
 
     def display_add_product(self):
-        # Page 1 (add product view)
-        #self.rm_page_list()
         self.page_add_form = QWidget()
         self.page_add_form.setLayout(self._create_add_form_layout())
         self.stacked.addWidget(self.page_add_form)  # index 1
         self.stacked.setCurrentWidget(self.page_add_form)
 
     def show_product_details(self, product):
-        """
-        Switch to the detail page and show the details of the given product.
-        """
-        #self.rm_page_list()
-        # page 2 (detail view)
         self.page_detail = ProductDetailWidget()
-        # hook the "Back" button in ProductDetailWidget
         self.page_detail.back_btn.clicked.connect(self.back_to_list)
         self.stacked.addWidget(self.page_detail)    # index 2
-
         self.page_detail.set_product(product)
         self.page_detail.back_btn.clicked.connect(self.back_to_list)
-        self.page_detail.remove_btn.clicked.connect(
-            lambda: self.remove_product(product))
+        self.page_detail.remove_btn.clicked.connect(lambda: self.remove_product(product))
         self.stacked.setCurrentWidget(self.page_detail)
 
     def back_to_list(self):
         self.rm_page_add()
         self.rm_page_detail()
-        # Page 0 (list view)
         self.page_list = QWidget()
         self.page_list.setLayout(self._create_list_layout())
         self.stacked.addWidget(self.page_list)     # index 0
         self.stacked.setCurrentWidget(self.page_list)
 
     def rm_page_add(self):
-        # Clear the add form if it exists
         if self.page_add_form:
             print("Removing page_add_form")
             self.stacked.removeWidget(self.page_add_form)
             self.page_add_form.deleteLater()
-            #del self.page_add_form
             self.page_add_form = None
 
     def rm_page_detail(self):
-        # Clear the detail view if it exists
         if self.page_detail:
             print("Removing page_detail")
             self.stacked.removeWidget(self.page_detail)
             self.page_detail.deleteLater()
-            #del self.page_detail
             self.page_detail = None
 
     def rm_page_list(self):
@@ -313,7 +262,6 @@ class TuotteetPage(QWidget):
             print("Removing page_list")
             self.stacked.removeWidget(self.page_list)
             self.page_list.deleteLater()
-            #del self.page_list
             self.page_list = None
 
     def remove_product(self, product):
@@ -323,9 +271,6 @@ class TuotteetPage(QWidget):
         self.back_to_list()
 
     def _clear_layout(self, layout):
-        """
-        Recursively clear a layout.
-        """
         while layout.count():
             item = layout.takeAt(0)
             widget = item.widget()
