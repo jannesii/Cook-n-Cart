@@ -17,6 +17,7 @@ def load_stylesheet(app, qss):
 
 def main():
     try:
+        os.environ["QT_QUICK_CONTROLS_STYLE"] = "Basic"
         app = QApplication(sys.argv)
         
         # Check if the 'utils' directory exists, create if it doesn't.
@@ -192,8 +193,7 @@ def main():
         window.show()
         sys.exit(app.exec())
     except Exception as e:
-        print(f"An error occurred: {e}")
-        sys.exit(app.exec())
+        pass
         
 
 if __name__ == "__main__":

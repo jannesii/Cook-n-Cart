@@ -75,25 +75,25 @@ class MainWindow(QMainWindow):
         self.open_ostolistat()
 
     def open_ostolistat(self):
-        self.clearMemory()
+        #self.clearMemory()
         self.ostolistat_page = OstolistatPage()
         self.stacked_widget.addWidget(self.ostolistat_page)  # index 0
         self.stacked_widget.setCurrentWidget(self.ostolistat_page)
 
     def open_reseptit(self):
-        self.clearMemory()
+        #self.clearMemory()
         self.reseptit_page = ReseptitPage()
         self.stacked_widget.addWidget(self.reseptit_page)    # index 1
         self.stacked_widget.setCurrentWidget(self.reseptit_page)
 
     def open_tuotteet(self):
-        self.clearMemory()
+        #self.clearMemory()
         self.products_page = TuotteetPage()
         self.stacked_widget.addWidget(self.products_page)    # index 2
         self.stacked_widget.setCurrentWidget(self.products_page)
 
     def open_asetukset(self):
-        self.clearMemory()
+        #self.clearMemory()
         self.asetukset_page = AsetuksetPage()
         self.stacked_widget.addWidget(self.asetukset_page)   # index 3
         self.stacked_widget.setCurrentWidget(self.asetukset_page)

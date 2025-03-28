@@ -5,8 +5,13 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, Signal, QTimer
 
+from widgets_add_tags_widget import AddTagsWidget
+from widgets_add_products_widget import AddProductsWidget
+from qml import NormalTextField, TallTextField, TagSelectorWidget
+
 TURKOOSI = "#00B0F0"
 HARMAA = "#808080"
+
 
 class AddRecipeWidget(QWidget):
     """
@@ -40,54 +45,48 @@ class AddRecipeWidget(QWidget):
         self.stacked = QStackedWidget(self)
 
         # Page 0: Reseptilomake
-        self.form_page = QWidget()
-        self.form_page.setLayout(self._create_form_layout())
+        self.form_page = None
 
         # Page 1: Tuotteiden valinta (oletetaan, että AddProductsWidget on jo toteutettu)
-        from widgets_add_products_widget import AddProductsWidget
-        self.products_page = AddProductsWidget(
-            product_controller=self.product_controller,
-            parent=self
-        )
-        self.products_page.finished.connect(self.on_products_selected)
+        self.products_page = None
 
         # Page 2: Tagien valinta
-        from widgets_add_tags_widget import AddTagsWidget
-        self.tags_page = AddTagsWidget(
-            recipe_controller=self.recipe_controller,
-            parent=self
-        )
-        self.tags_page.finished.connect(self.on_tags_selected)
-
-        self.stacked.addWidget(self.form_page)      # index 0
-        self.stacked.addWidget(self.products_page)    # index 1
-        self.stacked.addWidget(self.tags_page)        # index 2
+        self.tags_page = None
 
         layout = QVBoxLayout(self)
         layout.addWidget(self.stacked)
         self.setLayout(layout)
+        self._open_form_page()
 
     def _create_form_layout(self):
-        """
-        Luo lomakkeen ulkoasun uudelle reseptille (Page 0).
-        """
         layout = QVBoxLayout()
 
         # 1) Nimi
         name_label = QLabel("Nimi:")
-        self.name_edit = QLineEdit()
+        self.name_edit = NormalTextField(
+            text_field_id="name_edit",
+            placeholder_text="Syötä reseptin nimi"
+        )
         layout.addWidget(name_label)
         layout.addWidget(self.name_edit)
 
         # 2) Ohjeet
         instructions_label = QLabel("Valmistusohjeet:")
-        self.instructions_edit = QTextEdit()
+        self.instructions_edit = TallTextField(
+            text_field_id="instructions_edit",
+            placeholder_text="Syötä valmistusohjeet"
+        )
         layout.addWidget(instructions_label)
         layout.addWidget(self.instructions_edit)
 
         # 3) Tagien valinta: näytetään nykyiset tagit ja nappi niiden muokkaamiseen
         tags_label = QLabel("Tagit:")
-        self.tags_display_label = QLabel("Ei valittuja tageja")
+        self.tags_display_label = QLabel()
+        # Use the stored selected tags to update the label.
+        if self.selected_tags:
+            self.tags_display_label.setText(", ".join(self.selected_tags))
+        else:
+            self.tags_display_label.setText("Ei valittuja tageja")
         self.select_tags_btn = QPushButton("Valitse tageja")
         self.select_tags_btn.clicked.connect(self._open_tags_page)
         layout.addWidget(tags_label)
@@ -113,31 +112,58 @@ class AddRecipeWidget(QWidget):
         layout.addStretch()
         return layout
 
+
+    def _open_form_page(self):
+        """
+        Aseta lomake näkyviin (Page 0).
+        """
+        self.form_page = QWidget()
+        self.form_page.setLayout(self._create_form_layout())
+        self.stacked.addWidget(self.form_page)      # index 0
+        self.stacked.setCurrentWidget(self.form_page)
+
     def _open_products_page(self):
-        self.stacked.setCurrentIndex(1)
+        self.products_page = AddProductsWidget(
+            parent=self
+        )
+        self.products_page.finished.connect(self.on_products_selected)
+        self.stacked.addWidget(self.products_page)    # index 1
+        self.stacked.setCurrentWidget(self.products_page)
 
     def _open_tags_page(self):
-        self.stacked.setCurrentIndex(2)
+        self.tags_page = AddTagsWidget(
+            recipe_controller=self.recipe_controller,
+            selected_tags=self.selected_tags,  # Pass the current selected tags
+            parent=self
+        )
+        self.tags_page.finished.connect(self.on_tags_selected)
+        self.stacked.addWidget(self.tags_page)        # index 2
+        self.stacked.setCurrentWidget(self.tags_page)
+
 
     def on_products_selected(self, selected_products):
         self.selected_products = selected_products
-        self.stacked.setCurrentIndex(0)
+        self._open_form_page()
 
     def on_tags_selected(self, selected_tags):
         self.selected_tags = selected_tags
         # Päivitetään lomakkeen näyttö:
         if selected_tags:
+            print(f"Selected tags: {selected_tags}")
             self.tags_display_label.setText(", ".join(selected_tags))
         else:
+            print("Ei valittuja tageja")
             self.tags_display_label.setText("Ei valittuja tageja")
-        self.stacked.setCurrentIndex(0)
+        self._open_form_page()
 
     def setFieldsToRecipe(self, recipe):
         self.name_edit.setText(recipe.name)
         self.instructions_edit.setText(recipe.instructions)
         # Prepopulate tags: split by comma and trim spaces.
-        self.selected_tags = [tag.strip() for tag in recipe.tags.split(",")] if recipe.tags else []
-        self.tags_display_label.setText(recipe.tags if recipe.tags else "Ei valittuja tageja")
+        self.selected_tags = [
+            tag.strip() for tag in recipe.tags.split(",")] if recipe.tags else []
+        self.tags_display_label.setText(
+            recipe.tags if recipe.tags else "Ei valittuja tageja")
         # Prepopulate the product selection: build a list of dicts from recipe ingredients.
         self.selected_products = [
             {"id": ing.product_id, "quantity": ing.quantity, "unit": ing.unit}
@@ -146,12 +172,12 @@ class AddRecipeWidget(QWidget):
         # Store the current recipe id for later update.
         self.current_recipe_id = recipe.id
         # Instead of immediately rebuilding the products list, schedule it to run as soon as the event loop is free.
-        QTimer.singleShot(0, lambda: self.products_page.set_selected_products(self.selected_products))
-
+        QTimer.singleShot(
+            0, lambda: self.products_page.set_selected_products(self.selected_products))
 
     def _save_recipe(self):
-        name = self.name_edit.text().strip()
-        instructions = self.instructions_edit.toPlainText()
+        name = self.name_edit.get_text().strip()
+        instructions = self.instructions_edit.get_text().strip()
         tags = ", ".join(self.selected_tags)
 
         if not name:
@@ -168,7 +194,8 @@ class AddRecipeWidget(QWidget):
                 self._show_error("Ainesosan määrä ei ole kelvollinen luku.")
                 return
             if quantity <= 0:
-                self._show_error("Ainesosan määrä täytyy olla suurempi kuin 0.")
+                self._show_error(
+                    "Ainesosan määrä täytyy olla suurempi kuin 0.")
                 return
             if not p.get("unit"):
                 self._show_error("Valitse ainesosalle yksikkö.")
@@ -214,7 +241,6 @@ class AddRecipeWidget(QWidget):
             return
 
         self.recipe_added.emit(new_recipe)
-        self._clear_fields()
         if hasattr(self.parent(), "back_to_list"):
             self.parent().back_to_list()
 
@@ -222,18 +248,15 @@ class AddRecipeWidget(QWidget):
         if hasattr(self.parent(), "back_to_list"):
             self.parent().back_to_list()
 
-    def _clear_fields(self):
-        self.name_edit.clear()
-        self.instructions_edit.clear()
-        self.tags_display_label.setText("Ei valittuja tageja")
-        self.selected_products = []
-        self.selected_tags = []
-        # Clear edit mode if present.
-        if hasattr(self, "current_recipe_id"):
-            del self.current_recipe_id
-
     def _show_error(self, message):
         QMessageBox.warning(self, "Virhe", message)
 
-    def setFieldsToDefaults(self):
-        self._clear_fields()
+    def clearMemory(self):
+        if self.products_page:
+            self.stacked.removeWidget(self.products_page)
+            self.products_page.deleteLater()
+            self.products_page = None
+        if self.tags_page:
+            self.stacked.removeWidget(self.tags_page)
+            self.tags_page.deleteLater()
+            self.tags_page = None

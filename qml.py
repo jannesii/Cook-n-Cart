@@ -1,3 +1,5 @@
+# qml.py
+
 from PySide6.QtQuickWidgets import QQuickWidget
 from PySide6.QtCore import QUrl, QObject
 from PySide6.QtQml import QQmlComponent
@@ -32,7 +34,7 @@ class NormalTextField(QWidget):
                 objectName: "{self.text_field_id}"  // Set the objectName so findChild() can locate this element
                 anchors.fill: parent
                 font.pixelSize: 16
-                placeholderText: "{placeholder_text}"
+                placeholderText: " {placeholder_text}"
             }}
         }}
         '''
@@ -53,7 +55,68 @@ class NormalTextField(QWidget):
             if text_field is not None:
                 return text_field.property("text")
         return ""
-    
+
+    def set_text(self, text: str):
+        """
+        Set the text of the QML TextField by finding the object and updating its property.
+        """
+        root_obj = self.quick_widget.rootObject()
+        if root_obj is not None:
+            text_field = root_obj.findChild(QObject, self.text_field_id)
+            if text_field is not None:
+                text_field.setProperty("text", text)
+
+
+class TallTextField(QWidget):
+    def __init__(self, text_field_id="mobileTextField", placeholder_text="Enter value...", parent=None):
+        super().__init__(parent)
+        self.text_field_id = text_field_id
+
+        layout = QVBoxLayout(self)
+        self.quick_widget = QQuickWidget()
+        self.quick_widget.setResizeMode(QQuickWidget.SizeRootObjectToView)
+        layout.addWidget(self.quick_widget)
+        self.setLayout(layout)
+
+        # Inline QML with a dynamic TextField id
+        qml_code = f'''
+        import QtQuick 2.15
+        import QtQuick.Controls 2.15
+
+        Rectangle {{
+            id: root
+            width: 200
+            height: 200
+            color: "transparent"
+            radius: 5
+
+            TextField {{
+                id: {self.text_field_id}
+                objectName: "{self.text_field_id}"  // Set the objectName so findChild() can locate this element
+                anchors.fill: parent
+                font.pixelSize: 16
+                placeholderText: " {placeholder_text}"
+            }}
+        }}
+        '''
+        component = QQmlComponent(self.quick_widget.engine())
+        component.setData(qml_code.encode('utf-8'), QUrl())
+        if component.status() != QQmlComponent.Status.Ready:
+            for error in component.errors():
+                print("QML Error:", error.toString())
+        item = component.create()
+        self.quick_widget.setContent(QUrl(), component, item)
+
+    def get_text(self):
+        # Retrieve the QML root object
+        root_obj = self.quick_widget.rootObject()
+        if root_obj is not None:
+            # Use the dynamic id to find the TextField
+            text_field = root_obj.findChild(QObject, self.text_field_id)
+            if text_field is not None:
+                return text_field.property("text")
+        return ""
+
     def set_text(self, text: str):
         """
         Set the text of the QML TextField by finding the object and updating its property.
@@ -96,7 +159,7 @@ class MainSearchTextField(QWidget):
                 objectName: "{self.text_field_id}"  // So findChild() can locate it if needed.
                 anchors.fill: parent
                 font.pixelSize: 16
-                placeholderText: "{placeholder_text}"
+                placeholderText: " {placeholder_text}"
                 onTextChanged: root.textChanged(text)
             }}
         }}
@@ -143,7 +206,7 @@ class ScrollViewWidget(QWidget):
 
         ScrollView {{
             id: scrollView
-            width: 300
+            width: 350
             height: 200
 
             // Signal emitted when an item is clicked. Sends the productId.
@@ -159,7 +222,7 @@ class ScrollViewWidget(QWidget):
 
                     Rectangle {{
                         id: itemRect
-                        width: parent.width * 0.98
+                        width: parent.width 
                         height: 45
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.verticalCenter: parent.verticalCenter
@@ -213,7 +276,6 @@ class ScrollViewWidget(QWidget):
         }}
         '''
 
-
         component = QQmlComponent(self.quick_widget.engine())
         component.setData(qml_code.encode('utf-8'), QUrl())
         if component.status() != QQmlComponent.Status.Ready:
@@ -264,3 +326,434 @@ class ScrollViewWidget(QWidget):
         else:
             print("Root object not found.")
             raise RuntimeError("Root object not found.")
+
+
+class TagSelectorWidget(QWidget):
+    """
+    A QML-based widget that displays a scrollable list of tags with checkboxes.
+    Provides helper functions to populate the model, clear tags, and retrieve selected tags.
+    """
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        layout = QVBoxLayout(self)
+        self.quick_widget = QQuickWidget()
+        self.quick_widget.setResizeMode(QQuickWidget.SizeRootObjectToView)
+        layout.addWidget(self.quick_widget)
+        self.setLayout(layout)
+
+        qml_code = '''
+        import QtQuick 2.15
+        import QtQuick.Controls 2.15
+
+        Rectangle {
+            id: root
+            width: 300
+            height: 400
+            color: "transparent"
+
+            ListView {
+                id: tagListView
+                anchors.fill: parent
+                spacing: 10                    // Add this line to set vertical spacing
+                model: tagModel
+                delegate: Rectangle {
+                    id: delegateRect
+                    width: tagListView.width   // Screen-wide
+                    height: 45                 // Increase height for a larger touch target
+                    radius: 10
+                    color: model.checked ? "#00B0F0" : "#ffffff"
+                    border.width: 1
+                    border.color: "gray"
+
+                    Text {
+                        id: tagText
+                        text: model.text
+                        anchors.centerIn: parent
+                        font.pixelSize: 16
+                        color: model.checked ? "white" : "black"
+                        font.bold: true
+                    }
+
+                    // The entire delegate acts as a button.
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: { model.checked = !model.checked }
+                    }
+                }
+            }
+
+            ListModel {
+                id: tagModel
+            }
+
+            // Helper function to add a tag into the model.
+            function addTag(text, checked) {
+                tagModel.append({"text": text, "checked": checked});
+            }
+
+            // Helper function to clear all tags from the model.
+            function clearTags() {
+                while(tagModel.count > 0) {
+                    tagModel.remove(0);
+                }
+            }
+
+            // Helper function to return an array of selected tag texts.
+            function getSelectedTags() {
+                var result = [];
+                for(var i = 0; i < tagModel.count; i++) {
+                    var item = tagModel.get(i);
+                    if(item.checked)
+                        result.push(item.text);
+                }
+                return result;
+            }
+        }
+        '''
+
+        component = QQmlComponent(self.quick_widget.engine())
+        component.setData(qml_code.encode('utf-8'), QUrl())
+        if component.status() != QQmlComponent.Status.Ready:
+            for error in component.errors():
+                print("QML Error:", error.toString())
+        qml_item = component.create()
+        self.quick_widget.setContent(QUrl(), component, qml_item)
+
+    def get_root_object(self) -> QObject:
+        """Returns the root QML object for further interactions."""
+        return self.quick_widget.rootObject()
+
+    def add_tag(self, text: str, checked: bool = False):
+        """
+        Adds a tag with the given text and checked state to the QML ListModel.
+        """
+        root_obj = self.get_root_object()
+        if root_obj is not None:
+            try:
+                root_obj.addTag(text, checked)
+            except Exception as e:
+                print("Error calling addTag:", e)
+        else:
+            print("Root object not found.")
+
+    def clear_tags(self):
+        """
+        Clears all tags from the QML ListModel.
+        """
+        root_obj = self.get_root_object()
+        if root_obj is not None:
+            try:
+                root_obj.clearTags()
+            except Exception as e:
+                print("Error calling clearTags:", e)
+        else:
+            print("Root object not found.")
+
+    def get_selected_tags(self):
+        """
+        Retrieves an array of tag texts that are checked.
+        """
+        root_obj = self.get_root_object()
+        if root_obj is not None:
+            try:
+                return root_obj.getSelectedTags()
+            except Exception as e:
+                print("Error calling getSelectedTags:", e)
+        else:
+            print("Root object not found.")
+        return []
+
+
+class ProductSelectorWidget(QWidget):
+
+    def __init__(self, list_model_name="myListModel", parent=None):
+        super().__init__(parent)
+        layout = QVBoxLayout(self)
+        self.quick_widget = QQuickWidget()
+        self.quick_widget.setResizeMode(QQuickWidget.SizeRootObjectToView)
+        layout.addWidget(self.quick_widget)
+        self.setLayout(layout)
+
+        qml_code = '''
+        import QtQuick 2.15
+        import QtQuick.Controls 2.15
+
+        Rectangle {
+            id: root
+            width: 300
+            height: 400
+            color: "transparent"
+
+            ListView {
+                id: tagListView
+                anchors.fill: parent
+                spacing: 10                    // Add this line to set vertical spacing
+                model: tagModel
+                delegate: Rectangle {
+                    id: delegateRect
+                    width: tagListView.width   // Screen-wide
+                    height: 45                 // Increase height for a larger touch target
+                    radius: 10
+                    color: model.checked ? "#00B0F0" : "#ffffff"
+                    border.width: 1
+                    border.color: "gray"
+
+                    Text {
+                        id: tagText
+                        text: model.text 
+                        anchors.centerIn: parent
+                        font.pixelSize: 16
+                        color: model.checked ? "white" : "black"
+                        font.bold: true
+                    }
+
+                    // The entire delegate acts as a button.
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: { model.checked = !model.checked }
+                    }
+                }
+            }
+
+            ListModel {
+                id: tagModel
+            }
+
+            // Helper function to add a tag into the model.
+            function addTag(text, id, checked) {
+                tagModel.append({"text": text, "id": id, "checked": checked});
+            }
+
+            // Helper function to clear all tags from the model.
+            function clearTags() {
+                while(tagModel.count > 0) {
+                    tagModel.remove(0);
+                }
+            }
+
+            // Helper function to return an array of selected tag texts.
+            function getSelectedTags() {
+                var result = [];
+                for(var i = 0; i < tagModel.count; i++) {
+                    var item = tagModel.get(i);
+                    if(item.checked)
+                        result.push(item.id);
+                }
+                return result;
+            }
+        }
+        '''
+
+        component = QQmlComponent(self.quick_widget.engine())
+        component.setData(qml_code.encode('utf-8'), QUrl())
+        if component.status() != QQmlComponent.Status.Ready:
+            for error in component.errors():
+                print("QML Error:", error.toString())
+        qml_item = component.create()
+        self.quick_widget.setContent(QUrl(), component, qml_item)
+
+    def get_root_object(self) -> QObject:
+        """Returns the root QML object for further interactions."""
+        return self.quick_widget.rootObject()
+
+    def add_tag(self, text: str, checked: bool = False):
+        """
+        Adds a tag with the given text and checked state to the QML ListModel.
+        """
+        root_obj = self.get_root_object()
+        if root_obj is not None:
+            try:
+                root_obj.addTag(text, checked)
+            except Exception as e:
+                print("Error calling addTag:", e)
+        else:
+            print("Root object not found.")
+
+    def clear_tags(self):
+        """
+        Clears all tags from the QML ListModel.
+        """
+        root_obj = self.get_root_object()
+        if root_obj is not None:
+            try:
+                root_obj.clearTags()
+            except Exception as e:
+                print("Error calling clearTags:", e)
+        else:
+            print("Root object not found.")
+
+    def get_selected_tags(self):
+        """
+        Retrieves an array of tag texts that are checked.
+        """
+        root_obj = self.get_root_object()
+        if root_obj is not None:
+            try:
+                return root_obj.getSelectedTags()
+            except Exception as e:
+                print("Error calling getSelectedTags:", e)
+        else:
+            print("Root object not found.")
+        return []
+
+class ProductSelectorWidgetPage2(QWidget):
+
+    def __init__(self, list_model_name="myListModel", parent=None):
+        super().__init__(parent)
+        layout = QVBoxLayout(self)
+        self.quick_widget = QQuickWidget()
+        self.quick_widget.setResizeMode(QQuickWidget.SizeRootObjectToView)
+        layout.addWidget(self.quick_widget)
+        self.setLayout(layout)
+
+        qml_code = '''
+        import QtQuick 2.15
+        import QtQuick.Controls 2.15
+        import QtQuick.Layouts 1.15
+
+        Rectangle {
+            id: root
+            width: 300
+            height: 400
+            color: "transparent"
+
+            ListView {
+                id: tagListView
+                anchors.fill: parent
+                spacing: 10
+                model: tagModel
+                delegate: Rectangle {
+                    id: delegateRect
+                    width: tagListView.width
+                    height: 60  // increased height for additional controls
+                    radius: 10
+                    color: "#00B0F0"
+                    border.width: 1
+                    border.color: "gray"
+
+                    Row {
+                        anchors.fill: parent
+                        anchors.margins: 5
+                        spacing: 10
+
+                        Text {
+                            id: tagLabel
+                            text: model.text
+                            font.pixelSize: 16
+                            font.bold: true
+                            color: "black"
+                            verticalAlignment: Text.AlignVCenter
+                        }
+
+                        TextField {
+                            id: qtyField
+                            text: model.qty.toString()
+                            width: 40
+                            inputMethodHints: Qt.ImhDigitsOnly
+                            onEditingFinished: {
+                                // Ensure that qty remains a valid integer; if parsing fails, default to 1.
+                                model.qty = parseInt(qtyField.text) || 1
+                            }
+                        }
+
+                        ComboBox {
+                            id: unitCombo
+                            model: ["kpl", "kg", "l"]
+                            // Set the default selection based on the model's unit.
+                            currentIndex: model.unit === "kpl" ? 0 : (model.unit === "kg" ? 1 : (model.unit === "l" ? 2 : 0))
+                            onCurrentIndexChanged: {
+                                model.unit = unitCombo.currentText
+                            }
+                        }
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: { model.checked = !model.checked }
+                    }
+                }
+            }
+
+            ListModel {
+                id: tagModel
+            }
+
+            // Helper function to add a tag into the model.
+            // The id defaults to the text value if not provided.
+            function addTag(text, id, checked) {
+                tagModel.append({"text": text, "id": id, "checked": checked, "qty": 1, "unit": "kpl"});
+            }
+
+            // Helper function to clear all tags from the model.
+            function clearTags() {
+                while(tagModel.count > 0) {
+                    tagModel.remove(0);
+                }
+            }
+
+            // Helper function to return an array of selected tag IDs.
+            function getSelectedTags() {
+                var result = [];
+                for(var i = 0; i < tagModel.count; i++) {
+                    var item = tagModel.get(i);
+                    result.push(item.id, item.qty, item.unit);
+                }
+                return result;
+            }
+        }
+        '''
+
+        component = QQmlComponent(self.quick_widget.engine())
+        component.setData(qml_code.encode('utf-8'), QUrl())
+        if component.status() != QQmlComponent.Status.Ready:
+            for error in component.errors():
+                print("QML Error:", error.toString())
+        qml_item = component.create()
+        self.quick_widget.setContent(QUrl(), component, qml_item)
+
+    def get_root_object(self) -> QObject:
+        """Returns the root QML object for further interactions."""
+        return self.quick_widget.rootObject()
+
+    def add_tag(self, text: str, checked: bool = False):
+        """
+        Adds a tag with the given text and checked state to the QML ListModel.
+        """
+        root_obj = self.get_root_object()
+        if root_obj is not None:
+            try:
+                root_obj.addTag(text, checked)
+            except Exception as e:
+                print("Error calling addTag:", e)
+        else:
+            print("Root object not found.")
+
+    def clear_tags(self):
+        """
+        Clears all tags from the QML ListModel.
+        """
+        root_obj = self.get_root_object()
+        if root_obj is not None:
+            try:
+                root_obj.clearTags()
+            except Exception as e:
+                print("Error calling clearTags:", e)
+        else:
+            print("Root object not found.")
+
+    def get_selected_tags(self):
+        """
+        Retrieves an array of tag IDs that are checked.
+        """
+        root_obj = self.get_root_object()
+        if root_obj is not None:
+            try:
+                return root_obj.getSelectedTags()
+            except Exception as e:
+                print("Error calling getSelectedTags:", e)
+        else:
+            print("Root object not found.")
+        return []
+
+

@@ -12,7 +12,8 @@ from root_controllers import ShoppingListController as SLC
 from root_controllers import RecipeController as RC
 from widgets_add_recipe_widget import AddRecipeWidget
 from widgets_recipe_detail_widget import RecipeDetailWidget
-from widgets_edit_recipe_widget import EditRecipeWidget  # New dedicated edit widget
+from widgets_edit_recipe_widget import EditRecipeWidget 
+from qml import MainSearchTextField, ScrollViewWidget
 
 TURKOOSI = "#00B0F0"
 HARMAA = "#808080"
@@ -20,6 +21,7 @@ HARMAA = "#808080"
 RecipeController = RC()
 ProductController = PC()
 ShoppingListController = SLC()
+
 
 class ReseptitPage(QWidget):
     """
@@ -46,16 +48,10 @@ class ReseptitPage(QWidget):
         self.page_list = QWidget()
         self.page_list.setLayout(self._create_list_layout())
 
-
-
-
-
-
-
         self.page_detail = None
         self.page_add_recipe = None
         self.page_edit_recipe = None
-        
+
         # Add pages to the stacked widget
         self.stacked.addWidget(self.page_list)         # index 0
 
@@ -74,11 +70,10 @@ class ReseptitPage(QWidget):
         top_bar_layout = QHBoxLayout()
         self.title_label = QLabel("Reseptit")
         self.title_label.setObjectName("top_bar_title_label")
+        
+        top_bar_search_layout = QHBoxLayout()
+        self.search_bar = MainSearchTextField(text_field_id="top_bar_search_bar",placeholder_text="Hae reseptejä")
 
-        self.search_bar = QLineEdit()
-        self.search_bar.setPlaceholderText("Hae reseptejä")
-        self.search_bar.textChanged.connect(self.filter_recipes)
-        self.search_bar.setObjectName("top_bar_search_bar")
 
         self.new_btn = QPushButton("Uusi resepti")
         self.new_btn.setObjectName("top_bar_new_button")
@@ -86,21 +81,23 @@ class ReseptitPage(QWidget):
 
         top_bar_layout.addWidget(self.title_label)
         top_bar_layout.addStretch()
-        top_bar_layout.addWidget(self.search_bar)
+        top_bar_search_layout.addWidget(self.search_bar)
         top_bar_layout.addWidget(self.new_btn)
 
         top_bar_frame = QFrame()
         top_bar_frame.setLayout(top_bar_layout)
         top_bar_frame.setObjectName("top_bar_frame")
         layout.addWidget(top_bar_frame, 0)
+        layout.addLayout(top_bar_search_layout)
 
         # Scroll area for the recipe list
-        self.scroll_area = QScrollArea()
-        self.scroll_area.setWidgetResizable(True)
-        self.scroll_content = QWidget()
-        self.scroll_layout = QVBoxLayout(self.scroll_content)
-        self.scroll_area.setWidget(self.scroll_content)
+        self.scroll_area = ScrollViewWidget(list_model_name="recipe_list")
         layout.addWidget(self.scroll_area, 1)
+        
+        # Connect the search bar's textChanged signal to filter_products.
+        self.search_bar.get_root_object().textChanged.connect(self.filter_recipes)
+        # Connect the QML signal for item clicks.
+        self.scroll_area.connect_item_clicked(self.handle_item_click)
 
         self.populate_recipe_list()
         return layout
@@ -115,31 +112,23 @@ class ReseptitPage(QWidget):
         except Exception as e:
             print(f"Error deleting recipe: {e}")
 
-
     def update_recipes_dict(self):
         """
         Fetches all recipes from the RecipeController and updates the local dictionary.
         """
         self.recipes_dict = RecipeController.get_all_recipes()
 
-    def populate_recipe_list(self):
+    def populate_recipe_list(self, filter_text=""):
         # Clear current layout
-        self.clear_layout(self.scroll_layout)
+        self.scroll_area.clear_items()
         # Sort recipes by name (case-insensitive)
         sorted_recipes = sorted(
             self.recipes_dict.values(),
             key=lambda r: r.name.lower()
         )
         for recipe in sorted_recipes:
-            btn = QPushButton(f"{recipe.name}")
-            btn.setObjectName("main_list_button")
-            # Store the recipe object for later filtering
-            btn.recipe = recipe
-            # When clicked, display the recipe detail view
-            btn.clicked.connect(lambda checked=False, r=recipe: self.display_recipe_detail(r))
-            self.scroll_layout.addWidget(btn)
-        self.scroll_layout.addStretch()
-
+            if filter_text == "" or filter_text in recipe.name.lower():
+                self.scroll_area.add_item(recipe.name, recipe.id)
 
     def display_recipe_detail(self, recipe):
         """
@@ -151,16 +140,15 @@ class ReseptitPage(QWidget):
         # When the edit button is clicked in the detail view,
         # emit a signal with the current recipe.
         self.page_detail.edit_recipe_requested.connect(self.open_edit_recipe)
-        self.page_detail.delete_recipe_requested.connect(self.handle_delete_recipe)
+        self.page_detail.delete_recipe_requested.connect(
+            self.handle_delete_recipe)
         self.stacked.addWidget(self.page_detail)         # index 1
         self.page_detail.set_recipe(recipe)
         self.stacked.setCurrentWidget(self.page_detail)
-    
+
     def back_to_recipe_detail(self):
         # Switch back to the recipe detail view (index 1)
         self.stacked.setCurrentWidget(self.page_detail)
-        
-        
 
     def open_add_recipe_page(self):
         """
@@ -175,8 +163,7 @@ class ReseptitPage(QWidget):
         self.page_add_recipe.recipe_added.connect(self.on_recipe_added)
         self.page_add_recipe.cancel_btn.clicked.connect(self.back_to_list)
         self.stacked.addWidget(self.page_add_recipe)       # index 2
-        
-        self.page_add_recipe.setFieldsToDefaults()
+
         self.stacked.setCurrentWidget(self.page_add_recipe)
 
     def open_edit_recipe(self, recipe):
@@ -186,9 +173,10 @@ class ReseptitPage(QWidget):
         # Page 3: Edit recipe view (separate widget for editing)
         self.page_edit_recipe = EditRecipeWidget(parent=self)
         self.page_edit_recipe.recipe_updated.connect(self.on_recipe_updated)
-        self.page_edit_recipe.cancel_btn.clicked.connect(self.back_to_recipe_detail)
+        self.page_edit_recipe.cancel_btn.clicked.connect(
+            self.back_to_recipe_detail)
         self.stacked.addWidget(self.page_edit_recipe)      # index 3
-        
+
         self.page_edit_recipe.set_recipe(recipe)
         self.stacked.setCurrentWidget(self.page_edit_recipe)
 
@@ -199,7 +187,7 @@ class ReseptitPage(QWidget):
         self.update_recipes_dict()
         self.populate_recipe_list()
         self.stacked.setCurrentWidget(self.page_list)
-        
+
         # Remove the detail and add recipe pages from the stack
         if self.page_detail:
             print("Removing page_detail")
@@ -207,21 +195,20 @@ class ReseptitPage(QWidget):
             self.page_detail.deleteLater()
             del self.page_detail
             self.page_detail = None
-            
+
         if self.page_add_recipe:
             print("Removing page_add_recipe")
             self.stacked.removeWidget(self.page_add_recipe)
             self.page_add_recipe.deleteLater()
             del self.page_add_recipe
             self.page_add_recipe = None
-        
+
         if self.page_edit_recipe:
             print("Removing page_edit_recipe")
             self.stacked.removeWidget(self.page_edit_recipe)
             self.page_edit_recipe.deleteLater()
             del self.page_edit_recipe
             self.page_edit_recipe = None
-            
 
     def on_recipe_added(self, recipe):
         """
@@ -235,28 +222,21 @@ class ReseptitPage(QWidget):
         """
         self.back_to_list()
 
-    def filter_recipes(self, text):
-        search_text = text.lower()
-        for i in range(self.scroll_layout.count()):
-            widget = self.scroll_layout.itemAt(i).widget()
-            if widget is None:
-                continue
-            # If the recipe attribute is present, check name and tags.
-            recipe = getattr(widget, "recipe", None)
-            if recipe:
-                name_match = search_text in recipe.name.lower()
-                tags_match = search_text in recipe.tags.lower() if recipe.tags else False
-                if name_match or tags_match:
-                    widget.show()
-                else:
-                    widget.hide()
-            else:
-                # Fallback: check the widget text (if for some reason recipe is not set)
-                if search_text in widget.text().lower():
-                    widget.show()
-                else:
-                    widget.hide()
-
+    def filter_recipes(self, newtext):
+        """
+        Filters the recipe list based on the search text.
+        """
+        search_text = newtext.lower().strip()
+        self.populate_recipe_list(filter_text=search_text)
+        
+    def handle_item_click(self, recipe_id):
+        """
+        Handles item clicks in the recipe list.
+        """
+        # Fetch the recipe details using the ID
+        recipe = RecipeController.get_recipe_by_id(recipe_id)
+        if recipe:
+            self.display_recipe_detail(recipe)
 
     def clear_layout(self, layout):
         """
