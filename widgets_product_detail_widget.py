@@ -48,11 +48,9 @@ class ProductDetailWidget(QWidget):
         self.price_label = QLabel()
         self.category_label = QLabel()
         self.unit_label = QLabel()
-        self.created_at_label = QLabel()
-        self.updated_at_label = QLabel()
 
         for lbl in [self.name_label, self.price_label, self.category_label,
-                    self.unit_label, self.created_at_label, self.updated_at_label]:
+                    self.unit_label]:
             lbl.setWordWrap(True)
             layout.addWidget(lbl)
 
@@ -94,15 +92,11 @@ class ProductDetailWidget(QWidget):
                 f"Hinta: {price_text}")
             self.category_label.setText(f"Kategoria: {product.category}")
             self.unit_label.setText(f"Yksikkö: {unit_display}")
-            self.created_at_label.setText(f"Luotu: {product.created_at}")
-            self.updated_at_label.setText(f"Päivitetty: {product.updated_at}")
         else:
             self.name_label.setText("Tuotetta ei löytynyt")
             self.price_label.setText("")
             self.category_label.setText("")
             self.unit_label.setText("")
-            self.created_at_label.setText("")
-            self.updated_at_label.setText("")
         # Ensure the detail view is shown
         self.stacked.setCurrentIndex(0)
 

@@ -1,9 +1,10 @@
 # File: edit_product_widget.py
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QMessageBox
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QMessageBox
 )
 from PySide6.QtCore import Signal, Qt
 from root_controllers import ProductController
+from qml import NormalTextField  # Use the QML based NormalTextField
 
 class EditProductWidget(QWidget):
     # Signal to emit the updated product after saving.
@@ -26,25 +27,37 @@ class EditProductWidget(QWidget):
 
         # Product Name
         name_label = QLabel("Nimi:")
-        self.name_edit = QLineEdit()
+        self.name_edit = NormalTextField(
+            text_field_id="name_edit",
+            placeholder_text="Syötä nimi..."
+        )
         layout.addWidget(name_label)
         layout.addWidget(self.name_edit)
 
         # Unit
         unit_label = QLabel("Yksikkö:")
-        self.unit_edit = QLineEdit()
+        self.unit_edit = NormalTextField(
+            text_field_id="unit_edit",
+            placeholder_text="Syötä yksikkö..."
+        )
         layout.addWidget(unit_label)
         layout.addWidget(self.unit_edit)
 
         # Price per unit
         price_label = QLabel("Hinta per yksikkö:")
-        self.price_edit = QLineEdit()
+        self.price_edit = NormalTextField(
+            text_field_id="price_edit",
+            placeholder_text="Syötä hinta..."
+        )
         layout.addWidget(price_label)
         layout.addWidget(self.price_edit)
 
         # Category
         category_label = QLabel("Kategoria:")
-        self.category_edit = QLineEdit()
+        self.category_edit = NormalTextField(
+            text_field_id="category_edit",
+            placeholder_text="Syötä kategoria..."
+        )
         layout.addWidget(category_label)
         layout.addWidget(self.category_edit)
 
@@ -58,7 +71,7 @@ class EditProductWidget(QWidget):
 
         self.setLayout(layout)
 
-        # Connect signals
+        # Connect signals.
         self.save_btn.clicked.connect(self._save_product)
         self.cancel_btn.clicked.connect(self._cancel_edit)
 
@@ -68,20 +81,20 @@ class EditProductWidget(QWidget):
         """
         self.product = product
         if product:
-            self.name_edit.setText(product.name)
-            self.unit_edit.setText(product.unit)
-            self.price_edit.setText(str(product.price_per_unit))
-            self.category_edit.setText(product.category)
+            self.name_edit.set_text(product.name)
+            self.unit_edit.set_text(product.unit)
+            self.price_edit.set_text(str(product.price_per_unit))
+            self.category_edit.set_text(product.category)
 
     def _save_product(self):
         """
         Gather data from the input fields, validate them,
         call the update method from ProductController, and emit product_updated.
         """
-        name = self.name_edit.text().strip()
-        unit = self.unit_edit.text().strip()
-        price_str = self.price_edit.text().strip()
-        category = self.category_edit.text().strip()
+        name = self.name_edit.get_text().strip()
+        unit = self.unit_edit.get_text().strip()
+        price_str = self.price_edit.get_text().strip()
+        category = self.category_edit.get_text().strip()
 
         if not name:
             QMessageBox.warning(self, "Virhe", "Tuotteen nimi on pakollinen.")

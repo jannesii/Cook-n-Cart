@@ -37,9 +37,7 @@ class TuotteetPage(QWidget):
         self.update_products_dict()
 
         main_layout = QVBoxLayout(self)
-
         self.stacked = QStackedWidget()
-
         self.page_list = None
         self.page_add_form = None
         self.page_detail = None
@@ -76,24 +74,24 @@ class TuotteetPage(QWidget):
         layout.addLayout(top_bar_search_layout)
 
         # -- QML Scrollable List --
-        # Use the QML-based ScrollViewWidget which manages its own ListModel.
         self.scroll_area = ScrollViewWidget(list_model_name="tuotteet_list")
         layout.addWidget(self.scroll_area, 1)
 
-        # Connect the QML signal to handle_item_click only once.
+        # Connect the search bar's textChanged signal to filter_products.
+        self.search_bar.get_root_object().textChanged.connect(self.filter_products)
+        # Connect the QML signal for item clicks.
         self.scroll_area.connect_item_clicked(self.handle_item_click)
 
-        # Populate the list from the products dictionary.
+        # Initially populate the list.
         self.populate_product_list()
 
         return layout
 
-    def populate_product_list(self):
+    def populate_product_list(self, filter_text=""):
         """
         Clear and repopulate the QML ListModel in the ScrollViewWidget
-        with product names.
+        with product names, optionally filtering by filter_text.
         """
-        # Clear existing items (assumes ScrollViewWidget has a clear_items() method)
         self.scroll_area.clear_items()
 
         # Sort products by name (case-insensitive)
@@ -102,17 +100,24 @@ class TuotteetPage(QWidget):
             key=lambda p: p.name.lower()
         )
 
-        # Add each product to the QML ListModel via the ScrollViewWidget's add_item() method.
         for product in sorted_products:
-            self.scroll_area.add_item(product.name, product.id)
-    
+            # Only add product if filter_text is empty or is found in the product name.
+            if filter_text == "" or filter_text in product.name.lower():
+                self.scroll_area.add_item(product.name, product.id)
+
+    def filter_products(self, newText):
+        """
+        Called when the search bar text changes.
+        Filters the product list to only include items that contain the search text.
+        """
+        search_text = newText.lower().strip()
+        # Repopulate the list with the filtered products.
+        self.populate_product_list(filter_text=search_text)
 
     def handle_item_click(self, product_id):
         """
         Handle the click event for a product item in the list.
-        This method will be called when a product is clicked.
         """
-
         print(f"Product clicked: {product_id}")
         product = ProductController.get_product_by_id(product_id)
         if product:
@@ -147,7 +152,6 @@ class TuotteetPage(QWidget):
         form.addRow("Kategoria:", self.category_edit)
         layout.addLayout(form)
 
-        # Save/Cancel buttons
         btn_layout = QHBoxLayout()
         save_btn = QPushButton("Tallenna tuote")
         save_btn.clicked.connect(self._save_new_product)
@@ -161,16 +165,11 @@ class TuotteetPage(QWidget):
         return layout
 
     def _save_new_product(self):
-        """
-        Validate fields, add a new product via the ProductController,
-        then update and repopulate the product list.
-        """
         name = self.name_edit.get_text().strip()
         desc = self.desc_edit.get_text().strip()
         price_str = self.price_edit.get_text().strip().replace(",", ".")
         cat = self.category_edit.get_text().strip()
 
-        # Validate required fields: name, desc and price must not be empty.
         if not name or not desc or not price_str:
             QMessageBox.warning(
                 self,
@@ -190,8 +189,6 @@ class TuotteetPage(QWidget):
             return
 
         print(f"Adding product: {name}, {desc}, {price}, {cat}")
-
-        # Add the new product using the ProductController.
         ProductController.add_product(
             name=name,
             unit=desc,
@@ -199,7 +196,6 @@ class TuotteetPage(QWidget):
             category=cat
         )
 
-        # Update products and repopulate the list.
         self.update_products_dict()
         self.populate_product_list()
         self._update_category_completer()
@@ -213,25 +209,20 @@ class TuotteetPage(QWidget):
     def update_products_dict(self):
         self.products_dict = ProductController.get_all_products()
 
-    def filter_products(self):
-        """
-        This method may need to be adjusted to work with the QML list model.
-        """
-        search_text = self.search_bar.text().lower()
-        # Filtering would require either modifying the QML ListModel or
-        # repopulating it from Python based on the filter.
-        # (Not implemented here.)
+    def filter_products(self, newText):
+        search_text = newText.lower().strip()
+        self.populate_product_list(filter_text=search_text)
 
     def display_add_product(self):
         self.page_add_form = QWidget()
         self.page_add_form.setLayout(self._create_add_form_layout())
-        self.stacked.addWidget(self.page_add_form)  # index 1
+        self.stacked.addWidget(self.page_add_form)
         self.stacked.setCurrentWidget(self.page_add_form)
 
     def show_product_details(self, product):
         self.page_detail = ProductDetailWidget()
         self.page_detail.back_btn.clicked.connect(self.back_to_list)
-        self.stacked.addWidget(self.page_detail)    # index 2
+        self.stacked.addWidget(self.page_detail)
         self.page_detail.set_product(product)
         self.page_detail.back_btn.clicked.connect(self.back_to_list)
         self.page_detail.remove_btn.clicked.connect(lambda: self.remove_product(product))
@@ -242,7 +233,7 @@ class TuotteetPage(QWidget):
         self.rm_page_detail()
         self.page_list = QWidget()
         self.page_list.setLayout(self._create_list_layout())
-        self.stacked.addWidget(self.page_list)     # index 0
+        self.stacked.addWidget(self.page_list)
         self.stacked.setCurrentWidget(self.page_list)
 
     def rm_page_add(self):

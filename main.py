@@ -50,7 +50,7 @@ def main():
 
             /* General settings for all widgets */
             QWidget {
-                background-color: #f0f0f0;
+                background-color: #ffffff;
                 font-family: "Segoe UI", sans-serif;
             }
 
