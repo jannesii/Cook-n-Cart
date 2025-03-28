@@ -12,6 +12,7 @@ from root_controllers import ProductController as PC
 from root_controllers import ShoppingListController as SLC
 from root_controllers import RecipeController as RC
 from widgets_product_detail_widget import ProductDetailWidget
+from qml import QmlTextFieldWidget as QmlTextField
 
 TURKOOSI = "#00B0F0"
 HARMAA = "#808080"
@@ -94,10 +95,10 @@ class TuotteetPage(QWidget):
         layout = QVBoxLayout()
 
         form = QFormLayout()
-        self.name_edit = QLineEdit()
-        self.desc_edit = QLineEdit()
-        self.price_edit = QLineEdit()
-        self.category_edit = QLineEdit()
+        self.name_edit = QmlTextField(text_field_id="name_edit") # QLineEdit()
+        self.desc_edit = QmlTextField(text_field_id="desc_edit") # QLineEdit()
+        self.price_edit = QmlTextField(text_field_id="price_edit") # QLineEdit()
+        self.category_edit = QmlTextField(text_field_id="category_edit") # QLineEdit()
 
         # Fetch all categories and ensure uniqueness
         all_categories = ProductController.get_all_categories()
@@ -106,7 +107,7 @@ class TuotteetPage(QWidget):
 
         categories_completer = QCompleter(unique_categories)
         categories_completer.setCaseSensitivity(Qt.CaseInsensitive)
-        self.category_edit.setCompleter(categories_completer)
+        #self.category_edit.setCompleter(categories_completer)
 
         form.addRow("Nimi:", self.name_edit)
         form.addRow("Yksikkö:", self.desc_edit)
@@ -139,16 +140,29 @@ class TuotteetPage(QWidget):
         Call product_controller.add_product(...) with data from the form,
         then go back to product list page and refresh.
         """
-        name = self.name_edit.text().strip()
-        desc = self.desc_edit.text().strip()
-        price_str = self.price_edit.text().strip().replace(",", ".")
+        #name = self.name_edit.text().strip()
+        #desc = self.desc_edit.text().strip()
+        #price_str = self.price_edit.text().strip().replace(",", ".")
+        #try:
+        #    price = float(price_str) if price_str else 0.0
+        #except ValueError:
+        #    price = 0.0  # Default to 0.0 or handle the error as needed
+        #    # Optionally, you can show an error message here
+
+        #cat = self.category_edit.text().strip()
+        
+        name = self.name_edit.get_text().strip()
+        desc = self.desc_edit.get_text().strip()
+        price_str = self.price_edit.get_text().strip().replace(",", ".")
         try:
             price = float(price_str) if price_str else 0.0
         except ValueError:
             price = 0.0  # Default to 0.0 or handle the error as needed
             # Optionally, you can show an error message here
 
-        cat = self.category_edit.text().strip()
+        cat = self.category_edit.get_text().strip()
+        
+        print(f"Adding product: {name}, {desc}, {price}, {cat}")
 
         # Add the new product using the ProductController
         ProductController.add_product(
@@ -166,10 +180,10 @@ class TuotteetPage(QWidget):
         self._update_category_completer()
 
         # Clear fields
-        self.name_edit.clear()
-        self.desc_edit.clear()
-        self.price_edit.clear()
-        self.category_edit.clear()
+        #self.name_edit.clear()
+        #self.desc_edit.clear()
+        #self.price_edit.clear()
+        #self.category_edit.clear()
 
         # Go back to page 0 and refresh the product list
         self.back_to_list()
@@ -180,7 +194,7 @@ class TuotteetPage(QWidget):
         """
         all_categories = ProductController.get_all_categories()
         unique_categories = sorted(set(all_categories))
-        self.category_edit.completer().setModel(QStringListModel(unique_categories))
+        #self.category_edit.completer().setModel(QStringListModel(unique_categories))
 
     def update_products_dict(self):
         """
@@ -244,7 +258,7 @@ class TuotteetPage(QWidget):
 
     def display_add_product(self):
         # Page 1 (add product view)
-        self.rm_page_list()
+        #self.rm_page_list()
         self.page_add_form = QWidget()
         self.page_add_form.setLayout(self._create_add_form_layout())
         self.stacked.addWidget(self.page_add_form)  # index 1
@@ -254,7 +268,7 @@ class TuotteetPage(QWidget):
         """
         Switch to the detail page and show the details of the given product.
         """
-        self.rm_page_list()
+        #self.rm_page_list()
         # page 2 (detail view)
         self.page_detail = ProductDetailWidget()
         # hook the "Back" button in ProductDetailWidget
@@ -282,7 +296,7 @@ class TuotteetPage(QWidget):
             print("Removing page_add_form")
             self.stacked.removeWidget(self.page_add_form)
             self.page_add_form.deleteLater()
-            del self.page_add_form
+            #del self.page_add_form
             self.page_add_form = None
 
     def rm_page_detail(self):
@@ -291,7 +305,7 @@ class TuotteetPage(QWidget):
             print("Removing page_detail")
             self.stacked.removeWidget(self.page_detail)
             self.page_detail.deleteLater()
-            del self.page_detail
+            #del self.page_detail
             self.page_detail = None
 
     def rm_page_list(self):
@@ -299,7 +313,7 @@ class TuotteetPage(QWidget):
             print("Removing page_list")
             self.stacked.removeWidget(self.page_list)
             self.page_list.deleteLater()
-            del self.page_list
+            #del self.page_list
             self.page_list = None
 
     def remove_product(self, product):

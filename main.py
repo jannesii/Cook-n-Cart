@@ -185,7 +185,7 @@ def main():
             font-weight: bold;
         }
     """
-    #load_stylesheet(app, default_styles)
+    load_stylesheet(app, default_styles)
     window = MainWindow()
     window.show()
     sys.exit(app.exec())
