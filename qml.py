@@ -465,7 +465,7 @@ class TagSelectorWidget(QWidget):
         return []
 
 
-class ProductSelectorWidget(QWidget):
+class ProductSelectorWidgetPage1(QWidget):
 
     def __init__(self, list_model_name="myListModel", parent=None):
         super().__init__(parent)
@@ -597,6 +597,7 @@ class ProductSelectorWidget(QWidget):
             print("Root object not found.")
         return []
 
+
 class ProductSelectorWidgetPage2(QWidget):
 
     def __init__(self, list_model_name="myListModel", parent=None):
@@ -623,10 +624,12 @@ class ProductSelectorWidgetPage2(QWidget):
                 anchors.fill: parent
                 spacing: 10
                 model: tagModel
+                
                 delegate: Rectangle {
                     id: delegateRect
+                    property int delegateIndex: index  // capture the model index at creation time
                     width: tagListView.width
-                    height: 60  // increased height for additional controls
+                    height: 60
                     radius: 10
                     color: "#00B0F0"
                     border.width: 1
@@ -652,25 +655,34 @@ class ProductSelectorWidgetPage2(QWidget):
                             width: 40
                             inputMethodHints: Qt.ImhDigitsOnly
                             onEditingFinished: {
-                                // Ensure that qty remains a valid integer; if parsing fails, default to 1.
-                                model.qty = parseInt(qtyField.text) || 1
+                                // Update the model via setProperty to ensure proper ListModel update.
+                                tagListView.model.setProperty(delegateIndex, "qty", parseInt(text) || 1)
                             }
                         }
 
                         ComboBox {
                             id: unitCombo
                             model: ["kpl", "kg", "l"]
-                            // Set the default selection based on the model's unit.
-                            currentIndex: model.unit === "kpl" ? 0 : (model.unit === "kg" ? 1 : (model.unit === "l" ? 2 : 0))
-                            onCurrentIndexChanged: {
-                                model.unit = unitCombo.currentText
+
+                            // Delay the initialization until after the delegate is fully set up.
+                            Timer {
+                                interval: 0   // triggers as soon as possible after construction
+                                running: true
+                                repeat: false
+                                onTriggered: {
+                                    unitCombo.currentIndex = model.unit === "kpl" ? 0 :
+                                                (model.unit === "kg" ? 1 :
+                                                (model.unit === "l" ? 2 : 0))
+                                }
+                            }
+
+                            // Use onActivated with an explicit function signature to avoid parameter injection issues.
+                            onActivated: function(activatedIndex) {
+                                // Use the stored delegateIndex rather than the potentially shadowed "index"
+                                tagListView.model.setProperty(delegateIndex, "unit", currentText)
+                                console.log("Updated unit for delegate index", delegateIndex, "to", currentText)
                             }
                         }
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: { model.checked = !model.checked }
                     }
                 }
             }
@@ -681,8 +693,8 @@ class ProductSelectorWidgetPage2(QWidget):
 
             // Helper function to add a tag into the model.
             // The id defaults to the text value if not provided.
-            function addTag(text, id, checked) {
-                tagModel.append({"text": text, "id": id, "checked": checked, "qty": 1, "unit": "kpl"});
+            function addTag(name, id, qty, unit) {
+                tagModel.append({"text": name, "id": id, "qty": qty, "unit": unit});
             }
 
             // Helper function to clear all tags from the model.
@@ -697,7 +709,8 @@ class ProductSelectorWidgetPage2(QWidget):
                 var result = [];
                 for(var i = 0; i < tagModel.count; i++) {
                     var item = tagModel.get(i);
-                    result.push(item.id, item.qty, item.unit);
+                    
+                    result.push({"id": item.id, "qty": item.qty, "unit": item.unit, "name": item.text});
                 }
                 return result;
             }
@@ -755,5 +768,3 @@ class ProductSelectorWidgetPage2(QWidget):
         else:
             print("Root object not found.")
         return []
-
-

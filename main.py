@@ -17,7 +17,7 @@ def load_stylesheet(app, qss):
 
 def main():
     try:
-        os.environ["QT_QUICK_CONTROLS_STYLE"] = "Basic"
+        #os.environ["QT_QUICK_CONTROLS_STYLE"] = "Basic"
         app = QApplication(sys.argv)
         
         # Check if the 'utils' directory exists, create if it doesn't.

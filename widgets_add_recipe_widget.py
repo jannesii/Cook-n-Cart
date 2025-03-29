@@ -45,7 +45,9 @@ class AddRecipeWidget(QWidget):
         self.stacked = QStackedWidget(self)
 
         # Page 0: Reseptilomake
-        self.form_page = None
+        self.form_page = QWidget()
+        self.form_page.setLayout(self._create_form_layout())
+        self.stacked.addWidget(self.form_page)      # index 0
 
         # Page 1: Tuotteiden valinta (oletetaan, että AddProductsWidget on jo toteutettu)
         self.products_page = None
@@ -117,14 +119,12 @@ class AddRecipeWidget(QWidget):
         """
         Aseta lomake näkyviin (Page 0).
         """
-        self.form_page = QWidget()
-        self.form_page.setLayout(self._create_form_layout())
-        self.stacked.addWidget(self.form_page)      # index 0
-        self.stacked.setCurrentWidget(self.form_page)
+
+        self.stacked.setCurrentIndex(0)
 
     def _open_products_page(self):
         self.products_page = AddProductsWidget(
-            parent=self
+            parent=self, selected_products=self.selected_products
         )
         self.products_page.finished.connect(self.on_products_selected)
         self.stacked.addWidget(self.products_page)    # index 1
@@ -142,11 +142,15 @@ class AddRecipeWidget(QWidget):
 
 
     def on_products_selected(self, selected_products):
-        self.selected_products = selected_products
+        if selected_products:
+            print(f"Selected products: {selected_products}")
+            self.selected_products = selected_products
+        else:
+            print("Ei valittuja tuotteita")
+            self.selected_products = []
         self._open_form_page()
 
     def on_tags_selected(self, selected_tags):
-        self.selected_tags = selected_tags
         # Päivitetään lomakkeen näyttö:
         if selected_tags:
             print(f"Selected tags: {selected_tags}")
@@ -156,24 +160,6 @@ class AddRecipeWidget(QWidget):
             self.tags_display_label.setText("Ei valittuja tageja")
         self._open_form_page()
 
-    def setFieldsToRecipe(self, recipe):
-        self.name_edit.setText(recipe.name)
-        self.instructions_edit.setText(recipe.instructions)
-        # Prepopulate tags: split by comma and trim spaces.
-        self.selected_tags = [
-            tag.strip() for tag in recipe.tags.split(",")] if recipe.tags else []
-        self.tags_display_label.setText(
-            recipe.tags if recipe.tags else "Ei valittuja tageja")
-        # Prepopulate the product selection: build a list of dicts from recipe ingredients.
-        self.selected_products = [
-            {"id": ing.product_id, "quantity": ing.quantity, "unit": ing.unit}
-            for ing in recipe.ingredients
-        ]
-        # Store the current recipe id for later update.
-        self.current_recipe_id = recipe.id
-        # Instead of immediately rebuilding the products list, schedule it to run as soon as the event loop is free.
-        QTimer.singleShot(
-            0, lambda: self.products_page.set_selected_products(self.selected_products))
 
     def _save_recipe(self):
         name = self.name_edit.get_text().strip()
@@ -216,7 +202,8 @@ class AddRecipeWidget(QWidget):
                 "quantity": quantity,
                 "unit": unit
             })
-
+        for i in ingredients:
+            print(f"Ingredient: {i}")
         try:
             # If we're in edit mode (current_recipe_id is set), update the recipe.
             if hasattr(self, "current_recipe_id") and self.current_recipe_id:
