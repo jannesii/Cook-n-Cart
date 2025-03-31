@@ -1,42 +1,44 @@
 # recipe_detail_widget.py
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QHBoxLayout
+from PySide6.QtWidgets import (
+    QWidget, QVBoxLayout, QLabel, QPushButton,
+    QHBoxLayout, QStackedWidget, QMessageBox
+)
 from PySide6.QtCore import Qt, Signal
-from root_controllers import ProductController as PC  # Ensure this import exists
+from root_controllers import RecipeController, ProductController
 
 TURKOOSI = "#00B0F0"
 HARMAA = "#808080"
 
 class RecipeDetailWidget(QWidget):
-    # New signal that sends the current recipe object.
+    # Define signals for edit and deletion.
     edit_recipe_requested = Signal(object)
     delete_recipe_requested = Signal(object)
-
+    
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.product_controller = PC()
-        self.recipe = None  # Store the current recipe
+        self.recipe_controller = RecipeController()
+        self.product_controller = ProductController()
+        self.recipe = None  # Currently displayed recipe
 
-        self.layout = QVBoxLayout(self)
+        # Use a QStackedWidget if you wish to switch pages (if needed)
+        self.stacked = QStackedWidget(self)
+        main_layout = QVBoxLayout(self)
+        main_layout.addWidget(self.stacked)
+        self.setLayout(main_layout)
 
-        # Define labels for each field:
+        # --- Detail Page ---
+        self.detail_page = QWidget()
+        detail_layout = QVBoxLayout(self.detail_page)
         self.name_label = QLabel()
         self.instructions_label = QLabel()
         self.tags_label = QLabel()
-        self.ingredients_Titlelabel = QLabel("<b>Ainesosat:</b>")
         self.ingredients_label = QLabel()
-        #self.created_at_label = QLabel()
-        self.updated_at_label = QLabel()
-
-        # Allow text to wrap:
         for lbl in [self.name_label, self.instructions_label,
-                    self.tags_label, self.ingredients_Titlelabel,
-                    self.ingredients_label, self.updated_at_label]:
+                    self.tags_label, self.ingredients_label]:
             lbl.setWordWrap(True)
-            self.layout.addWidget(lbl)
+            detail_layout.addWidget(lbl)
 
-        # Buttons layout:
-        button_layout = QVBoxLayout()
-        # Horizontal layout for Edit/Delete
+        # Buttons: Edit, Delete, Back
         btn_layout = QHBoxLayout()
         self.edit_btn = QPushButton("Muokkaa reseptiä")
         self.delete_btn = QPushButton("Poista resepti")
@@ -44,48 +46,50 @@ class RecipeDetailWidget(QWidget):
         btn_layout.addWidget(self.edit_btn)
         btn_layout.addWidget(self.delete_btn)
         btn_layout.addStretch()
-        button_layout.addLayout(btn_layout)
-        # Back button
         self.back_btn = QPushButton("Takaisin")
-        button_layout.addWidget(self.back_btn, alignment=Qt.AlignRight)
-        self.layout.addLayout(button_layout)
+        btn_layout.addWidget(self.back_btn)
+        detail_layout.addLayout(btn_layout)
+        self.stacked.addWidget(self.detail_page)  # index 0
 
-        # Connect the edit button to a local slot that emits our signal
-        self.edit_btn.clicked.connect(self.on_edit_clicked)
+        # --- Signal Connections ---
+        self.edit_btn.clicked.connect(self.switch_to_edit_view)
         self.delete_btn.clicked.connect(self.on_delete_clicked)
+        # (Assume back_btn is handled by the parent view.)
         
-    def on_edit_clicked(self):
-        if self.recipe:
-            self.edit_recipe_requested.emit(self.recipe)
-            
-    def on_delete_clicked(self):
-        if self.recipe:
-            self.delete_recipe_requested.emit(self.recipe)
-
+        # (No internal edit view is created here—the edit request is passed to the parent.)
+    
     def set_recipe(self, recipe):
-        """Update the widget fields with the given recipe details."""
+        """Prepopulates the detail view with the recipe data."""
         self.recipe = recipe
         if recipe:
             self.name_label.setText(f"<b>Nimi:</b> {recipe.name}")
             instructions_formatted = recipe.instructions.replace("\n", "<br>")
-            self.instructions_label.setText(f"<b>Valmistusohje:</b><br>{instructions_formatted}")
+            self.instructions_label.setText(f"<b>Ohjeet:</b><br>{instructions_formatted}")
             self.tags_label.setText(f"<b>Tagit:</b> {recipe.tags}")
-            
             ingredients_text = ""
             for ingredient in recipe.ingredients:
                 product = self.product_controller.get_product_by_id(ingredient.product_id)
-                product_name = product.name if product else f"Product {ingredient.product_id}"
-                # Format quantity to remove unnecessary decimals
+                product_name = product.name if product else f"Tuote {ingredient.product_id}"
                 quantity_str = f"{ingredient.quantity:g}"
                 ingredients_text += f"{product_name}: {quantity_str} {ingredient.unit}<br>"
             self.ingredients_label.setText(ingredients_text)
-            
-            #self.created_at_label.setText(f"<b>Luotu:</b> {recipe.created_at}")
-            self.updated_at_label.setText(f"<b>Päivitetty:</b> {recipe.updated_at}")
         else:
-            self.name_label.setText("")
-            self.instructions_label.setText("")
-            self.tags_label.setText("")
-            self.ingredients_label.setText("")
-            #self.created_at_label.setText("")
-            self.updated_at_label.setText("")
+            self.name_label.setText("Reseptiä ei löytynyt")
+            self.instructions_label.clear()
+            self.tags_label.clear()
+            self.ingredients_label.clear()
+    
+    def switch_to_edit_view(self):
+        """
+        Emits the edit_recipe_requested signal with the current recipe.
+        The parent view should have connected this signal and will then open the edit view.
+        """
+        if self.recipe:
+            self.edit_recipe_requested.emit(self.recipe)
+        else:
+            QMessageBox.warning(self, "Virhe", "Ei reseptiä muokattavaksi.")
+    
+    def on_delete_clicked(self):
+        """Emits the delete_recipe_requested signal with the current recipe."""
+        if self.recipe:
+            self.delete_recipe_requested.emit(self.recipe)

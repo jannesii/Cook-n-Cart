@@ -1,4 +1,3 @@
-# add_recipe_widget.py
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QLineEdit, QTextEdit, QStackedWidget, QCompleter, QMessageBox
@@ -15,44 +14,49 @@ HARMAA = "#808080"
 
 class AddRecipeWidget(QWidget):
     """
-    Widget uuden reseptin lisäämistä varten. Sisältää:
-      - Nimi, ohjeet kentät
-      - Painikkeen tuotteiden lisäämiseen (käyttää AddProductsWidget)
-      - Uuden tagien valinnan: nappi, joka avaa tagien valintasivun (AddTagsWidget)
-      - Tallenna ja Peruuta napit
-    Sisäisen QStackedWidgetin sivut:
-      Page 0: Reseptilomake
-      Page 1: Tuotteiden valinta (AddProductsWidget)
-      Page 2: Tagien valinta (AddTagsWidget)
+    Widget for adding or editing a recipe. It contains:
+      - Name and instructions fields.
+      - A button to add products (using AddProductsWidget).
+      - A button to select tags (which opens AddTagsWidget).
+      - Save and Cancel buttons.
+      
+    Internally, it uses a QStackedWidget with:
+      Page 0: The recipe form.
+      Page 1: The products selection widget.
+      Page 2: The tags selection widget.
+      
+    To edit an existing recipe, call set_recipe(recipe) before showing the widget.
     """
 
-    # Signaali, joka emittoidaan uuden reseptin tallennuksen jälkeen
-    recipe_added = Signal(object)
+    # Signal emitted after the recipe is saved (added or updated)
+    recipe_saved = Signal(object)
 
     def __init__(self, recipe_controller, product_controller, parent=None):
         super().__init__(parent)
         self.recipe_controller = recipe_controller
         self.product_controller = product_controller
 
-        # Tallennetaan valitut tuotteet ja tagit
+        # Store selected products and tags
         self.selected_products = []
         self.selected_tags = []
 
-        # QStackedWidget:n asetukset:
-        # Page 0: reseptilomake
-        # Page 1: tuotteiden valinta (olemassa oleva widget)
-        # Page 2: tagien valinta (uusi widget)
+        # current_recipe is None when adding a new recipe;
+        # if set, then the widget is in edit mode.
+        self.current_recipe = None
+
+        # QStackedWidget settings:
+        # Page 0: recipe form
+        # Page 1: product selection (AddProductsWidget)
+        # Page 2: tag selection (AddTagsWidget)
         self.stacked = QStackedWidget(self)
 
-        # Page 0: Reseptilomake
+        # Page 0: Recipe form
         self.form_page = QWidget()
         self.form_page.setLayout(self._create_form_layout())
-        self.stacked.addWidget(self.form_page)      # index 0
+        self.stacked.addWidget(self.form_page)  # index 0
 
-        # Page 1: Tuotteiden valinta (oletetaan, että AddProductsWidget on jo toteutettu)
+        # Pages for products and tags will be created as needed.
         self.products_page = None
-
-        # Page 2: Tagien valinta
         self.tags_page = None
 
         layout = QVBoxLayout(self)
@@ -63,7 +67,7 @@ class AddRecipeWidget(QWidget):
     def _create_form_layout(self):
         layout = QVBoxLayout()
 
-        # 1) Nimi
+        # 1) Name
         name_label = QLabel("Nimi:")
         self.name_edit = NormalTextField(
             text_field_id="name_edit",
@@ -72,7 +76,7 @@ class AddRecipeWidget(QWidget):
         layout.addWidget(name_label)
         layout.addWidget(self.name_edit)
 
-        # 2) Ohjeet
+        # 2) Instructions
         instructions_label = QLabel("Valmistusohjeet:")
         self.instructions_edit = TallTextField(
             text_field_id="instructions_edit",
@@ -81,10 +85,9 @@ class AddRecipeWidget(QWidget):
         layout.addWidget(instructions_label)
         layout.addWidget(self.instructions_edit)
 
-        # 3) Tagien valinta: näytetään nykyiset tagit ja nappi niiden muokkaamiseen
+        # 3) Tags selection: show current tags and a button to edit them.
         tags_label = QLabel("Tagit:")
         self.tags_display_label = QLabel()
-        # Use the stored selected tags to update the label.
         if self.selected_tags:
             self.tags_display_label.setText(", ".join(self.selected_tags))
         else:
@@ -95,18 +98,18 @@ class AddRecipeWidget(QWidget):
         layout.addWidget(self.tags_display_label)
         layout.addWidget(self.select_tags_btn)
 
-        # 4) Tuotteiden lisäys: painike aukaisee tuotteiden valintasivun
+        # 4) Products selection: button opens product selection widget.
         self.add_products_btn = QPushButton("+ Lisää tuotteita")
         self.add_products_btn.clicked.connect(self._open_products_page)
         layout.addWidget(self.add_products_btn)
 
-        # 5) Tallenna ja Peruuta napit
+        # 5) Save and Cancel buttons
         buttons_layout = QHBoxLayout()
         self.save_btn = QPushButton("Tallenna resepti")
         self.save_btn.clicked.connect(self._save_recipe)
         self.cancel_btn = QPushButton("Peruuta")
         self.cancel_btn.setObjectName("gray_button")
-        self.cancel_btn.clicked.connect(self._cancel_add_recipe)
+        self.cancel_btn.clicked.connect(self._cancel_recipe)
         buttons_layout.addWidget(self.save_btn)
         buttons_layout.addWidget(self.cancel_btn)
         layout.addLayout(buttons_layout)
@@ -114,32 +117,29 @@ class AddRecipeWidget(QWidget):
         layout.addStretch()
         return layout
 
-
     def _open_form_page(self):
-        """
-        Aseta lomake näkyviin (Page 0).
-        """
-
+        """Switch to the form (Page 0)."""
         self.stacked.setCurrentIndex(0)
 
     def _open_products_page(self):
+        """Opens the products selection widget."""
         self.products_page = AddProductsWidget(
             parent=self, selected_products=self.selected_products
         )
         self.products_page.finished.connect(self.on_products_selected)
-        self.stacked.addWidget(self.products_page)    # index 1
+        self.stacked.addWidget(self.products_page)  # index 1
         self.stacked.setCurrentWidget(self.products_page)
 
     def _open_tags_page(self):
+        """Opens the tags selection widget."""
         self.tags_page = AddTagsWidget(
             recipe_controller=self.recipe_controller,
-            selected_tags=self.selected_tags,  # Pass the current selected tags
+            selected_tags=self.selected_tags,
             parent=self
         )
         self.tags_page.finished.connect(self.on_tags_selected)
-        self.stacked.addWidget(self.tags_page)        # index 2
+        self.stacked.addWidget(self.tags_page)  # index 2
         self.stacked.setCurrentWidget(self.tags_page)
-
 
     def on_products_selected(self, selected_products):
         if selected_products:
@@ -151,7 +151,6 @@ class AddRecipeWidget(QWidget):
         self._open_form_page()
 
     def on_tags_selected(self, selected_tags):
-        # Päivitetään lomakkeen näyttö:
         if selected_tags:
             self.selected_tags = selected_tags
             print(f"Selected tags: {selected_tags}")
@@ -161,6 +160,32 @@ class AddRecipeWidget(QWidget):
             self.tags_display_label.setText("Ei valittuja tageja")
         self._open_form_page()
 
+    def set_recipe(self, recipe):
+        """
+        Puts the widget into edit mode by prepopulating the fields with the given recipe.
+        Also sets self.current_recipe so that _save_recipe() updates rather than adds.
+        """
+        self.current_recipe = recipe
+        # Prepopulate text fields with the recipe data.
+        self.name_edit.set_text(recipe.name)
+        self.instructions_edit.set_text(recipe.instructions)
+        # Assume recipe.tags is a comma-separated string.
+        if recipe.tags:
+            tags_list = [tag.strip() for tag in recipe.tags.split(",") if tag.strip()]
+        else:
+            tags_list = []
+        self.selected_tags = tags_list
+        self.tags_display_label.setText(", ".join(tags_list))
+        # For ingredients/products, you might want to prepopulate self.selected_products.
+        # This depends on your data structure; here we assume each ingredient contains
+        # at least 'product_id', 'quantity', and 'unit'.
+        self.selected_products = []
+        for ingredient in recipe.ingredients:
+            self.selected_products.append({
+                "id": ingredient.product_id,
+                "quantity": ingredient.quantity,
+                "unit": ingredient.unit
+            })
 
     def _save_recipe(self):
         name = self.name_edit.get_text().strip()
@@ -174,6 +199,7 @@ class AddRecipeWidget(QWidget):
             self._show_error("Valmistusohjeet ovat pakolliset.")
             return
 
+        # Validate selected products
         for p in self.selected_products:
             try:
                 quantity = float(p.get("quantity", 0))
@@ -181,13 +207,13 @@ class AddRecipeWidget(QWidget):
                 self._show_error("Ainesosan määrä ei ole kelvollinen luku.")
                 return
             if quantity <= 0:
-                self._show_error(
-                    "Ainesosan määrä täytyy olla suurempi kuin 0.")
+                self._show_error(f"Ainesosan määrä tuotteelle '{p.get('name', '')}' täytyy olla suurempi kuin 0.")
                 return
             if not p.get("unit"):
                 self._show_error("Valitse ainesosalle yksikkö.")
                 return
 
+        # Prepare ingredients list from selected products
         ingredients = []
         for p in self.selected_products:
             if isinstance(p, dict):
@@ -203,22 +229,21 @@ class AddRecipeWidget(QWidget):
                 "quantity": quantity,
                 "unit": unit
             })
-        for i in ingredients:
-            print(f"Ingredient: {i}")
+
         try:
-            # If we're in edit mode (current_recipe_id is set), update the recipe.
-            if hasattr(self, "current_recipe_id") and self.current_recipe_id:
+            if self.current_recipe is not None:
+                # Update the existing recipe
                 updated_recipe = self.recipe_controller.update_recipe(
-                    recipe_id=self.current_recipe_id,
+                    recipe_id=self.current_recipe.id,
                     name=name,
                     instructions=instructions,
                     tags=tags,
                     ingredients=ingredients
                 )
-                new_recipe = updated_recipe
+                recipe = updated_recipe
             else:
-                # Otherwise, add as a new recipe.
-                new_recipe = self.recipe_controller.add_recipe(
+                # Add a new recipe
+                recipe = self.recipe_controller.add_recipe(
                     name=name,
                     instructions=instructions,
                     tags=tags,
@@ -228,23 +253,13 @@ class AddRecipeWidget(QWidget):
             self._show_error(f"Reseptin tallennus epäonnistui: {e}")
             return
 
-        self.recipe_added.emit(new_recipe)
+        self.recipe_saved.emit(recipe)
         if hasattr(self.parent(), "back_to_list"):
             self.parent().back_to_list()
 
-    def _cancel_add_recipe(self):
+    def _cancel_recipe(self):
         if hasattr(self.parent(), "back_to_list"):
             self.parent().back_to_list()
 
     def _show_error(self, message):
         QMessageBox.warning(self, "Virhe", message)
-
-    def clearMemory(self):
-        if self.products_page:
-            self.stacked.removeWidget(self.products_page)
-            self.products_page.deleteLater()
-            self.products_page = None
-        if self.tags_page:
-            self.stacked.removeWidget(self.tags_page)
-            self.tags_page.deleteLater()
-            self.tags_page = None

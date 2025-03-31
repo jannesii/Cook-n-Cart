@@ -13,14 +13,10 @@ from root_controllers import ProductController as PC
 from root_controllers import ShoppingListController as SLC
 from root_controllers import RecipeController as RC
 from widgets_product_detail_widget import ProductDetailWidget
-from qml import NormalTextField, MainSearchTextField, ScrollViewWidget, ComboBoxWidget
+from qml import NormalTextField, MainSearchTextField, ScrollViewWidget
 
 TURKOOSI = "#00B0F0"
 HARMAA = "#808080"
-
-RecipeController = RC()
-ProductController = PC()
-ShoppingListController = SLC()
 
 
 class TuotteetPage(QWidget):
@@ -33,6 +29,8 @@ class TuotteetPage(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
+        self.product_controller = PC()
+
         self.products_dict = {}
         self.update_products_dict()
 
@@ -41,6 +39,7 @@ class TuotteetPage(QWidget):
         self.page_list = None
         self.page_add_form = None
         self.page_detail = None
+        self.unit_selector = None
 
         # Start with the list page
         self.setLayout(main_layout)
@@ -119,38 +118,55 @@ class TuotteetPage(QWidget):
         Handle the click event for a product item in the list.
         """
         print(f"Product clicked: {product_id}")
-        product = ProductController.get_product_by_id(product_id)
+        product = self.product_controller.get_product_by_id(product_id)
         if product:
             self.show_product_details(product)
 
     def _create_add_form_layout(self):
-        layout = QVBoxLayout()
-        form = QFormLayout()
+        # Use a QFormLayout to keep labels and inputs nicely aligned
+        form_layout = QFormLayout()
+
+        # -- Nimi --
+        nimi_label = QLabel("Nimi:")
         self.name_edit = NormalTextField(
             text_field_id="name_edit", placeholder_text="Syötä nimi..."
         )
-        self.unit_edit = ComboBoxWidget()
-        
+        form_layout.addRow(nimi_label, self.name_edit)
+
+        # -- Yksikkö --
+        yksikko_label = QLabel("Yksikkö:")
+        self.unit_edit = QPushButton("Valitse yksikkö")
+        self.unit_edit.clicked.connect(self._show_unit_selector)
+
+        # Optional: style the button so it looks more like a text field
+        self.unit_edit.setStyleSheet("""
+            QPushButton {
+                background-color: white;
+                border: 1px solid #C0C0C0;
+                border-radius: 3px;
+                padding: 4px 8px;
+            }
+            QPushButton:hover {
+                background-color: #E6E6E6;
+            }
+        """)
+        form_layout.addRow(yksikko_label, self.unit_edit)
+
+        # -- Hinta --
+        hinta_label = QLabel("Hinta:")
         self.price_edit = NormalTextField(
             text_field_id="price_edit", placeholder_text="Syötä hinta..."
         )
+        form_layout.addRow(hinta_label, self.price_edit)
+
+        # -- Kategoria --
+        kategoria_label = QLabel("Kategoria:")
         self.category_edit = NormalTextField(
             text_field_id="category_edit", placeholder_text="Syötä kategoria..."
         )
+        form_layout.addRow(kategoria_label, self.category_edit)
 
-        # Fetch and set up categories if needed
-        all_categories = ProductController.get_all_categories()
-        unique_categories = sorted(set(all_categories))
-        categories_completer = QCompleter(unique_categories)
-        categories_completer.setCaseSensitivity(Qt.CaseInsensitive)
-        # self.category_edit.setCompleter(categories_completer)
-
-        form.addRow("Nimi:", self.name_edit)
-        form.addRow("Yksikkö:", self.unit_edit)
-        form.addRow("Hinta:", self.price_edit)
-        form.addRow("Kategoria:", self.category_edit)
-        layout.addLayout(form)
-
+        # -- Buttons row --
         btn_layout = QHBoxLayout()
         save_btn = QPushButton("Tallenna tuote")
         save_btn.clicked.connect(self._save_new_product)
@@ -159,13 +175,48 @@ class TuotteetPage(QWidget):
         back_btn.clicked.connect(self.back_to_list)
         btn_layout.addWidget(save_btn)
         btn_layout.addWidget(back_btn)
-        layout.addLayout(btn_layout)
-        layout.addStretch()
+
+        # Combine the form layout + buttons into a main layout
+        main_layout = QVBoxLayout()
+        main_layout.addLayout(form_layout)
+        main_layout.addLayout(btn_layout)
+        main_layout.addStretch()
+
+        return main_layout
+
+    def _show_unit_selector(self):
+        # Create and store the unit selector widget so we can remove it later.
+        self.unit_selector = QWidget()
+        self.unit_selector.setLayout(self._create_unit_selector_layout())
+        self.stacked.addWidget(self.unit_selector)
+        self.stacked.setCurrentWidget(self.unit_selector)
+
+    def _select_unit(self, unit):
+        # Set the selected unit on the unit_edit button.
+        self.unit_edit.setText(unit)
+        # Return back to the add product form page.
+        if self.page_add_form is not None:
+            self.stacked.setCurrentWidget(self.page_add_form)
+        # Remove and delete the unit selector page.
+        if self.unit_selector is not None:
+            self.stacked.removeWidget(self.unit_selector)
+            self.unit_selector.deleteLater()
+            self.unit_selector = None
+
+    def _create_unit_selector_layout(self):
+        layout = QVBoxLayout()
+        units = ["kpl", "mg", "g", "kg", "ml", "dl", "l"]
+        for unit in units:
+            button = QPushButton(unit)
+            # When a unit is clicked, call _select_unit to update the form and return.
+            button.clicked.connect(lambda checked, u=unit: self._select_unit(u))
+            layout.addWidget(button)
         return layout
+
 
     def _save_new_product(self):
         name = self.name_edit.get_text().strip()
-        desc = self.unit_edit.get_unit().strip()
+        desc = self.unit_edit.text().strip()
         price_str = self.price_edit.get_text().strip().replace(",", ".")
         cat = self.category_edit.get_text().strip()
 
@@ -188,7 +239,7 @@ class TuotteetPage(QWidget):
             return
 
         print(f"Adding product: {name}, {desc}, {price}, {cat}")
-        ProductController.add_product(
+        self.product_controller.add_product(
             name=name,
             unit=desc,
             price_per_unit=price,
@@ -197,25 +248,21 @@ class TuotteetPage(QWidget):
 
         self.update_products_dict()
         self.populate_product_list()
-        self._update_category_completer()
         self.back_to_list()
 
-    def _update_category_completer(self):
-        all_categories = ProductController.get_all_categories()
-        unique_categories = sorted(set(all_categories))
-        # self.category_edit.completer().setModel(QStringListModel(unique_categories))
 
     def update_products_dict(self):
-        self.products_dict = ProductController.get_all_products()
+        self.products_dict = self.product_controller.get_all_products()
 
     def filter_products(self, newText):
         search_text = newText.lower().strip()
         self.populate_product_list(filter_text=search_text)
 
     def display_add_product(self):
-        self.page_add_form = QWidget()
-        self.page_add_form.setLayout(self._create_add_form_layout())
-        self.stacked.addWidget(self.page_add_form)
+        if not self.page_add_form:
+            self.page_add_form = QWidget()
+            self.page_add_form.setLayout(self._create_add_form_layout())
+            self.stacked.addWidget(self.page_add_form)
         self.stacked.setCurrentWidget(self.page_add_form)
 
     def show_product_details(self, product):
@@ -224,12 +271,14 @@ class TuotteetPage(QWidget):
         self.stacked.addWidget(self.page_detail)
         self.page_detail.set_product(product)
         self.page_detail.back_btn.clicked.connect(self.back_to_list)
-        self.page_detail.remove_btn.clicked.connect(lambda: self.remove_product(product))
+        self.page_detail.remove_btn.clicked.connect(
+            lambda: self.remove_product(product))
         self.stacked.setCurrentWidget(self.page_detail)
 
     def back_to_list(self):
         self.rm_page_add()
         self.rm_page_detail()
+        self.rm_page_unit_selector()
         self.page_list = QWidget()
         self.page_list.setLayout(self._create_list_layout())
         self.stacked.addWidget(self.page_list)
@@ -255,9 +304,16 @@ class TuotteetPage(QWidget):
             self.stacked.removeWidget(self.page_list)
             self.page_list.deleteLater()
             self.page_list = None
+            
+    def rm_page_unit_selector(self):
+        if self.unit_selector:
+            print("Removing unit_selector")
+            self.stacked.removeWidget(self.unit_selector)
+            self.unit_selector.deleteLater()
+            self.unit_selector = None
 
     def remove_product(self, product):
-        ProductController.delete_product(product.id)
+        self.product_controller.delete_product(product.id)
         self.update_products_dict()
         self.populate_product_list()
         self.back_to_list()

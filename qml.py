@@ -361,7 +361,7 @@ class TagSelectorWidget(QWidget):
         Rectangle {
             id: root
             width: 300
-            height: 400
+            height: 350
             color: "transparent"
 
             ListView {
@@ -802,7 +802,7 @@ class ProductSelectorWidgetPage2(QWidget):
                                 verticalAlignment: Text.AlignVCenter
                             }
 
-                            ComboBox {
+                            /*ComboBox {
                                 id: unitCombo
                                 model: ["kpl", "kg", "l"]
 
@@ -821,7 +821,7 @@ class ProductSelectorWidgetPage2(QWidget):
                                     tagListView.model.setProperty(delegateIndex, "unit", currentText)
                                     console.log("Updated unit for delegate index", delegateIndex, "to", currentText)
                                 }
-                            }
+                            }*/
                         }
                     }
                 }
@@ -908,42 +908,5 @@ class ProductSelectorWidgetPage2(QWidget):
         else:
             print("Root object not found.")
         return []
-class ComboBoxWidget(QWidget):
 
-    def __init__(self, list_model_name="myListModel", parent=None):
-        super().__init__(parent)
-        layout = QVBoxLayout(self)
-        self.quick_widget = QQuickWidget()
-        self.quick_widget.setResizeMode(QQuickWidget.SizeRootObjectToView)
-        layout.addWidget(self.quick_widget)
-        self.setLayout(layout)
 
-        qml_code = f'''
-        import QtQuick 2.15
-        import QtQuick.Controls 2.15
-
-        ComboBox {{
-            id: unitCombo
-            model: ["kpl", "mg", "g", "kg", "ml", "dl", "l"]
-        }}
-        '''
-
-        component = QQmlComponent(self.quick_widget.engine())
-        component.setData(qml_code.encode('utf-8'), QUrl())
-        if component.status() != QQmlComponent.Status.Ready:
-            for error in component.errors():
-                print("QML Error:", error.toString())
-        qml_item = component.create()
-        self.quick_widget.setContent(QUrl(), component, qml_item)
-
-    def get_root_object(self) -> QObject:
-        """Returns the root QML object (the ComboBox) for further interactions."""
-        return self.quick_widget.rootObject()
-
-    def get_unit(self):
-        """Returns the currently selected unit from the ComboBox."""
-        root_obj = self.get_root_object()
-        if root_obj is not None:
-            # In Qt Quick Controls 2, ComboBox has a "currentText" property.
-            return root_obj.property("currentText")
-        return None

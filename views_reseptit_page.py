@@ -12,7 +12,6 @@ from root_controllers import ShoppingListController as SLC
 from root_controllers import RecipeController as RC
 from widgets_add_recipe_widget import AddRecipeWidget
 from widgets_recipe_detail_widget import RecipeDetailWidget
-from widgets_edit_recipe_widget import EditRecipeWidget 
 from qml import MainSearchTextField, ScrollViewWidget
 
 TURKOOSI = "#00B0F0"
@@ -160,7 +159,7 @@ class ReseptitPage(QWidget):
             product_controller=ProductController,
             parent=self
         )
-        self.page_add_recipe.recipe_added.connect(self.on_recipe_added)
+        self.page_add_recipe.recipe_saved.connect(self.on_recipe_added)
         self.page_add_recipe.cancel_btn.clicked.connect(self.back_to_list)
         self.stacked.addWidget(self.page_add_recipe)       # index 2
 
@@ -171,8 +170,12 @@ class ReseptitPage(QWidget):
         Opens the edit recipe view with the selected recipe prepopulated.
         """
         # Page 3: Edit recipe view (separate widget for editing)
-        self.page_edit_recipe = EditRecipeWidget(parent=self)
-        self.page_edit_recipe.recipe_updated.connect(self.on_recipe_updated)
+        self.page_edit_recipe = AddRecipeWidget(
+            recipe_controller=RecipeController,
+            product_controller=ProductController,
+            parent=self
+        )
+        self.page_edit_recipe.recipe_saved.connect(self.on_recipe_updated)
         self.page_edit_recipe.cancel_btn.clicked.connect(
             self.back_to_recipe_detail)
         self.stacked.addWidget(self.page_edit_recipe)      # index 3
