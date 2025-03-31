@@ -1,7 +1,7 @@
 # File: widgets_add_tags_widget.py
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton
 from PySide6.QtCore import Signal
-from qml import TagSelectorWidget  # Import the new TagSelectorWidget from qml.py
+from qml import TagSelectorWidget, MainSearchTextField
 
 class AddTagsWidget(QWidget):
     finished = Signal(list)  # Emits a list of selected tags
@@ -13,8 +13,20 @@ class AddTagsWidget(QWidget):
         self.all_tags = sorted(set(self.recipe_controller.get_all_tags()))
         # Use provided selected_tags if any; otherwise, start empty.
         self.selected_tags = selected_tags if selected_tags is not None else []
-
         layout = QVBoxLayout(self)
+        
+        # -- Search Bar --
+        top_bar_search_layout = QHBoxLayout()
+        self.search_bar = MainSearchTextField(
+            text_field_id="top_bar_search_bar",
+            placeholder_text="Hae tageja..."
+        )
+        # Connect the search bar's textChanged signal to filter_products.
+        self.search_bar.get_root_object().textChanged.connect(self.filter_products)
+
+        top_bar_search_layout.addWidget(self.search_bar)
+
+        layout.addLayout(top_bar_search_layout)
 
         # Create an instance of TagSelectorWidget.
         self.tag_selector = TagSelectorWidget()
@@ -36,7 +48,7 @@ class AddTagsWidget(QWidget):
         # Populate the tag selector with tags.
         self.populate_tags()
 
-    def populate_tags(self):
+    def populate_tags(self, filter_text=""):
         """
         Populate the QML model in TagSelectorWidget with all tags.
         Pre-check tags that are already selected.
@@ -48,9 +60,20 @@ class AddTagsWidget(QWidget):
             # Add each tag from all_tags.
             for tag in self.all_tags:
                 is_checked = tag in self.selected_tags
-                root_obj.addTag(tag, is_checked)
+                if filter_text == "" or filter_text in tag.lower():
+                    root_obj.addTag(tag, is_checked)
         else:
             print("TagSelectorWidget root object not found.")
+            
+    def filter_products(self, newText):
+        """
+        Called when the search bar text changes.
+        Filters the product list to only include items that contain the search text.
+        """
+        search_text = newText.lower().strip()
+        # Repopulate the list with the filtered products.
+        self.populate_tags(
+            filter_text=search_text)
 
     def _finish_selection(self):
         """
@@ -64,7 +87,6 @@ class AddTagsWidget(QWidget):
             selected = js_value.toVariant()
             self.selected_tags = selected  # Update stored selection.
             self.finished.emit(selected)
-            print(f"Selected tags: {selected}")
         else:
             self.finished.emit([])
 

@@ -13,7 +13,7 @@ from root_controllers import ProductController as PC
 from root_controllers import ShoppingListController as SLC
 from root_controllers import RecipeController as RC
 from widgets_product_detail_widget import ProductDetailWidget
-from qml import NormalTextField, MainSearchTextField, ScrollViewWidget
+from qml import NormalTextField, MainSearchTextField, ScrollViewWidget, ComboBoxWidget
 
 TURKOOSI = "#00B0F0"
 HARMAA = "#808080"
@@ -129,9 +129,8 @@ class TuotteetPage(QWidget):
         self.name_edit = NormalTextField(
             text_field_id="name_edit", placeholder_text="Syötä nimi..."
         )
-        self.desc_edit = NormalTextField(
-            text_field_id="desc_edit", placeholder_text="Syötä yksikkö..."
-        )
+        self.unit_edit = ComboBoxWidget()
+        
         self.price_edit = NormalTextField(
             text_field_id="price_edit", placeholder_text="Syötä hinta..."
         )
@@ -147,7 +146,7 @@ class TuotteetPage(QWidget):
         # self.category_edit.setCompleter(categories_completer)
 
         form.addRow("Nimi:", self.name_edit)
-        form.addRow("Yksikkö:", self.desc_edit)
+        form.addRow("Yksikkö:", self.unit_edit)
         form.addRow("Hinta:", self.price_edit)
         form.addRow("Kategoria:", self.category_edit)
         layout.addLayout(form)
@@ -166,7 +165,7 @@ class TuotteetPage(QWidget):
 
     def _save_new_product(self):
         name = self.name_edit.get_text().strip()
-        desc = self.desc_edit.get_text().strip()
+        desc = self.unit_edit.get_unit().strip()
         price_str = self.price_edit.get_text().strip().replace(",", ".")
         cat = self.category_edit.get_text().strip()
 

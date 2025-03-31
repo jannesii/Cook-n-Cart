@@ -153,6 +153,7 @@ class AddRecipeWidget(QWidget):
     def on_tags_selected(self, selected_tags):
         # Päivitetään lomakkeen näyttö:
         if selected_tags:
+            self.selected_tags = selected_tags
             print(f"Selected tags: {selected_tags}")
             self.tags_display_label.setText(", ".join(selected_tags))
         else:

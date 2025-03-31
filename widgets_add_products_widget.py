@@ -8,6 +8,8 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QDoubleValidator
 from PySide6.QtCore import Signal, Qt, QTimer
 
+from time import sleep
+
 from qml import ProductSelectorWidgetPage1, MainSearchTextField, ProductSelectorWidgetPage2
 from root_controllers import ProductController as PC
 
@@ -26,26 +28,18 @@ class AddProductsWidget(QWidget):
 
         main_layout = QVBoxLayout(self)
         self.stacked = QStackedWidget()
+        self.page1 = None
+        self.page2 = None
 
         # Page 1
-        if not self.selected_products:
+        if True:
             self.flag = False
             self.page1 = QWidget()
             self.page1.setLayout(self.create_page1_layout())
             self.stacked.addWidget(self.page1)
-        else:
-            self.flag = True
-            products = []
-            for p in self.selected_products:
-                product = self.product_controller.get_product_by_id(p["id"])
-                products.append(product)
-            self.page2 = QWidget()
-            self.page2.setLayout(self.create_page2_layout(products))
-            self.stacked.addWidget(self.page2)
 
         self.setLayout(main_layout)
         main_layout.addWidget(self.stacked, 1)
-
         self.stacked.setCurrentIndex(0)
 
     def create_page1_layout(self):
@@ -123,6 +117,7 @@ class AddProductsWidget(QWidget):
         """
         print("Cancel button clicked")
         self.finished.emit([])
+        self.clearMemory()
 
     def handle_next(self):
         """
@@ -135,12 +130,11 @@ class AddProductsWidget(QWidget):
             # Convert the QJSValue to a native Python list.
             selected = js_value.toVariant()
             self.selected_products = selected
-            print(f"Selected products: {selected}")
             products = []
-            for id in selected:
-                products.append(self.product_controller.get_product_by_id(id))
+            #for id in selected:
+            #    products.append(self.product_controller.get_product_by_id(id))
             self.page2 = QWidget()
-            self.page2.setLayout(self.create_page2_layout(products))
+            self.page2.setLayout(self.create_page2_layout(selected))
             self.stacked.addWidget(self.page2)
             self.stacked.setCurrentIndex(1)
 
@@ -154,7 +148,6 @@ class AddProductsWidget(QWidget):
             js_value = root_obj.getSelectedTags()
             # Convert the QJSValue to a native Python list.
             products = js_value.toVariant()
-            print(f"Products: {products}")
 
         new_selection = []
 
@@ -182,6 +175,7 @@ class AddProductsWidget(QWidget):
                 "unit": product["unit"],
             })
         self.finished.emit(new_selection)
+        self.clearMemory()
 
     def populate_product_list(self, target, products, filter_text=""):
         """
@@ -196,12 +190,26 @@ class AddProductsWidget(QWidget):
                 products.values(),
                 key=lambda p: p.name.lower()
             )
-
             for product in sorted_products:
-                is_checked = product.id in self.selected_products
+                if any(item['id'] == product.id for item in self.selected_products):
+                    is_checked = True
+                else:
+                    is_checked = False
+                    
+                if is_checked:
+                    print(f"Product {product.name} is checked")
+                    item = next((item for item in self.selected_products if item['id'] == product.id), None)
+
+                    if item:
+                        quantity = item['quantity']
+                        unit = item['unit']
+                else:
+                    quantity = 1
+                    unit = "kpl"
+                    
                 # Only add product if filter_text is empty or is found in the product name.
                 if filter_text == "" or filter_text in product.name.lower():
-                    root_obj.addTag(product.name, product.id, is_checked)
+                    root_obj.addTag(product.name, product.id, is_checked, quantity, unit)
 
     def populate_product_list2(self, target, products, filter_text=""):
         """
@@ -213,17 +221,11 @@ class AddProductsWidget(QWidget):
             root_obj.clearTags()
             # Sort products by name (case-insensitive)
 
-            if not self.flag:
-                for product in products:
-                    # Only add product if filter_text is empty or is found in the product name.
-                    if filter_text == "" or filter_text in product.name.lower():
-                        root_obj.addTag(product.name, product.id, 1, "kpl")
-            else:
-                for p in self.selected_products:
-                    product = self.product_controller.get_product_by_id(
-                        p["id"])
-                    root_obj.addTag(
-                        product.name, p["id"], p["quantity"], p["unit"])
+            for p in products:
+                product = self.product_controller.get_product_by_id(
+                    p["id"])
+                root_obj.addTag(
+                    product.name, p["id"], p["qty"], product.unit)
 
     def filter_products(self, newText):
         """
@@ -240,3 +242,18 @@ class AddProductsWidget(QWidget):
         Handle the click event for a product item in the list.
         """
         print(f"Product clicked: {product_id}")
+        
+    def clearMemory(self):
+        """
+        Clear the memory of the widget.
+        """
+        if self.page1:
+            print("Removing add_products page1")
+            self.stacked.removeWidget(self.page1)
+            self.page1.deleteLater()
+            self.page1 = None
+        if self.page2:
+            print("Removing add_products page2")
+            self.stacked.removeWidget(self.page2)
+            self.page2.deleteLater()
+            self.page2 = None

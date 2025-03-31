@@ -4,6 +4,7 @@ from PySide6.QtQuickWidgets import QQuickWidget
 from PySide6.QtCore import QUrl, QObject
 from PySide6.QtQml import QQmlComponent
 from PySide6.QtWidgets import QWidget, QVBoxLayout
+from PySide6.QtCore import Qt, Signal, QTimer
 
 
 class NormalTextField(QWidget):
@@ -27,7 +28,9 @@ class NormalTextField(QWidget):
             width: 200
             height: 40
             color: "transparent"
-            radius: 5
+            radius: 3
+            border.width: 1
+            border.color: "gray"
 
             TextField {{
                 id: {self.text_field_id}
@@ -35,6 +38,7 @@ class NormalTextField(QWidget):
                 anchors.fill: parent
                 font.pixelSize: 16
                 placeholderText: " {placeholder_text}"
+                background: Rectangle {{ color: "transparent" }}  // Override default background
             }}
         }}
         '''
@@ -80,24 +84,29 @@ class TallTextField(QWidget):
 
         # Inline QML with a dynamic TextField id
         qml_code = f'''
-        import QtQuick 2.15
-        import QtQuick.Controls 2.15
+import QtQuick 2.15
+import QtQuick.Controls 2.15
 
-        Rectangle {{
-            id: root
-            width: 200
-            height: 200
-            color: "transparent"
-            radius: 5
+Rectangle {{
+    id: root
+    width: 200
+    height: 200
+    color: "transparent"
+    radius: 3
+    border.width: 1
+    border.color: "gray"
 
-            TextField {{
-                id: {self.text_field_id}
-                objectName: "{self.text_field_id}"  // Set the objectName so findChild() can locate this element
-                anchors.fill: parent
-                font.pixelSize: 16
-                placeholderText: " {placeholder_text}"
-            }}
-        }}
+    TextArea {{
+        id: {self.text_field_id}
+        objectName: "{self.text_field_id}"  // Allows findChild() to locate this element
+        anchors.fill: parent
+        font.pixelSize: 16
+        placeholderText: " {placeholder_text}"
+        wrapMode: Text.WordWrap  // Enable wrapping/newline input
+
+    }}
+}}
+
         '''
         component = QQmlComponent(self.quick_widget.engine())
         component.setData(qml_code.encode('utf-8'), QUrl())
@@ -149,7 +158,9 @@ class MainSearchTextField(QWidget):
             width: 140
             height: 40
             color: "transparent"
-            radius: 5
+            radius: 3
+            border.width: 1
+            border.color: "gray"
 
             // Signal to propagate text changes.
             signal textChanged(string newText)
@@ -161,6 +172,7 @@ class MainSearchTextField(QWidget):
                 font.pixelSize: 16
                 placeholderText: " {placeholder_text}"
                 onTextChanged: root.textChanged(text)
+                background: Rectangle {{ color: "transparent" }}  // Override default background
             }}
         }}
         '''
@@ -355,12 +367,12 @@ class TagSelectorWidget(QWidget):
             ListView {
                 id: tagListView
                 anchors.fill: parent
-                spacing: 10                    // Add this line to set vertical spacing
+                spacing: 5  // Vertical spacing between delegates
                 model: tagModel
                 delegate: Rectangle {
                     id: delegateRect
                     width: tagListView.width   // Screen-wide
-                    height: 45                 // Increase height for a larger touch target
+                    height: 30                 // Touch target size
                     radius: 10
                     color: model.checked ? "#00B0F0" : "#ffffff"
                     border.width: 1
@@ -378,7 +390,10 @@ class TagSelectorWidget(QWidget):
                     // The entire delegate acts as a button.
                     MouseArea {
                         anchors.fill: parent
-                        onClicked: { model.checked = !model.checked }
+                        onClicked: {
+                            model.checked = !model.checked
+                            reorderSelected()
+                        }
                     }
                 }
             }
@@ -389,25 +404,73 @@ class TagSelectorWidget(QWidget):
 
             // Helper function to add a tag into the model.
             function addTag(text, checked) {
-                tagModel.append({"text": text, "checked": checked});
+                // Ensure that roles are defined by providing safe defaults.
+                var safeText = text !== undefined ? text : ""
+                var safeChecked = checked !== undefined ? checked : false
+                tagModel.append({"text": safeText, "checked": safeChecked})
             }
 
             // Helper function to clear all tags from the model.
             function clearTags() {
-                while(tagModel.count > 0) {
-                    tagModel.remove(0);
+                while (tagModel.count > 0) {
+                    tagModel.remove(0)
                 }
             }
 
             // Helper function to return an array of selected tag texts.
             function getSelectedTags() {
-                var result = [];
-                for(var i = 0; i < tagModel.count; i++) {
-                    var item = tagModel.get(i);
-                    if(item.checked)
-                        result.push(item.text);
+                var result = []
+                for (var i = 0; i < tagModel.count; i++) {
+                    var item = tagModel.get(i)
+                    if (item.checked)
+                        result.push(item.text)
                 }
-                return result;
+                return result
+            }
+
+            // Function to reorder the model so that all selected tags are at the top.
+            function reorderSelected() {
+                var selectedItems = []
+                var unselectedItems = []
+                // Split items into selected and unselected while ensuring defined roles.
+                for (var i = 0; i < tagModel.count; i++) {
+                    var item = tagModel.get(i)
+                    var fixedItem = {
+                        "text": item.text !== undefined ? item.text : "",
+                        "checked": item.checked !== undefined ? item.checked : false
+                    }
+                    if (fixedItem.checked)
+                        selectedItems.push(fixedItem)
+                    else
+                        unselectedItems.push(fixedItem)
+                }
+                // Clear the model.
+                while (tagModel.count > 0) {
+                    tagModel.remove(0)
+                }
+                // Append selected items first.
+                for (var i = 0; i < selectedItems.length; i++) {
+                    tagModel.append(selectedItems[i])
+                }
+                // Append the unselected items.
+                for (var i = 0; i < unselectedItems.length; i++) {
+                    tagModel.append(unselectedItems[i])
+                }
+            }
+
+            // A timer to reorder the model after initial population.
+            Timer {
+                id: reorderTimer
+                interval: 10   // Adjust delay as needed
+                running: false
+                repeat: false
+                onTriggered: {
+                    reorderSelected()
+                }
+            }
+
+            Component.onCompleted: {
+                reorderTimer.start()
             }
         }
         '''
@@ -488,12 +551,12 @@ class ProductSelectorWidgetPage1(QWidget):
             ListView {
                 id: tagListView
                 anchors.fill: parent
-                spacing: 10                    // Add this line to set vertical spacing
+                spacing: 5                    // Vertical spacing between delegates
                 model: tagModel
                 delegate: Rectangle {
                     id: delegateRect
                     width: tagListView.width   // Screen-wide
-                    height: 45                 // Increase height for a larger touch target
+                    height: 30                 // Increased height for a larger touch target
                     radius: 10
                     color: model.checked ? "#00B0F0" : "#ffffff"
                     border.width: 1
@@ -511,7 +574,12 @@ class ProductSelectorWidgetPage1(QWidget):
                     // The entire delegate acts as a button.
                     MouseArea {
                         anchors.fill: parent
-                        onClicked: { model.checked = !model.checked }
+                        onClicked: {
+                            // Toggle the checked state.
+                            model.checked = !model.checked;
+                            // Reorder the entire model so that all selected items appear on top.
+                            reorderSelected();
+                        }
                     }
                 }
             }
@@ -520,11 +588,68 @@ class ProductSelectorWidgetPage1(QWidget):
                 id: tagModel
             }
 
-            // Helper function to add a tag into the model.
-            function addTag(text, id, checked) {
-                tagModel.append({"text": text, "id": id, "checked": checked});
+            // Function to reorder the model so that selected items are at the top.
+            function reorderSelected() {
+                var selectedItems = [];
+                var unselectedItems = [];
+                // Loop over each item in the model.
+                for (var i = 0; i < tagModel.count; i++) {
+                    var item = tagModel.get(i);
+                    // Ensure each role has a default value.
+                    var fixedItem = {
+                        "text": item.text !== undefined ? item.text : "",
+                        "id": item.id !== undefined ? item.id : 0,
+                        "checked": item.checked !== undefined ? item.checked : false,
+                        "qty": item.qty !== undefined ? item.qty : 0,
+                        "unit": item.unit !== undefined ? item.unit : ""
+                    };
+                    if (fixedItem.checked) {
+                        selectedItems.push(fixedItem);
+                    } else {
+                        unselectedItems.push(fixedItem);
+                    }
+                }
+                // Clear the model.
+                while (tagModel.count > 0) {
+                    tagModel.remove(0);
+                }
+                // Append selected items first.
+                for (var i = 0; i < selectedItems.length; i++) {
+                    tagModel.append(selectedItems[i]);
+                }
+                // Append unselected items.
+                for (var i = 0; i < unselectedItems.length; i++) {
+                    tagModel.append(unselectedItems[i]);
+                }
             }
 
+            // Timer to call reorderSelected after the model is initially populated.
+            Timer {
+                id: reorderTimer
+                interval: 10  // Adjust delay if necessary
+                running: false
+                repeat: false
+                onTriggered: {
+                    reorderSelected();
+                }
+            }
+
+            Component.onCompleted: {
+                // Start the timer so that the model is fully populated before reordering.
+                reorderTimer.start();
+            }
+
+            // Helper function to add a tag into the model.
+            function addTag(text, id, checked, qty, unit) {
+                tagModel.append({
+                    "text": text !== undefined ? text : "",
+                    "id": id !== undefined ? id : 0,
+                    "checked": checked !== undefined ? checked : false,
+                    "qty": qty !== undefined ? qty : 0,
+                    "unit": unit !== undefined ? unit : ""
+                });
+            }
+            
             // Helper function to clear all tags from the model.
             function clearTags() {
                 while(tagModel.count > 0) {
@@ -532,17 +657,18 @@ class ProductSelectorWidgetPage1(QWidget):
                 }
             }
 
-            // Helper function to return an array of selected tag texts.
+            // Helper function to return an array of selected tag IDs.
             function getSelectedTags() {
                 var result = [];
-                for(var i = 0; i < tagModel.count; i++) {
+                for (var i = 0; i < tagModel.count; i++) {
                     var item = tagModel.get(i);
-                    if(item.checked)
-                        result.push(item.id);
+                    if (item.checked)
+                        result.push({"id": item.id, "qty": item.qty, "unit": item.unit});
                 }
                 return result;
             }
         }
+
         '''
 
         component = QQmlComponent(self.quick_widget.engine())
@@ -629,58 +755,72 @@ class ProductSelectorWidgetPage2(QWidget):
                     id: delegateRect
                     property int delegateIndex: index  // capture the model index at creation time
                     width: tagListView.width
-                    height: 60
+                    height: 80   // increased height to accommodate two rows
                     radius: 10
                     color: "#00B0F0"
                     border.width: 1
                     border.color: "gray"
 
-                    Row {
+                    Column {
                         anchors.fill: parent
                         anchors.margins: 5
-                        spacing: 10
+                        spacing: 5
 
-                        Text {
-                            id: tagLabel
-                            text: model.text
-                            font.pixelSize: 16
-                            font.bold: true
-                            color: "black"
-                            verticalAlignment: Text.AlignVCenter
-                        }
-
-                        TextField {
-                            id: qtyField
-                            text: model.qty.toString()
-                            width: 40
-                            inputMethodHints: Qt.ImhDigitsOnly
-                            onEditingFinished: {
-                                // Update the model via setProperty to ensure proper ListModel update.
-                                tagListView.model.setProperty(delegateIndex, "qty", parseInt(text) || 1)
+                        // First row: display the tag text.
+                        Row {
+                            Text {
+                                id: tagLabel
+                                text: model.text
+                                font.pixelSize: 16
+                                font.bold: true
+                                color: "black"
+                                verticalAlignment: Text.AlignVCenter
                             }
                         }
 
-                        ComboBox {
-                            id: unitCombo
-                            model: ["kpl", "kg", "l"]
+                        // Second row: display the TextField and ComboBox.
+                        Row {
+                            spacing: 10
 
-                            // Delay the initialization until after the delegate is fully set up.
-                            Timer {
-                                interval: 0   // triggers as soon as possible after construction
-                                running: true
-                                repeat: false
-                                onTriggered: {
-                                    unitCombo.currentIndex = model.unit === "kpl" ? 0 :
-                                                (model.unit === "kg" ? 1 :
-                                                (model.unit === "l" ? 2 : 0))
+                            TextField {
+                                id: qtyField
+                                text: model.qty.toString()
+                                width: 40
+                                height: 30
+                                inputMethodHints: Qt.ImhDigitsOnly
+                                onEditingFinished: {
+                                    // Update the model via setProperty to ensure proper ListModel update.
+                                    tagListView.model.setProperty(delegateIndex, "qty", parseInt(text) || 1)
                                 }
                             }
+                            Text {
+                                id: tagUnitLabel
+                                text: model.unit
+                                font.pixelSize: 16
+                                font.bold: false
+                                color: "black"
+                                verticalAlignment: Text.AlignVCenter
+                            }
 
-                            // Use onActivated with an explicit function signature to avoid parameter injection issues.
-                            onActivated: function(activatedIndex) {
-                                // Use the stored delegateIndex rather than the potentially shadowed "index"
-                                tagListView.model.setProperty(delegateIndex, "unit", currentText)
-                                console.log("Updated unit for delegate index", delegateIndex, "to", currentText)
+                            ComboBox {
+                                id: unitCombo
+                                model: ["kpl", "kg", "l"]
+
+                                Timer {
+                                    interval: 0   // triggers as soon as possible after construction
+                                    running: true
+                                    repeat: false
+                                    onTriggered: {
+                                        unitCombo.currentIndex = model.unit === "kpl" ? 0 :
+                                                                (model.unit === "kg" ? 1 :
+                                                                (model.unit === "l" ? 2 : 0))
+                                    }
+                                }
+
+                                onActivated: function(activatedIndex) {
+                                    tagListView.model.setProperty(delegateIndex, "unit", currentText)
+                                    console.log("Updated unit for delegate index", delegateIndex, "to", currentText)
+                                }
                             }
                         }
                     }
@@ -768,3 +908,42 @@ class ProductSelectorWidgetPage2(QWidget):
         else:
             print("Root object not found.")
         return []
+class ComboBoxWidget(QWidget):
+
+    def __init__(self, list_model_name="myListModel", parent=None):
+        super().__init__(parent)
+        layout = QVBoxLayout(self)
+        self.quick_widget = QQuickWidget()
+        self.quick_widget.setResizeMode(QQuickWidget.SizeRootObjectToView)
+        layout.addWidget(self.quick_widget)
+        self.setLayout(layout)
+
+        qml_code = f'''
+        import QtQuick 2.15
+        import QtQuick.Controls 2.15
+
+        ComboBox {{
+            id: unitCombo
+            model: ["kpl", "mg", "g", "kg", "ml", "dl", "l"]
+        }}
+        '''
+
+        component = QQmlComponent(self.quick_widget.engine())
+        component.setData(qml_code.encode('utf-8'), QUrl())
+        if component.status() != QQmlComponent.Status.Ready:
+            for error in component.errors():
+                print("QML Error:", error.toString())
+        qml_item = component.create()
+        self.quick_widget.setContent(QUrl(), component, qml_item)
+
+    def get_root_object(self) -> QObject:
+        """Returns the root QML object (the ComboBox) for further interactions."""
+        return self.quick_widget.rootObject()
+
+    def get_unit(self):
+        """Returns the currently selected unit from the ComboBox."""
+        root_obj = self.get_root_object()
+        if root_obj is not None:
+            # In Qt Quick Controls 2, ComboBox has a "currentText" property.
+            return root_obj.property("currentText")
+        return None
