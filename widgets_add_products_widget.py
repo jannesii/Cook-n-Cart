@@ -2,15 +2,19 @@
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QLineEdit, QListWidget, QListWidgetItem, QComboBox, QCheckBox,
-    QMessageBox, QStackedWidget
+    QLineEdit, QListWidget, QListWidgetItem, QComboBox, QCheckBox, 
+    QStackedWidget
 )
 from PySide6.QtGui import QDoubleValidator
 from PySide6.QtCore import Signal, Qt, QTimer
 
 from time import sleep
 
-from qml import ProductSelectorWidgetPage1, MainSearchTextField, ProductSelectorWidgetPage2
+from qml import (
+ProductSelectorWidgetPage1, MainSearchTextField, ProductSelectorWidgetPage2,
+WarningDialog
+)
+
 from root_controllers import ProductController as PC
 
 TURKOOSI = "#00B0F0"
@@ -32,11 +36,10 @@ class AddProductsWidget(QWidget):
         self.page2 = None
 
         # Page 1
-        if True:
-            self.flag = False
-            self.page1 = QWidget()
-            self.page1.setLayout(self.create_page1_layout())
-            self.stacked.addWidget(self.page1)
+        self.flag = False
+        self.page1 = QWidget()
+        self.page1.setLayout(self.create_page1_layout())
+        self.stacked.addWidget(self.page1)
 
         self.setLayout(main_layout)
         main_layout.addWidget(self.stacked, 1)
@@ -156,18 +159,16 @@ class AddProductsWidget(QWidget):
 
                 quantity = float(product["qty"])
                 if quantity <= 0:
-                    QMessageBox.warning(
-                        self,
-                        "Invalid Quantity",
-                        f"Quantity for product '{product['name']}' must be positive."
+                    warning = WarningDialog(
+                        f"Invalid Quantity\nQuantity for product '{product['name']}' must be positive.", self
                     )
+                    warning.show()
                     return  # Stop and do not proceed if invalid
             except ValueError:
-                QMessageBox.warning(
-                    self,
-                    "Invalid Input",
-                    f"Please enter a valid number for the quantity of product '{product['name']}'."
+                warning = WarningDialog(
+                    f"Invalid Input\nPlease enter a valid number for the quantity of product '{product['name']}'.", self
                 )
+                warning.show()
                 return
             new_selection.append({
                 "id": product["id"],

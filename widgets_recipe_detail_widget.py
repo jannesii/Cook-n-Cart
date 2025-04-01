@@ -1,10 +1,11 @@
 # recipe_detail_widget.py
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QPushButton,
-    QHBoxLayout, QStackedWidget, QMessageBox
+    QHBoxLayout, QStackedWidget
 )
 from PySide6.QtCore import Qt, Signal
 from root_controllers import RecipeController, ProductController
+from qml import WarningDialog
 
 TURKOOSI = "#00B0F0"
 HARMAA = "#808080"
@@ -87,9 +88,13 @@ class RecipeDetailWidget(QWidget):
         if self.recipe:
             self.edit_recipe_requested.emit(self.recipe)
         else:
-            QMessageBox.warning(self, "Virhe", "Ei reseptiä muokattavaksi.")
+            self._show_error("Ei reseptiä muokattavaksi.")
     
     def on_delete_clicked(self):
         """Emits the delete_recipe_requested signal with the current recipe."""
         if self.recipe:
             self.delete_recipe_requested.emit(self.recipe)
+
+    def _show_error(self, message):
+        warning = WarningDialog(f"Virhe: {message}", self)
+        warning.show()

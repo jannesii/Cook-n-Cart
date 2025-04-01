@@ -1,10 +1,10 @@
 # File: edit_product_widget.py
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QMessageBox, QStackedWidget
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QStackedWidget
 )
 from PySide6.QtCore import Signal, Qt
 from root_controllers import ProductController
-from qml import NormalTextField
+from qml import NormalTextField, WarningDialog
 
 class EditProductWidget(QWidget):
     # Signal to emit the updated product after saving.
@@ -108,6 +108,7 @@ class EditProductWidget(QWidget):
     def _create_unit_selector_layout(self):
         """Creates a vertical layout with buttons for each unit option."""
         layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignTop)
         units = ["kpl", "mg", "g", "kg", "ml", "dl", "l"]
         for unit in units:
             button = QPushButton(unit)
@@ -144,13 +145,13 @@ class EditProductWidget(QWidget):
         category = self.category_edit.get_text().strip()
 
         if not name:
-            QMessageBox.warning(self, "Virhe", "Tuotteen nimi on pakollinen.")
+            self._show_error("Virhe: Tuotteen nimi on pakollinen.")
             return
 
         try:
             price = float(price_str)
         except ValueError:
-            QMessageBox.warning(self, "Virhe", "Hinnan tulee olla numero.")
+            self._show_error("Virhe: Hinnan tulee olla numero.")
             return
 
         try:
@@ -162,8 +163,12 @@ class EditProductWidget(QWidget):
             )
             self.product_updated.emit(updated_product)
         except Exception as e:
-            QMessageBox.warning(self, "Virhe", f"Tuotteen päivitys epäonnistui: {e}")
+            self._show_error(f"Tuotteen päivitys epäonnistui: {e}")
 
     def _cancel_edit(self):
         """Emits the edit_cancelled signal."""
         self.edit_cancelled.emit()
+        
+    def _show_error(self, message):
+        warning = WarningDialog(f"Virhe: {message}", self)
+        warning.show()

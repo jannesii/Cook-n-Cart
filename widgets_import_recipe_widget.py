@@ -1,10 +1,11 @@
 # import_recipe_widget.py
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
-    QPushButton, QListWidget, QListWidgetItem, QStackedWidget, QMessageBox
+    QPushButton, QListWidget, QListWidgetItem, QStackedWidget
 )
 from PySide6.QtCore import Signal, Qt
 from root_controllers import RecipeController, ProductController
+from qml import WarningDialog
 
 class ImportRecipeWidget(QWidget):
     # Signal emitted with a list of selected product dictionaries (each with id, quantity, unit)
@@ -160,7 +161,11 @@ class ImportRecipeWidget(QWidget):
         if selected_products:
             self.importCompleted.emit(selected_products)
         else:
-            QMessageBox.warning(self, "Huom", "Et ole valinnut yhtään ainesosaa.")
+            self._show_error("Et ole valinnut yhtään ainesosaa.")
 
     def _on_cancel(self):
         self.cancelImport.emit()
+
+    def _show_error(self, message):
+        warning = WarningDialog(f"Virhe: {message}", self)
+        warning.show()

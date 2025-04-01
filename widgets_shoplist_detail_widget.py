@@ -3,7 +3,7 @@ import sys
 import json
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QPushButton, QListWidget,
-    QListWidgetItem, QLabel, QStackedWidget, QMessageBox,
+    QListWidgetItem, QLabel, QStackedWidget,
     QDialog
 )
 from PySide6.QtCore import Qt, Signal
@@ -12,6 +12,7 @@ from root_controllers import ShoppingListController as SLC
 from root_models import ShoppingList, ShoppingListItem
 from widgets_add_products_widget import AddProductsWidget
 from widgets_import_recipe_widget import ImportRecipeWidget
+from qml import WarningDialog
 
 TURKOOSI = "#00B0F0"
 HARMAA = "#808080"
@@ -393,22 +394,22 @@ class ShoplistDetailWidget(QWidget):
     def _delete_shoplist(self):
         if not self.shoppinglist:
             return
-        confirm = QMessageBox.question(
-            self,
-            "Vahvistus",
-            "Haluatko varmasti poistaa tämän ostoslistan?",
-            QMessageBox.Yes | QMessageBox.No
-        )
-        if confirm == QMessageBox.Yes:
-            try:
-                self.shoplist_controller.delete_shopping_list_by_id(
-                    self.shoppinglist.id)
-                QMessageBox.information(
-                    self, "Poistettu", "Ostoslista on poistettu onnistuneesti.")
-                self.finished.emit()
-            except Exception as e:
-                QMessageBox.critical(
-                    self, "Virhe", f"Ostoslistan poistaminen epäonnistui: {str(e)}")
+        try:
+            self.shoplist_controller.delete_shopping_list_by_id(
+                self.shoppinglist.id)
+            self._show_message(
+                "Ostoslista on poistettu onnistuneesti.")
+            self.finished.emit()
+        except Exception as e:
+            self._show_error(f"Ostoslistan poistaminen epäonnistui: {str(e)}")
 
     def _go_back(self):
         self.finished.emit()
+
+    def _show_error(self, message):
+        warning = WarningDialog(f"Virhe: {message}", self)
+        warning.show()
+        
+    def _show_message(self, message):
+        msg = WarningDialog(f"Viesti: {message}", self)
+        msg.show()

@@ -1,7 +1,10 @@
 # File: widgets_add_tags_widget.py
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QInputDialog
-from PySide6.QtCore import Signal
-from qml import TagSelectorWidget, MainSearchTextField, NormalTextField
+from PySide6.QtWidgets import (
+    QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QInputDialog,
+    QStackedWidget, QLabel
+)
+from PySide6.QtCore import Signal, Qt
+from qml import TagSelectorWidget, MainSearchTextField, NormalTextField, WarningDialog
 
 class AddTagsWidget(QWidget):
     finished = Signal(list)  # Emits a list of selected tags
@@ -13,7 +16,19 @@ class AddTagsWidget(QWidget):
         self.all_tags = sorted(set(self.recipe_controller.get_all_tags()))
         # Use provided selected_tags if any; otherwise, start empty.
         self.selected_tags = selected_tags if selected_tags is not None else []
-        layout = QVBoxLayout(self)
+
+        main_layout = QVBoxLayout(self)
+        self.stacked = QStackedWidget()
+
+        self.main_page = None
+        self.add_tag_page = None
+
+        self.setLayout(main_layout)
+        main_layout.addWidget(self.stacked, 1)
+        self._show_select_tags_page()
+
+    def _select_tags_layout(self):
+        layout = QVBoxLayout()
 
         # -- Search Bar --
         top_bar_search_layout = QHBoxLayout()
@@ -35,9 +50,9 @@ class AddTagsWidget(QWidget):
         self.add_tag_btn = QPushButton("Lisää uusi tagi")
         self.add_tag_btn.setObjectName("add_tag_button")
         # Connect the new tag button to our new functionality.
-        self.add_tag_btn.clicked.connect(self._add_new_tag)
+        self.add_tag_btn.clicked.connect(self._show_add_tag_page)
         bottom_bar_layout.addWidget(self.add_tag_btn)
-        
+
         btn_layout = QHBoxLayout()
         self.ok_btn = QPushButton("OK")
         self.cancel_btn = QPushButton("Peruuta")
@@ -46,8 +61,6 @@ class AddTagsWidget(QWidget):
         bottom_bar_layout.addLayout(btn_layout)
         layout.addLayout(bottom_bar_layout)
 
-        self.setLayout(layout)
-
         # Connect the OK and Cancel buttons.
         self.ok_btn.clicked.connect(self._finish_selection)
         self.cancel_btn.clicked.connect(self._cancel_selection)
@@ -55,23 +68,62 @@ class AddTagsWidget(QWidget):
         # Populate the tag selector with tags.
         self.populate_tags()
 
-    def _add_new_tag(self):
-        """
-        Opens an input dialog to add a new tag.
-        If the tag is non-empty and not already present, it is added
-        to the list of all tags and marked as selected.
-        Then, the tag selector is refreshed.
-        """
-        new_tag, ok = QInputDialog.getText(self, "Lisää uusi tagi", "Syötä uusi tagi:")
-        if ok and new_tag:
-            new_tag = new_tag.strip()
-            if new_tag:
-                if new_tag not in self.all_tags:
-                    self.all_tags.append(new_tag)
-                    self.all_tags.sort()
-                if new_tag not in self.selected_tags:
-                    self.selected_tags.append(new_tag)
-                self.populate_tags()
+        return layout
+
+    def _add_new_tag_layout(self):
+        layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignTop)
+
+        self.new_tag_text_field = NormalTextField(
+            text_field_id="new_tag_text_field",
+            placeholder_text="Syötä uusi tagi..."
+        )
+        layout.addWidget(self.new_tag_text_field)
+        self.description_label = QLabel(
+            "Tagi on reseptin kategorisointia varten. Tagi voi olla esim. \"Kasvis\" tai \"Gluteeniton\".")
+        self.description_label.setWordWrap(True)
+        layout.addWidget(self.description_label)
+
+        btn_layout = QHBoxLayout()
+        self.add_tag_btn = QPushButton("Lisää tagi")
+        self.cancel_add_tag_btn = QPushButton("Peruuta")
+        btn_layout.addWidget(self.add_tag_btn)
+        btn_layout.addWidget(self.cancel_add_tag_btn)
+        layout.addLayout(btn_layout)
+
+        self.add_tag_btn.clicked.connect(self._add_tag)
+        self.cancel_add_tag_btn.clicked.connect(self._show_select_tags_page)
+
+        return layout
+
+    def _add_tag(self):
+        new_tag = self.new_tag_text_field.get_text().strip()
+        if not new_tag:
+            # Inform the user that the tag cannot be empty
+            warning = WarningDialog("Tagi ei voi olla tyhjä.", self)
+            warning.show()
+            return  # Stop processing if the tag is empty
+        if new_tag not in self.all_tags:
+            self.all_tags.append(new_tag)
+            self.all_tags.sort()
+        if new_tag not in self.selected_tags:
+            self.selected_tags.append(new_tag)
+        self.populate_tags()
+        self._show_select_tags_page()
+
+    def _show_select_tags_page(self):
+        if self.main_page is None:
+            self.main_page = QWidget()
+            self.main_page.setLayout(self._select_tags_layout())
+            self.stacked.addWidget(self.main_page)
+        self.stacked.setCurrentWidget(self.main_page)
+
+    def _show_add_tag_page(self):
+        if self.add_tag_page is None:
+            self.add_tag_page = QWidget()
+            self.add_tag_page.setLayout(self._add_new_tag_layout())
+            self.stacked.addWidget(self.add_tag_page)
+        self.stacked.setCurrentWidget(self.add_tag_page)
 
     def populate_tags(self, filter_text=""):
         """

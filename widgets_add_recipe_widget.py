@@ -1,12 +1,12 @@
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QLineEdit, QTextEdit, QStackedWidget, QCompleter, QMessageBox
+    QLineEdit, QTextEdit, QStackedWidget, QCompleter
 )
 from PySide6.QtCore import Qt, Signal, QTimer
 
 from widgets_add_tags_widget import AddTagsWidget
 from widgets_add_products_widget import AddProductsWidget
-from qml import NormalTextField, TallTextField, TagSelectorWidget
+from qml import NormalTextField, TallTextField, WarningDialog
 
 TURKOOSI = "#00B0F0"
 HARMAA = "#808080"
@@ -262,4 +262,5 @@ class AddRecipeWidget(QWidget):
             self.parent().back_to_list()
 
     def _show_error(self, message):
-        QMessageBox.warning(self, "Virhe", message)
+        warning = WarningDialog(f"Virhe: {message}", self)
+        warning.show()

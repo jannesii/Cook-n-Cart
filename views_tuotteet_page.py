@@ -4,8 +4,7 @@ import sys
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QPushButton, QScrollArea, QStackedWidget,
-    QFrame, QLineEdit, QCompleter, QFormLayout,
-    QMessageBox
+    QFrame, QLineEdit, QCompleter, QFormLayout
 )
 from PySide6.QtCore import Qt, QStringListModel
 
@@ -13,7 +12,7 @@ from root_controllers import ProductController as PC
 from root_controllers import ShoppingListController as SLC
 from root_controllers import RecipeController as RC
 from widgets_product_detail_widget import ProductDetailWidget
-from qml import NormalTextField, MainSearchTextField, ScrollViewWidget
+from qml import NormalTextField, MainSearchTextField, ScrollViewWidget, WarningDialog
 
 TURKOOSI = "#00B0F0"
 HARMAA = "#808080"
@@ -205,43 +204,51 @@ class TuotteetPage(QWidget):
 
     def _create_unit_selector_layout(self):
         layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignTop)
         units = ["kpl", "mg", "g", "kg", "ml", "dl", "l"]
         for unit in units:
             button = QPushButton(unit)
             # When a unit is clicked, call _select_unit to update the form and return.
-            button.clicked.connect(lambda checked, u=unit: self._select_unit(u))
+            button.clicked.connect(lambda checked=True, u=unit: self._select_unit(u))
             layout.addWidget(button)
         return layout
 
 
     def _save_new_product(self):
         name = self.name_edit.get_text().strip()
-        desc = self.unit_edit.text().strip()
+        unit = self.unit_edit.text().strip()
         price_str = self.price_edit.get_text().strip().replace(",", ".")
         cat = self.category_edit.get_text().strip()
 
-        if not name or not desc or not price_str:
-            QMessageBox.warning(
-                self,
-                "Missing Information",
-                "Please provide a value for Name, Description, and Price."
+        missing_fields = []
+        if not name:
+            missing_fields.append("Name")
+        if unit == "Valitse yksikkö":
+            missing_fields.append("Unit")
+        if not price_str:
+            missing_fields.append("Price")
+
+        if missing_fields:
+            missing_str = ", ".join(missing_fields)
+            warning = WarningDialog(
+                f"Missing Information!\nPlease provide a value for: \n{missing_str}.", self
             )
+            warning.show()
             return
 
         try:
             price = float(price_str)
         except ValueError:
-            QMessageBox.warning(
-                self,
-                "Invalid Price",
-                "Please enter a valid numeric value for Price."
+            warning = WarningDialog(
+                "Invalid Price!\nPlease enter a valid numeric value for: \nPrice.", self
             )
+            warning.show()
             return
 
-        print(f"Adding product: {name}, {desc}, {price}, {cat}")
+        print(f"Adding product: {name}, {unit}, {price}, {cat}")
         self.product_controller.add_product(
             name=name,
-            unit=desc,
+            unit=unit,
             price_per_unit=price,
             category=cat
         )
@@ -272,7 +279,7 @@ class TuotteetPage(QWidget):
         self.page_detail.set_product(product)
         self.page_detail.back_btn.clicked.connect(self.back_to_list)
         self.page_detail.remove_btn.clicked.connect(
-            lambda: self.remove_product(product))
+            lambda checked: self.remove_product(product))
         self.stacked.setCurrentWidget(self.page_detail)
 
     def back_to_list(self):

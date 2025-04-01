@@ -910,3 +910,68 @@ class ProductSelectorWidgetPage2(QWidget):
         return []
 
 
+class WarningDialog(QWidget):
+    def __init__(self, message, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Warning")
+        # Set the widget as a dialog
+        self.setWindowFlags(Qt.Dialog | Qt.WindowTitleHint)
+        
+        layout = QVBoxLayout(self)
+        self.quick_widget = QQuickWidget()
+        self.quick_widget.setResizeMode(QQuickWidget.SizeRootObjectToView)
+        layout.addWidget(self.quick_widget)
+        self.setLayout(layout)
+        
+        qml_code = f'''
+        import QtQuick 2.15
+        import QtQuick.Controls 2.15
+
+        Rectangle {{
+            id: dialogRoot
+            width: 300
+            height: 150
+            color: "lightyellow"
+            radius: 10
+            border.width: 2
+            border.color: "red"
+
+            Column {{
+                anchors.fill: parent
+                anchors.margins: 10
+                spacing: 10
+
+                Text {{
+                    id: messageText
+                    objectName: "messageText"
+                    text: "{message}"
+                    wrapMode: Text.WordWrap
+                    font.pixelSize: 16
+                    color: "black"
+                }}
+
+                Button {{
+                    id: okButton
+                    text: "OK"
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    onClicked: {{
+                        dialogRoot.accepted()
+                    }}
+                }}
+            }}
+
+            signal accepted()
+        }}
+        '''
+        component = QQmlComponent(self.quick_widget.engine())
+        component.setData(qml_code.encode('utf-8'), QUrl())
+        if component.status() != QQmlComponent.Status.Ready:
+            for error in component.errors():
+                print("QML Error:", error.toString())
+        qml_item = component.create()
+        self.quick_widget.setContent(QUrl(), component, qml_item)
+
+        # Connect the QML "accepted" signal to close the dialog.
+        root_obj = self.quick_widget.rootObject()
+        if root_obj is not None:
+            root_obj.accepted.connect(self.close)
