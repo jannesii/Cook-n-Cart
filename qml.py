@@ -5,9 +5,15 @@ from PySide6.QtCore import QUrl, QObject
 from PySide6.QtQml import QQmlComponent
 from PySide6.QtWidgets import QWidget, QVBoxLayout
 from PySide6.QtCore import Qt, Signal, QTimer
+import functools
+import logging
+from error_handler import catch_errors
+
+# --- Centralized Error Handling Decorator ---
 
 
 class NormalTextField(QWidget):
+    @catch_errors
     def __init__(self, text_field_id="mobileTextField", placeholder_text="Enter value...", parent=None):
         super().__init__(parent)
         self.text_field_id = text_field_id
@@ -50,6 +56,7 @@ class NormalTextField(QWidget):
         item = component.create()
         self.quick_widget.setContent(QUrl(), component, item)
 
+    @catch_errors
     def get_text(self):
         # Retrieve the QML root object
         root_obj = self.quick_widget.rootObject()
@@ -60,6 +67,7 @@ class NormalTextField(QWidget):
                 return text_field.property("text")
         return ""
 
+    @catch_errors
     def set_text(self, text: str):
         """
         Set the text of the QML TextField by finding the object and updating its property.
@@ -72,6 +80,7 @@ class NormalTextField(QWidget):
 
 
 class TallTextField(QWidget):
+    @catch_errors
     def __init__(self, text_field_id="mobileTextField", placeholder_text="Enter value...", parent=None):
         super().__init__(parent)
         self.text_field_id = text_field_id
@@ -116,6 +125,7 @@ Rectangle {{
         item = component.create()
         self.quick_widget.setContent(QUrl(), component, item)
 
+    @catch_errors
     def get_text(self):
         # Retrieve the QML root object
         root_obj = self.quick_widget.rootObject()
@@ -126,6 +136,7 @@ Rectangle {{
                 return text_field.property("text")
         return ""
 
+    @catch_errors
     def set_text(self, text: str):
         """
         Set the text of the QML TextField by finding the object and updating its property.
@@ -138,6 +149,7 @@ Rectangle {{
 
 
 class MainSearchTextField(QWidget):
+    @catch_errors
     def __init__(self, text_field_id="mobileTextField", placeholder_text="Enter value...", parent=None):
         super().__init__(parent)
         self.text_field_id = text_field_id
@@ -184,6 +196,7 @@ class MainSearchTextField(QWidget):
         item = component.create()
         self.quick_widget.setContent(QUrl(), component, item)
 
+    @catch_errors
     def get_text(self):
         # Retrieve the QML root object and then the TextField by its id.
         root_obj = self.quick_widget.rootObject()
@@ -193,11 +206,13 @@ class MainSearchTextField(QWidget):
                 return text_field.property("text")
         return ""
 
+    @catch_errors
     def get_root_object(self):
         return self.quick_widget.rootObject()
 
 
 class ScrollViewWidget(QWidget):
+    @catch_errors
     def __init__(self, list_model_name="myListModel", parent=None, height=50, main_height=200):
         super().__init__(parent)
         self.list_model_name = list_model_name  # dynamic objectName for ListModel
@@ -296,10 +311,12 @@ class ScrollViewWidget(QWidget):
         item = component.create()
         self.quick_widget.setContent(QUrl(), component, item)
 
+    @catch_errors
     def get_root_object(self) -> QObject:
         """Returns the root QML object for further interactions."""
         return self.quick_widget.rootObject()
 
+    @catch_errors
     def add_item(self, text: str, item_id):
         """
         Adds an item with the given text and item_id to the QML ListModel
@@ -314,6 +331,7 @@ class ScrollViewWidget(QWidget):
         else:
             print("Root object not found.")
 
+    @catch_errors
     def clear_items(self):
         """
         Clears all items from the QML ListModel by calling the QML function 'clearItems'.
@@ -327,6 +345,7 @@ class ScrollViewWidget(QWidget):
         else:
             print("Root object not found.")
 
+    @catch_errors
     def connect_item_clicked(self, slot):
         """
         Connects a Python slot to the QML 'itemClicked' signal.
@@ -345,7 +364,7 @@ class TagSelectorWidget(QWidget):
     A QML-based widget that displays a scrollable list of tags with checkboxes.
     Provides helper functions to populate the model, clear tags, and retrieve selected tags.
     """
-
+    @catch_errors
     def __init__(self, parent=None):
         super().__init__(parent)
         layout = QVBoxLayout(self)
@@ -492,10 +511,12 @@ class TagSelectorWidget(QWidget):
         qml_item = component.create()
         self.quick_widget.setContent(QUrl(), component, qml_item)
 
+    @catch_errors
     def get_root_object(self) -> QObject:
         """Returns the root QML object for further interactions."""
         return self.quick_widget.rootObject()
 
+    @catch_errors
     def add_tag(self, text: str, checked: bool = False):
         """
         Adds a tag with the given text and checked state to the QML ListModel.
@@ -509,6 +530,7 @@ class TagSelectorWidget(QWidget):
         else:
             print("Root object not found.")
 
+    @catch_errors
     def clear_tags(self):
         """
         Clears all tags from the QML ListModel.
@@ -522,6 +544,7 @@ class TagSelectorWidget(QWidget):
         else:
             print("Root object not found.")
 
+    @catch_errors
     def get_selected_tags(self):
         """
         Retrieves an array of tag texts that are checked.
@@ -535,7 +558,8 @@ class TagSelectorWidget(QWidget):
         else:
             print("Root object not found.")
         return []
-    
+
+    @catch_errors
     def check_all_tags(self):
         """
         Marks all tags as checked.
@@ -548,12 +572,14 @@ class TagSelectorWidget(QWidget):
                 print("Error calling checkAllTags:", e)
         else:
             print("Root object not found.")
+
+
 class IngredientSelectorWidget(QWidget):
     """
     A QML-based widget that displays a scrollable list of tags with checkboxes.
     Provides helper functions to populate the model, clear tags, and retrieve selected tags.
     """
-
+    @catch_errors
     def __init__(self, parent=None):
         super().__init__(parent)
         layout = QVBoxLayout(self)
@@ -720,10 +746,12 @@ class IngredientSelectorWidget(QWidget):
         qml_item = component.create()
         self.quick_widget.setContent(QUrl(), component, qml_item)
 
+    @catch_errors
     def get_root_object(self) -> QObject:
         """Returns the root QML object for further interactions."""
         return self.quick_widget.rootObject()
 
+    @catch_errors
     def add_tag(self, text: str, checked: bool = False):
         """
         Adds a tag with the given text and checked state to the QML ListModel.
@@ -737,6 +765,7 @@ class IngredientSelectorWidget(QWidget):
         else:
             print("Root object not found.")
 
+    @catch_errors
     def clear_tags(self):
         """
         Clears all tags from the QML ListModel.
@@ -750,6 +779,7 @@ class IngredientSelectorWidget(QWidget):
         else:
             print("Root object not found.")
 
+    @catch_errors
     def get_selected_tags(self):
         """
         Retrieves an array of tag texts that are checked.
@@ -763,7 +793,8 @@ class IngredientSelectorWidget(QWidget):
         else:
             print("Root object not found.")
         return []
-    
+
+    @catch_errors
     def check_all_tags(self):
         """
         Marks all tags as checked.
@@ -779,7 +810,7 @@ class IngredientSelectorWidget(QWidget):
 
 
 class ProductSelectorWidgetPage1(QWidget):
-
+    @catch_errors
     def __init__(self, list_model_name="myListModel", parent=None):
         super().__init__(parent)
         layout = QVBoxLayout(self)
@@ -929,10 +960,12 @@ class ProductSelectorWidgetPage1(QWidget):
         qml_item = component.create()
         self.quick_widget.setContent(QUrl(), component, qml_item)
 
+    @catch_errors
     def get_root_object(self) -> QObject:
         """Returns the root QML object for further interactions."""
         return self.quick_widget.rootObject()
 
+    @catch_errors
     def add_tag(self, text: str, checked: bool = False):
         """
         Adds a tag with the given text and checked state to the QML ListModel.
@@ -946,6 +979,7 @@ class ProductSelectorWidgetPage1(QWidget):
         else:
             print("Root object not found.")
 
+    @catch_errors
     def clear_tags(self):
         """
         Clears all tags from the QML ListModel.
@@ -959,6 +993,7 @@ class ProductSelectorWidgetPage1(QWidget):
         else:
             print("Root object not found.")
 
+    @catch_errors
     def get_selected_tags(self):
         """
         Retrieves an array of tag texts that are checked.
@@ -975,7 +1010,7 @@ class ProductSelectorWidgetPage1(QWidget):
 
 
 class ProductSelectorWidgetPage2(QWidget):
-
+    @catch_errors
     def __init__(self, list_model_name="myListModel", parent=None):
         super().__init__(parent)
         layout = QVBoxLayout(self)
@@ -1115,10 +1150,12 @@ class ProductSelectorWidgetPage2(QWidget):
         qml_item = component.create()
         self.quick_widget.setContent(QUrl(), component, qml_item)
 
+    @catch_errors
     def get_root_object(self) -> QObject:
         """Returns the root QML object for further interactions."""
         return self.quick_widget.rootObject()
 
+    @catch_errors
     def add_tag(self, text: str, checked: bool = False):
         """
         Adds a tag with the given text and checked state to the QML ListModel.
@@ -1132,6 +1169,7 @@ class ProductSelectorWidgetPage2(QWidget):
         else:
             print("Root object not found.")
 
+    @catch_errors
     def clear_tags(self):
         """
         Clears all tags from the QML ListModel.
@@ -1145,6 +1183,7 @@ class ProductSelectorWidgetPage2(QWidget):
         else:
             print("Root object not found.")
 
+    @catch_errors
     def get_selected_tags(self):
         """
         Retrieves an array of tag IDs that are checked.
@@ -1161,6 +1200,7 @@ class ProductSelectorWidgetPage2(QWidget):
 
 
 class WarningDialog(QWidget):
+    @catch_errors
     def __init__(self, message, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Warning")
@@ -1228,7 +1268,7 @@ class WarningDialog(QWidget):
 
 
 class ShoplistWidget(QWidget):
-
+    @catch_errors
     def __init__(self, list_model_name="myListModel", parent=None):
         super().__init__(parent)
         layout = QVBoxLayout(self)
@@ -1402,10 +1442,12 @@ class ShoplistWidget(QWidget):
         qml_item = component.create()
         self.quick_widget.setContent(QUrl(), component, qml_item)
 
+    @catch_errors
     def get_root_object(self) -> QObject:
         """Returns the root QML object for further interactions."""
         return self.quick_widget.rootObject()
 
+    @catch_errors
     def add_tag(self, text: str, checked: bool = False):
         """
         Adds a tag with the given text and checked state to the QML ListModel.
@@ -1419,6 +1461,7 @@ class ShoplistWidget(QWidget):
         else:
             print("Root object not found.")
 
+    @catch_errors
     def clear_tags(self):
         """
         Clears all tags from the QML ListModel.
@@ -1432,6 +1475,7 @@ class ShoplistWidget(QWidget):
         else:
             print("Root object not found.")
 
+    @catch_errors
     def get_selected_tags(self):
         """
         Retrieves an array of tag texts that are checked.
@@ -1446,6 +1490,7 @@ class ShoplistWidget(QWidget):
             print("Root object not found.")
         return []
 
+    @catch_errors
     def connect_item_clicked(self, slot):
         """
         Connects a Python slot to the QML 'itemClicked' signal.

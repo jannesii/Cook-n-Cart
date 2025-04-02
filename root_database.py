@@ -3,11 +3,15 @@
 import sqlite3
 from typing import List, Dict
 import os
+import functools
+import logging
+from error_handler import catch_errors
 
 
 class DatabaseManager:
     _instance = None
 
+    @catch_errors
     def __init__(self, db_path="utils/cook_and_cart.db"):
         if DatabaseManager._instance is not None:
             raise Exception("This class is a singleton!")
@@ -20,33 +24,39 @@ class DatabaseManager:
             DatabaseManager._instance = self
 
     @staticmethod
+    @catch_errors
     def get_instance():
         if DatabaseManager._instance is None:
             DatabaseManager()
         return DatabaseManager._instance
 
+    @catch_errors
     def execute_query(self, query, params=()):
         cursor = self.connection.cursor()
         cursor.execute(query, params)
         self.connection.commit()
         return cursor
 
+    @catch_errors
     def fetchall(self, query, params=()):
         cursor = self.execute_query(query, params)
         return cursor.fetchall()
 
+    @catch_errors
     def fetchone(self, query, params=()):
         cursor = self.execute_query(query, params)
         return cursor.fetchone()
-    
+
+    @catch_errors
     def executemany(self, query: str, params: List[tuple]):
         with self.connection as conn:
             cursor = conn.cursor()
             cursor.executemany(query, params)
             conn.commit()
         return cursor
-    
+
     @staticmethod
+    @catch_errors
     def create_database(db_path):
         # Ensure that the database directory exists
         os.makedirs(os.path.dirname(db_path), exist_ok=True)
@@ -127,10 +137,11 @@ class DatabaseManager:
             columns = cursor.fetchall()
             column_names = [col["name"] for col in columns]
             if "unit" not in column_names:
-                cursor.execute("ALTER TABLE recipe_ingredients ADD COLUMN unit TEXT NOT NULL DEFAULT '';")
+                cursor.execute(
+                    "ALTER TABLE recipe_ingredients ADD COLUMN unit TEXT NOT NULL DEFAULT '';")
                 print("Column 'unit' added to recipe_ingredients table.")
 
-        # Create triggers for updating purchased_count in shopping_lists
+        # Create triggers for updating purchased_count in shopping_lists.
         create_triggers = """
         CREATE TRIGGER IF NOT EXISTS trg_item_purchased
         AFTER UPDATE OF is_purchased ON shopping_list_items
@@ -178,7 +189,7 @@ class DatabaseManager:
         except sqlite3.OperationalError as e:
             print(f"Error creating triggers: {e}")
 
-        # Create indices to improve query performance
+        # Create indices to improve query performance.
         create_indices = """
         CREATE INDEX IF NOT EXISTS idx_recipe_ingredients_recipe_id ON recipe_ingredients(recipe_id);
         CREATE INDEX IF NOT EXISTS idx_recipe_ingredients_product_id ON recipe_ingredients(product_id);
@@ -187,8 +198,8 @@ class DatabaseManager:
         CREATE INDEX IF NOT EXISTS idx_shopping_lists_purchased_count ON shopping_lists(purchased_count);
         """
         cursor.executescript(create_indices)
-        
-        insert_products ="""
+
+        insert_products = """
         INSERT INTO products (name, unit, price_per_unit, category) VALUES
         ('Kanafilee', 'kg', 15.00, 'Liha ja kala'),
         ('Naudan ulkofileepihvi', 'kg', 25.00, 'Liha ja kala'),
@@ -222,7 +233,6 @@ class DatabaseManager:
 
         cursor.execute(insert_products)
 
-        # Commit changes and close the connection
         conn.commit()
         conn.close()
 

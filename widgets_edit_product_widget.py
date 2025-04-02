@@ -1,10 +1,16 @@
 # File: edit_product_widget.py
+
+import functools
+import logging
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QStackedWidget
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QStackedWidget, QMessageBox
 )
 from PySide6.QtCore import Signal, Qt
 from root_controllers import ProductController
 from qml import NormalTextField, WarningDialog
+
+from error_handler import catch_errors_ui
+
 
 class EditProductWidget(QWidget):
     # Signal to emit the updated product after saving.
@@ -12,6 +18,7 @@ class EditProductWidget(QWidget):
     # Signal to indicate that editing was cancelled.
     edit_cancelled = Signal()
 
+    @catch_errors_ui
     def __init__(self, parent=None):
         super().__init__(parent)
         self.product_controller = ProductController()
@@ -31,6 +38,7 @@ class EditProductWidget(QWidget):
         # Placeholder for unit selector page.
         self.unit_selector = None
 
+    @catch_errors_ui
     def _init_form_ui(self):
         """Initializes the main form UI inside self.form_page."""
         layout = QVBoxLayout(self.form_page)
@@ -98,6 +106,7 @@ class EditProductWidget(QWidget):
         self.save_btn.clicked.connect(self._save_product)
         self.cancel_btn.clicked.connect(self._cancel_edit)
 
+    @catch_errors_ui
     def _show_unit_selector(self):
         """Creates and shows the unit selector page."""
         self.unit_selector = QWidget()
@@ -105,6 +114,7 @@ class EditProductWidget(QWidget):
         self.stacked.addWidget(self.unit_selector)
         self.stacked.setCurrentWidget(self.unit_selector)
 
+    @catch_errors_ui
     def _create_unit_selector_layout(self):
         """Creates a vertical layout with buttons for each unit option."""
         layout = QVBoxLayout()
@@ -113,10 +123,12 @@ class EditProductWidget(QWidget):
         for unit in units:
             button = QPushButton(unit)
             # When a unit is clicked, call _select_unit.
-            button.clicked.connect(lambda checked, u=unit: self._select_unit(u))
+            button.clicked.connect(
+                lambda checked, u=unit: self._select_unit(u))
             layout.addWidget(button)
         return layout
 
+    @catch_errors_ui
     def _select_unit(self, unit):
         """Updates the unit button text with the selected unit and returns to the main form."""
         self.unit_btn.setText(unit)
@@ -128,6 +140,7 @@ class EditProductWidget(QWidget):
             self.unit_selector.deleteLater()
             self.unit_selector = None
 
+    @catch_errors_ui
     def set_product(self, product):
         """Prepopulate the widget with the product details to edit."""
         self.product = product
@@ -137,6 +150,7 @@ class EditProductWidget(QWidget):
             self.price_edit.set_text(str(product.price_per_unit))
             self.category_edit.set_text(product.category)
 
+    @catch_errors_ui
     def _save_product(self):
         """Gather data, validate, update the product, and emit product_updated."""
         name = self.name_edit.get_text().strip()
@@ -165,10 +179,12 @@ class EditProductWidget(QWidget):
         except Exception as e:
             self._show_error(f"Tuotteen päivitys epäonnistui: {e}")
 
+    @catch_errors_ui
     def _cancel_edit(self):
         """Emits the edit_cancelled signal."""
         self.edit_cancelled.emit()
-        
+
+    @catch_errors_ui
     def _show_error(self, message):
         warning = WarningDialog(f"Virhe: {message}", self)
         warning.show()

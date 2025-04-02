@@ -2,23 +2,27 @@
 
 import sys
 import json
+import functools
+import logging
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, 
-    QLabel, QComboBox, QFrame, 
+    QWidget, QVBoxLayout, QHBoxLayout,
+    QLabel, QComboBox, QFrame, QMessageBox
 )
 
 from root_controllers import ProductController as PC
 from root_controllers import ShoppingListController as SLC
 from root_controllers import RecipeController as RC
-
+from error_handler import catch_errors_ui
 
 TURKOOSI = "#00B0F0"
 HARMAA = "#808080"
 CONFIG_FILE = "cookncart/utils/config.json"
 
+# Create controller instances.
 RecipeController = RC()
 ProductController = PC()
 ShoppingListController = SLC()
+
 
 class AsetuksetPage(QWidget):
     """
@@ -48,22 +52,21 @@ class AsetuksetPage(QWidget):
 
         main_layout.addWidget(top_bar_frame, 0)
 
-        # -- Keskialue --
-        # Tehdään kolme "riviä", joissa vasemmalla label ja oikealla ComboBox,
-        # ja koko rivi on kehystetty kuin nappi (pyöristetty, turkoosi).
-
-        # 1) Valuutta
+        # --- Helper Functions with Error Handling ---
+        @catch_errors_ui
         def load_settings():
-            """ Lataa asetukset config.json-tiedostosta. """
+            """Lataa asetukset config.json-tiedostosta."""
+            # NOTE: The following default is returned immediately.
+            # You may want to remove the default return and actually load from file.
             try:
-                return {"currency": "€", "weight_unit": "kg", "volume_unit": "l"}  # Oletusasetukset
                 with open(CONFIG_FILE, "r", encoding="utf-8") as file:
-                    return json.load(file).get("settings", {})
+                    return json.load(file).get("settings", {"currency": "€", "weight_unit": "kg", "volume_unit": "l"})
             except (FileNotFoundError, json.JSONDecodeError):
-                return {"currency": "€", "weight_unit": "kg", "volume_unit": "l"}  # Oletusasetukset
+                return {"currency": "€", "weight_unit": "kg", "volume_unit": "l"}
 
+        @catch_errors_ui
         def save_settings():
-            """ Tallentaa asetukset config.json-tiedostoon. """
+            """Tallentaa asetukset config.json-tiedostoon."""
             settings = {
                 "settings": {
                     "currency": self.currency_combo.currentText(),
@@ -76,6 +79,7 @@ class AsetuksetPage(QWidget):
 
         self.settings = load_settings()
 
+        # --- Currency Row ---
         currency_frame = QFrame()
         currency_frame.setObjectName("asetukset_frame")
         currency_layout = QHBoxLayout(currency_frame)
@@ -86,8 +90,6 @@ class AsetuksetPage(QWidget):
         self.currency_combo = QComboBox()
         self.currency_combo.addItems(["€"])
         self.currency_combo.setObjectName("asetukset_combobox")
-
-
         self.currency_combo.setCurrentText(self.settings.get("currency", "€"))
         self.currency_combo.currentTextChanged.connect(save_settings)
 
@@ -95,7 +97,7 @@ class AsetuksetPage(QWidget):
         currency_layout.addStretch()
         currency_layout.addWidget(self.currency_combo)
 
-        # 2) Painon yksikkö
+        # --- Weight Unit Row ---
         weight_frame = QFrame()
         weight_frame.setObjectName("asetukset_frame")
         weight_layout = QHBoxLayout(weight_frame)
@@ -106,10 +108,10 @@ class AsetuksetPage(QWidget):
         self.weight_combo = QComboBox()
         self.weight_combo.addItems(["kg"])
         self.weight_combo.setObjectName("asetukset_combobox")
+        self.weight_combo.setCurrentText(
+            self.settings.get("weight_unit", "kg"))
 
-        self.weight_combo.setCurrentText(self.settings.get("weight_unit", "kg"))
-        
-        # Päivittää painoyksiköt järjestelmässä
+        @catch_errors_ui
         def update_weight_unit():
             save_settings()
             new_unit = self.weight_combo.currentText()
@@ -122,7 +124,7 @@ class AsetuksetPage(QWidget):
         weight_layout.addStretch()
         weight_layout.addWidget(self.weight_combo)
 
-        # 3) Nestemäärän yksikkö
+        # --- Volume Unit Row ---
         volume_frame = QFrame()
         volume_frame.setObjectName("asetukset_frame")
         volume_layout = QHBoxLayout(volume_frame)
@@ -133,10 +135,9 @@ class AsetuksetPage(QWidget):
         self.volume_combo = QComboBox()
         self.volume_combo.addItems(["l"])
         self.volume_combo.setObjectName("asetukset_combobox")
-
         self.volume_combo.setCurrentText(self.settings.get("volume_unit", "l"))
-        
-        # Päivittää nesteyksiköt järjestelmässä
+
+        @catch_errors_ui
         def update_volume_unit():
             save_settings()
             new_unit = self.volume_combo.currentText()
@@ -149,7 +150,7 @@ class AsetuksetPage(QWidget):
         volume_layout.addStretch()
         volume_layout.addWidget(self.volume_combo)
 
-        # Lisätään kehykset pystylayoutiin
+        # --- Combine Rows ---
         content_layout = QVBoxLayout()
         content_layout.addWidget(currency_frame)
         content_layout.addWidget(weight_frame)

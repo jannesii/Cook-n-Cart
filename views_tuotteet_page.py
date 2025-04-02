@@ -1,10 +1,12 @@
 # tuotteet_page.py
 
 import sys
+import functools
+import logging
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QPushButton, QScrollArea, QStackedWidget,
-    QFrame, QLineEdit, QCompleter, QFormLayout
+    QFrame, QLineEdit, QCompleter, QFormLayout, QMessageBox
 )
 from PySide6.QtCore import Qt, QStringListModel
 
@@ -14,6 +16,7 @@ from root_controllers import RecipeController as RC
 from widgets_product_detail_widget import ProductDetailWidget
 from widgets_add_categories_widget import AddCategoriesWidget
 from qml import NormalTextField, MainSearchTextField, ScrollViewWidget, WarningDialog
+from error_handler import catch_errors_ui
 
 TURKOOSI = "#00B0F0"
 HARMAA = "#808080"
@@ -26,6 +29,7 @@ class TuotteetPage(QWidget):
       - Keskialue: QML ScrollViewWidget displaying a list of products
     """
 
+    @catch_errors_ui
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent = parent
@@ -47,6 +51,7 @@ class TuotteetPage(QWidget):
         main_layout.addWidget(self.stacked, 1)
         self.back_to_list()
 
+    @catch_errors_ui
     def _create_list_layout(self):
         layout = QVBoxLayout()
         # -- Top Bar --
@@ -84,36 +89,34 @@ class TuotteetPage(QWidget):
 
         # Initially populate the list.
         self.populate_product_list()
-
         return layout
 
+    @catch_errors_ui
     def populate_product_list(self, filter_text=""):
         """
         Clear and repopulate the QML ListModel in the ScrollViewWidget
         with product names, optionally filtering by filter_text.
         """
         self.scroll_area.clear_items()
-
         # Sort products by name (case-insensitive)
         sorted_products = sorted(
             self.products_dict.values(),
             key=lambda p: p.name.lower()
         )
-
         for product in sorted_products:
-            # Only add product if filter_text is empty or is found in the product name.
             if filter_text == "" or filter_text in product.name.lower():
                 self.scroll_area.add_item(product.name, product.id)
 
+    @catch_errors_ui
     def filter_products(self, newText):
         """
         Called when the search bar text changes.
         Filters the product list to only include items that contain the search text.
         """
         search_text = newText.lower().strip()
-        # Repopulate the list with the filtered products.
         self.populate_product_list(filter_text=search_text)
 
+    @catch_errors_ui
     def handle_item_click(self, product_id):
         """
         Handle the click event for a product item in the list.
@@ -123,6 +126,7 @@ class TuotteetPage(QWidget):
         if product:
             self.show_product_details(product)
 
+    @catch_errors_ui
     def _create_add_form_layout(self):
         # Use a QFormLayout to keep labels and inputs nicely aligned
         form_layout = QFormLayout()
@@ -138,7 +142,6 @@ class TuotteetPage(QWidget):
         yksikko_label = QLabel("Yksikkö:")
         self.unit_edit = QPushButton("Valitse yksikkö")
         self.unit_edit.clicked.connect(self._show_unit_selector)
-
         self.unit_edit.setStyleSheet("""
             QPushButton {
                 background-color: white;
@@ -186,61 +189,59 @@ class TuotteetPage(QWidget):
         btn_layout.addWidget(save_btn)
         btn_layout.addWidget(back_btn)
 
-        # Combine the form layout + buttons into a main layout
         main_layout = QVBoxLayout()
         main_layout.addLayout(form_layout)
         main_layout.addLayout(btn_layout)
         main_layout.addStretch()
 
         return main_layout
-    
+
+    @catch_errors_ui
     def _show_category_selector(self):
-        # Create and store the category selector widget so we can remove it later.
         self.category_selector = AddCategoriesWidget()
         self.category_selector.finished.connect(self._on_category_selected)
         self.category_selector.cancel_btn.clicked.connect(self.back_to_list)
         self.stacked.addWidget(self.category_selector)
         self.stacked.setCurrentWidget(self.category_selector)
-        
+
+    @catch_errors_ui
     def _on_category_selected(self, categories):
-        # Set the selected category on the category_edit button.
-        categories = ", ".join(categories) if categories else "Valitse kategoria"
+        categories = ", ".join(
+            categories) if categories else "Valitse kategoria"
         self.category_edit.setText(categories)
-        # Return back to the add product form page.
         if self.page_add_form is not None:
             self.stacked.setCurrentWidget(self.page_add_form)
 
+    @catch_errors_ui
     def _show_unit_selector(self):
-        # Create and store the unit selector widget so we can remove it later.
         self.unit_selector = QWidget()
         self.unit_selector.setLayout(self._create_unit_selector_layout())
         self.stacked.addWidget(self.unit_selector)
         self.stacked.setCurrentWidget(self.unit_selector)
 
+    @catch_errors_ui
     def _select_unit(self, unit):
-        # Set the selected unit on the unit_edit button.
         self.unit_edit.setText(unit)
-        # Return back to the add product form page.
         if self.page_add_form is not None:
             self.stacked.setCurrentWidget(self.page_add_form)
-        # Remove and delete the unit selector page.
         if self.unit_selector is not None:
             self.stacked.removeWidget(self.unit_selector)
             self.unit_selector.deleteLater()
             self.unit_selector = None
 
+    @catch_errors_ui
     def _create_unit_selector_layout(self):
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignTop)
         units = ["kpl", "mg", "g", "kg", "ml", "dl", "l"]
         for unit in units:
             button = QPushButton(unit)
-            # When a unit is clicked, call _select_unit to update the form and return.
-            button.clicked.connect(lambda checked=True, u=unit: self._select_unit(u))
+            button.clicked.connect(lambda checked=True,
+                                   u=unit: self._select_unit(u))
             layout.addWidget(button)
         return layout
 
-
+    @catch_errors_ui
     def _save_new_product(self):
         name = self.name_edit.get_text().strip()
         unit = self.unit_edit.text().strip()
@@ -284,14 +285,11 @@ class TuotteetPage(QWidget):
         self.populate_product_list()
         self.back_to_list()
 
-
+    @catch_errors_ui
     def update_products_dict(self):
         self.products_dict = self.product_controller.get_all_products()
 
-    def filter_products(self, newText):
-        search_text = newText.lower().strip()
-        self.populate_product_list(filter_text=search_text)
-
+    @catch_errors_ui
     def display_add_product(self):
         if not self.page_add_form:
             self.page_add_form = QWidget()
@@ -300,6 +298,7 @@ class TuotteetPage(QWidget):
         self.stacked.setCurrentWidget(self.page_add_form)
         self.parent.hide_buttons()
 
+    @catch_errors_ui
     def show_product_details(self, product):
         self.page_detail = ProductDetailWidget()
         self.page_detail.back_btn.clicked.connect(self.back_to_list)
@@ -311,6 +310,7 @@ class TuotteetPage(QWidget):
         self.stacked.setCurrentWidget(self.page_detail)
         self.parent.hide_buttons()
 
+    @catch_errors_ui
     def back_to_list(self):
         self.rm_page_add()
         self.rm_page_detail()
@@ -322,6 +322,7 @@ class TuotteetPage(QWidget):
         self.stacked.setCurrentWidget(self.page_list)
         self.parent.show_buttons()
 
+    @catch_errors_ui
     def rm_page_add(self):
         if self.page_add_form:
             print("Removing page_add_form")
@@ -329,6 +330,7 @@ class TuotteetPage(QWidget):
             self.page_add_form.deleteLater()
             self.page_add_form = None
 
+    @catch_errors_ui
     def rm_page_detail(self):
         if self.page_detail:
             print("Removing page_detail")
@@ -336,20 +338,23 @@ class TuotteetPage(QWidget):
             self.page_detail.deleteLater()
             self.page_detail = None
 
+    @catch_errors_ui
     def rm_page_list(self):
         if self.page_list:
             print("Removing page_list")
             self.stacked.removeWidget(self.page_list)
             self.page_list.deleteLater()
             self.page_list = None
-            
+
+    @catch_errors_ui
     def rm_page_unit_selector(self):
         if self.unit_selector:
             print("Removing unit_selector")
             self.stacked.removeWidget(self.unit_selector)
             self.unit_selector.deleteLater()
             self.unit_selector = None
-    
+
+    @catch_errors_ui
     def rm_page_category_selector(self):
         if self.category_selector:
             print("Removing category_selector")
@@ -357,12 +362,14 @@ class TuotteetPage(QWidget):
             self.category_selector.deleteLater()
             self.category_selector = None
 
+    @catch_errors_ui
     def remove_product(self, product):
         self.product_controller.delete_product(product.id)
         self.update_products_dict()
         self.populate_product_list()
         self.back_to_list()
 
+    @catch_errors_ui
     def _clear_layout(self, layout):
         while layout.count():
             item = layout.takeAt(0)

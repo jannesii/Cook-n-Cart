@@ -3,13 +3,19 @@
 from root_database import DatabaseManager
 from root_models import Recipe, Product, RecipeIngredient, ShoppingList, ShoppingListItem
 from typing import List, Dict
+import functools
+import logging
+from error_handler import catch_errors
+
+
 
 
 class RecipeRepository:
-
+    @catch_errors
     def __init__(self):
         self.db = DatabaseManager.get_instance()
 
+    @catch_errors
     def get_recipe_by_id(self, recipe_id: int) -> Recipe:
         query = "SELECT * FROM recipes WHERE id = ?"
         row = self.db.fetchone(query, (recipe_id,))
@@ -26,6 +32,7 @@ class RecipeRepository:
             return recipe
         return None
 
+    @catch_errors
     def get_all_recipes(self) -> Dict[int, Recipe]:
         query = "SELECT * FROM recipes"
         rows = self.db.fetchall(query)
@@ -45,6 +52,7 @@ class RecipeRepository:
             recipe.id: recipe for recipe in recipes}
         return recipes_dict
 
+    @catch_errors
     def get_all_tags(self) -> List[str]:
         query = "SELECT tags FROM recipes"
         rows = self.db.fetchall(query)
@@ -55,6 +63,7 @@ class RecipeRepository:
                             for tag in row['tags'].split(',') if tag.strip()])
         return tags
 
+    @catch_errors
     def get_ingredients_by_recipe_id(self, recipe_id: int) -> List[RecipeIngredient]:
         query = "SELECT * FROM recipe_ingredients WHERE recipe_id = ?"
         rows = self.db.fetchall(query, (recipe_id,))
@@ -65,13 +74,15 @@ class RecipeRepository:
                 recipe_id=row['recipe_id'],
                 product_id=row['product_id'],
                 quantity=row['quantity'],
-                unit=row['unit'],  # <-- Added to retrieve the unit from the database.
+                # <-- Added to retrieve the unit from the database.
+                unit=row['unit'],
                 created_at=row['created_at'],
                 updated_at=row['updated_at']
             )
             ingredients.append(ingredient)
         return ingredients
 
+    @catch_errors
     def add_recipe(self, recipe: Recipe) -> int:
         query = """
         INSERT INTO recipes (name, instructions, tags)
@@ -82,15 +93,18 @@ class RecipeRepository:
         recipe_id = cursor.lastrowid
         return recipe_id
 
+    @catch_errors
     def add_recipe_ingredient(self, recipe_id: int, ingredient: RecipeIngredient):
         query = """
         INSERT INTO recipe_ingredients (recipe_id, product_id, quantity, unit)
         VALUES (?, ?, ?, ?)
         """
         self.db.execute_query(
-            query, (recipe_id, ingredient.product_id, ingredient.quantity, ingredient.unit)
+            query, (recipe_id, ingredient.product_id,
+                    ingredient.quantity, ingredient.unit)
         )
 
+    @catch_errors
     def remove_ingredients_from_recipe(self, recipe_id: int):
         query = "DELETE FROM recipe_ingredients WHERE recipe_id = ?"
         self.db.execute_query(query, (recipe_id,))
@@ -98,7 +112,7 @@ class RecipeRepository:
     def delete_recipe(self, recipe_id: int):
         query = "DELETE FROM recipes WHERE id = ?"
         self.db.execute_query(query, (recipe_id,))
-        
+
     def update_recipe(self, recipe_id: int, recipe: Recipe):
         query = """
         UPDATE recipes
@@ -108,14 +122,16 @@ class RecipeRepository:
             updated_at = CURRENT_TIMESTAMP
         WHERE id = ?
         """
-        self.db.execute_query(query, (recipe.name, recipe.instructions, recipe.tags, recipe_id))
-
+        self.db.execute_query(
+            query, (recipe.name, recipe.instructions, recipe.tags, recipe_id))
 
 
 class ProductRepository:
+    @catch_errors
     def __init__(self):
         self.db = DatabaseManager.get_instance()
 
+    @catch_errors
     def get_all_products(self) -> Dict[int, Product]:
         query = "SELECT * FROM products"
         rows = self.db.fetchall(query)
@@ -136,6 +152,7 @@ class ProductRepository:
             product.id: product for product in products}
         return products_dict
 
+    @catch_errors
     def get_product_by_id(self, product_id: int) -> Product:
         query = "SELECT * FROM products WHERE id = ?"
         row = self.db.fetchone(query, (product_id,))
@@ -152,6 +169,7 @@ class ProductRepository:
             return product
         return None
 
+    @catch_errors
     def get_all_categories(self) -> List[str]:
         query = "SELECT category FROM products"
         rows = self.db.fetchall(query)
@@ -160,6 +178,7 @@ class ProductRepository:
             categories.append(row['category'])
         return categories
 
+    @catch_errors
     def get_products_by_shoplist_id(self, shopping_list_id: int) -> List[ShoppingListItem]:
         query = "SELECT * FROM shopping_list_items WHERE shopping_list_id = ?"
         rows = self.db.fetchall(query, (shopping_list_id,))
@@ -177,6 +196,7 @@ class ProductRepository:
             items.append(item)
         return items
 
+    @catch_errors
     def add_product(self, product: Product):
         query = """
         INSERT INTO products (name, unit, price_per_unit, category)
@@ -185,6 +205,7 @@ class ProductRepository:
         self.db.execute_query(query, (product.name, product.unit,
                                       product.price_per_unit, product.category))
 
+    @catch_errors
     def update_product(self, product_id: int, product: Product):
         query = """
         UPDATE products
@@ -194,16 +215,19 @@ class ProductRepository:
         self.db.execute_query(query, (product.name, product.unit,
                                       product.price_per_unit, product.category, product_id))
 
+    @catch_errors
     def delete_product(self, product_id: int):
         query = "DELETE FROM products WHERE id = ?"
         self.db.execute_query(query, (product_id,))
 
 
 class ShoppingListRepository:
+    @catch_errors
     def __init__(self):
         self.db = DatabaseManager.get_instance()
         self.product_repo = ProductRepository()
 
+    @catch_errors
     def get_all_shopping_lists(self) -> Dict[int, ShoppingList]:
         query = "SELECT * FROM shopping_lists"
         rows = self.db.fetchall(query)
@@ -218,7 +242,6 @@ class ShoppingListRepository:
             # Fetch items for this shopping list
             items_query = "SELECT * FROM shopping_list_items WHERE shopping_list_id = ?"
             items_rows = self.db.fetchall(items_query, (row['id'],))
-    
 
             items = [
                 ShoppingListItem(
@@ -250,6 +273,7 @@ class ShoppingListRepository:
         }
         return shopping_lists_dict
 
+    @catch_errors
     def get_shopping_list_by_id(self, shopping_list_id: int) -> ShoppingList:
         query = "SELECT * FROM shopping_lists WHERE id = ?"
         row = self.db.fetchone(query, (shopping_list_id,))
@@ -266,6 +290,7 @@ class ShoppingListRepository:
             return shopping_list
         return None
 
+    @catch_errors
     def add_shopping_list(self, shoppinglist: ShoppingList):
         query = """
         INSERT INTO shopping_lists (title, total_sum, purchased_count)
@@ -278,19 +303,22 @@ class ShoppingListRepository:
             self.add_shopping_list_items(list_id, items)
         return list_id
 
+    @catch_errors
     def add_shopping_list_items(self, shopping_list_id: int, items: List[ShoppingListItem]):
         for item in items:
-            print(f"Attempting to insert item with values: shopping_list_id={shopping_list_id}, product_id={item.product_id}, quantity={item.quantity}, is_purchased={item.is_purchased}")
+            print(
+                f"Attempting to insert item with values: shopping_list_id={shopping_list_id}, product_id={item.product_id}, quantity={item.quantity}, is_purchased={item.is_purchased}")
             try:
                 query = """
                 INSERT INTO shopping_list_items (shopping_list_id, product_id, quantity, is_purchased, created_at, updated_at)
                 VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
                 """
-                self.db.execute_query(query, (item.shopping_list_id, item.product_id, item.quantity, item.is_purchased))
+                self.db.execute_query(
+                    query, (item.shopping_list_id, item.product_id, item.quantity, item.is_purchased))
             except Exception as e:
                 print(f"Error inserting item: {item}, Error: {e}")
 
-
+    @catch_errors
     def update_shopping_list(self, shopping_list_id: int, shopping_list: ShoppingList):
         query = """
         UPDATE shopping_lists
@@ -304,7 +332,7 @@ class ShoppingListRepository:
         for items in shopping_list.items:
             self.add_shopping_list_items(shopping_list_id, items)
 
-
+    @catch_errors
     def get_items_by_shopping_list_id(self, shopping_list_id: int) -> List[ShoppingListItem]:
         query = """
         SELECT id, shopping_list_id, product_id, quantity, is_purchased, created_at, updated_at
@@ -323,9 +351,10 @@ class ShoppingListRepository:
                 created_at=row['created_at'],
                 updated_at=row['updated_at'],
             )
-            items.append(item) 
+            items.append(item)
         return items
-    
+
+    @catch_errors
     def get_purchased_count_by_shopping_list_id(self, shopping_list_id: int) -> int:
         query = """
         SELECT COUNT(*) AS purchased_count
@@ -335,7 +364,8 @@ class ShoppingListRepository:
         row = self.db.fetchone(query, (shopping_list_id,))
         if row:
             return row['purchased_count']
-    
+
+    @catch_errors
     def update_shopping_list_items(self, items: List[ShoppingListItem]):
         """Updates the quantity or purchase status of multiple items in the shopping list."""
         for item in items:
@@ -344,8 +374,10 @@ class ShoppingListRepository:
             SET quantity = ?, is_purchased = ?, updated_at = CURRENT_TIMESTAMP
             WHERE shopping_list_id = ? AND product_id = ?
             """
-            self.db.execute_query(query, (item.quantity, item.is_purchased, item.shopping_list_id, item.product_id))
-            
+            self.db.execute_query(
+                query, (item.quantity, item.is_purchased, item.shopping_list_id, item.product_id))
+
+    @catch_errors
     def update_purchased_status(self, item_id: int, is_purchased: bool):
         """Updates the purchase status of a single item in the shopping list."""
         query = """
@@ -354,7 +386,8 @@ class ShoppingListRepository:
         WHERE id = ?
         """
         self.db.execute_query(query, (is_purchased, item_id))
-        
+
+    @catch_errors
     def update_total_sum(self, shopping_list_id: int, total_sum: float):
         """Updates the total sum of a shopping list."""
         query = """
@@ -363,13 +396,14 @@ class ShoppingListRepository:
         WHERE id = ?
         """
         self.db.execute_query(query, (total_sum, shopping_list_id))
-    
+
+    @catch_errors
     def delete_shopping_list_item(self, item_id: int):
         """Removes an item from the shopping list."""
         query = "DELETE FROM shopping_list_items WHERE id = ?"
         self.db.execute_query(query, (item_id,))
 
-
+    @catch_errors
     def delete_shopping_list_by_id(self, shoplist_id: int):
         try:
             # Delete all items in the shopping list first (cascade delete might also work)
@@ -381,4 +415,3 @@ class ShoppingListRepository:
             self.db.execute_query(delete_list_query, (shoplist_id,))
         except Exception as e:
             raise Exception(f"Failed to delete shopping list: {str(e)}")
-

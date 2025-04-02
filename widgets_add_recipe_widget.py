@@ -1,12 +1,18 @@
+# add_recipe_widget.py
+
+import functools
+import logging
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QLineEdit, QTextEdit, QStackedWidget, QCompleter
+    QLineEdit, QTextEdit, QStackedWidget, QCompleter, QMessageBox
 )
 from PySide6.QtCore import Qt, Signal, QTimer
 
 from widgets_add_tags_widget import AddTagsWidget
 from widgets_add_products_widget import AddProductsWidget
 from qml import NormalTextField, TallTextField, WarningDialog
+
+from error_handler import catch_errors_ui
 
 TURKOOSI = "#00B0F0"
 HARMAA = "#808080"
@@ -19,18 +25,19 @@ class AddRecipeWidget(QWidget):
       - A button to add products (using AddProductsWidget).
       - A button to select tags (which opens AddTagsWidget).
       - Save and Cancel buttons.
-      
+
     Internally, it uses a QStackedWidget with:
       Page 0: The recipe form.
       Page 1: The products selection widget.
       Page 2: The tags selection widget.
-      
+
     To edit an existing recipe, call set_recipe(recipe) before showing the widget.
     """
 
     # Signal emitted after the recipe is saved (added or updated)
     recipe_saved = Signal(object)
 
+    @catch_errors_ui
     def __init__(self, recipe_controller, product_controller, parent=None):
         super().__init__(parent)
         self.recipe_controller = recipe_controller
@@ -64,6 +71,7 @@ class AddRecipeWidget(QWidget):
         self.setLayout(layout)
         self._open_form_page()
 
+    @catch_errors_ui
     def _create_form_layout(self):
         layout = QVBoxLayout()
 
@@ -117,10 +125,12 @@ class AddRecipeWidget(QWidget):
         layout.addStretch()
         return layout
 
+    @catch_errors_ui
     def _open_form_page(self):
         """Switch to the form (Page 0)."""
         self.stacked.setCurrentIndex(0)
 
+    @catch_errors_ui
     def _open_products_page(self):
         """Opens the products selection widget."""
         self.products_page = AddProductsWidget(
@@ -130,6 +140,7 @@ class AddRecipeWidget(QWidget):
         self.stacked.addWidget(self.products_page)  # index 1
         self.stacked.setCurrentWidget(self.products_page)
 
+    @catch_errors_ui
     def _open_tags_page(self):
         """Opens the tags selection widget."""
         self.tags_page = AddTagsWidget(
@@ -141,25 +152,26 @@ class AddRecipeWidget(QWidget):
         self.stacked.addWidget(self.tags_page)  # index 2
         self.stacked.setCurrentWidget(self.tags_page)
 
+    @catch_errors_ui
     def on_products_selected(self, selected_products):
         if selected_products:
-            #print(f"Selected products: {selected_products}")
             self.selected_products = selected_products
         else:
             print("Ei valittuja tuotteita")
             self.selected_products = []
         self._open_form_page()
 
+    @catch_errors_ui
     def on_tags_selected(self, selected_tags):
         if selected_tags:
             self.selected_tags = selected_tags
-            #print(f"Selected tags: {selected_tags}")
             self.tags_display_label.setText(", ".join(selected_tags))
         else:
             print("Ei valittuja tageja")
             self.tags_display_label.setText("Ei valittuja tageja")
         self._open_form_page()
 
+    @catch_errors_ui
     def set_recipe(self, recipe):
         """
         Puts the widget into edit mode by prepopulating the fields with the given recipe.
@@ -171,14 +183,13 @@ class AddRecipeWidget(QWidget):
         self.instructions_edit.set_text(recipe.instructions)
         # Assume recipe.tags is a comma-separated string.
         if recipe.tags:
-            tags_list = [tag.strip() for tag in recipe.tags.split(",") if tag.strip()]
+            tags_list = [tag.strip()
+                         for tag in recipe.tags.split(",") if tag.strip()]
         else:
             tags_list = []
         self.selected_tags = tags_list
         self.tags_display_label.setText(", ".join(tags_list))
-        # For ingredients/products, you might want to prepopulate self.selected_products.
-        # This depends on your data structure; here we assume each ingredient contains
-        # at least 'product_id', 'quantity', and 'unit'.
+        # Prepopulate selected products from recipe ingredients.
         self.selected_products = []
         for ingredient in recipe.ingredients:
             self.selected_products.append({
@@ -187,6 +198,7 @@ class AddRecipeWidget(QWidget):
                 "unit": ingredient.unit
             })
 
+    @catch_errors_ui
     def _save_recipe(self):
         name = self.name_edit.get_text().strip()
         instructions = self.instructions_edit.get_text().strip()
@@ -207,7 +219,8 @@ class AddRecipeWidget(QWidget):
                 self._show_error("Ainesosan määrä ei ole kelvollinen luku.")
                 return
             if quantity <= 0:
-                self._show_error(f"Ainesosan määrä tuotteelle '{p.get('name', '')}' täytyy olla suurempi kuin 0.")
+                self._show_error(
+                    f"Ainesosan määrä tuotteelle '{p.get('name', '')}' täytyy olla suurempi kuin 0.")
                 return
             if not p.get("unit"):
                 self._show_error("Valitse ainesosalle yksikkö.")
@@ -257,10 +270,12 @@ class AddRecipeWidget(QWidget):
         if hasattr(self.parent(), "back_to_list"):
             self.parent().back_to_list()
 
+    @catch_errors_ui
     def _cancel_recipe(self):
         if hasattr(self.parent(), "back_to_list"):
             self.parent().back_to_list()
 
+    @catch_errors_ui
     def _show_error(self, message):
         warning = WarningDialog(f"Virhe: {message}", self)
         warning.show()

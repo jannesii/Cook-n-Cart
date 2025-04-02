@@ -1,15 +1,22 @@
 # File: widgets_add_tags_widget.py
+
+import functools
+import logging
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QInputDialog,
-    QStackedWidget, QLabel
+    QStackedWidget, QLabel, QMessageBox
 )
 from PySide6.QtCore import Signal, Qt
 from qml import TagSelectorWidget, MainSearchTextField, NormalTextField, WarningDialog
+from root_controllers import ProductController
+
+from error_handler import catch_errors_ui
 
 
 class AddTagsWidget(QWidget):
     finished = Signal(list)  # Emits a list of selected tags
 
+    @catch_errors_ui
     def __init__(self, recipe_controller, selected_tags=None, parent=None):
         super().__init__(parent)
         self.recipe_controller = recipe_controller
@@ -20,7 +27,6 @@ class AddTagsWidget(QWidget):
 
         main_layout = QVBoxLayout(self)
         self.stacked = QStackedWidget()
-
         self.main_page = None
         self.add_tag_page = None
 
@@ -28,6 +34,7 @@ class AddTagsWidget(QWidget):
         main_layout.addWidget(self.stacked, 1)
         self._show_select_tags_page()
 
+    @catch_errors_ui
     def _select_tags_layout(self):
         layout = QVBoxLayout()
 
@@ -71,6 +78,7 @@ class AddTagsWidget(QWidget):
 
         return layout
 
+    @catch_errors_ui
     def _add_new_tag_layout(self):
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignTop)
@@ -81,7 +89,8 @@ class AddTagsWidget(QWidget):
         )
         layout.addWidget(self.new_tag_text_field)
         self.description_label = QLabel(
-            "Tagi on reseptin kategorisointia varten. Tagi voi olla esim. \"Kasvis\" tai \"Gluteeniton\".")
+            "Tagi on reseptin kategorisointia varten. Tagi voi olla esim. \"Kasvis\" tai \"Gluteeniton\"."
+        )
         self.description_label.setWordWrap(True)
         layout.addWidget(self.description_label)
 
@@ -97,10 +106,11 @@ class AddTagsWidget(QWidget):
 
         return layout
 
+    @catch_errors_ui
     def _add_tag(self):
         new_tag = self.new_tag_text_field.get_text().strip()
         if not new_tag:
-            # Inform the user that the tag cannot be empty
+            # Inform the user that the tag cannot be empty.
             warning = WarningDialog("Tagi ei voi olla tyhjä.", self)
             warning.show()
             return  # Stop processing if the tag is empty
@@ -112,6 +122,7 @@ class AddTagsWidget(QWidget):
         self.populate_tags()
         self._show_select_tags_page()
 
+    @catch_errors_ui
     def _show_select_tags_page(self):
         if self.main_page is None:
             self.main_page = QWidget()
@@ -119,6 +130,7 @@ class AddTagsWidget(QWidget):
             self.stacked.addWidget(self.main_page)
         self.stacked.setCurrentWidget(self.main_page)
 
+    @catch_errors_ui
     def _show_add_tag_page(self):
         if self.add_tag_page is None:
             self.add_tag_page = QWidget()
@@ -126,6 +138,7 @@ class AddTagsWidget(QWidget):
             self.stacked.addWidget(self.add_tag_page)
         self.stacked.setCurrentWidget(self.add_tag_page)
 
+    @catch_errors_ui
     def populate_tags(self, filter_text=""):
         """
         Populate the QML model in TagSelectorWidget with all tags.
@@ -143,6 +156,7 @@ class AddTagsWidget(QWidget):
         else:
             print("TagSelectorWidget root object not found.")
 
+    @catch_errors_ui
     def filter_products(self, newText):
         """
         Called when the search bar text changes.
@@ -151,6 +165,7 @@ class AddTagsWidget(QWidget):
         search_text = newText.lower().strip()
         self.populate_tags(filter_text=search_text)
 
+    @catch_errors_ui
     def _finish_selection(self):
         """
         Retrieve the selected tags from the QML model, update stored selection,
@@ -166,6 +181,7 @@ class AddTagsWidget(QWidget):
         else:
             self.finished.emit([])
 
+    @catch_errors_ui
     def _cancel_selection(self):
         """
         Retrieve the current selection on cancel and emit it.

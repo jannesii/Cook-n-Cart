@@ -1,7 +1,43 @@
+# main.py
+
 import sys
 import os
-from PySide6.QtWidgets import QApplication
+import logging
+from PySide6.QtWidgets import QApplication, QMessageBox
 from views_main_window import MainWindow
+
+# Set up logging to a file (for example, error.log)
+logging.basicConfig(
+    filename="utils/error.log",
+    level=logging.ERROR,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
+def show_error_dialog(message):
+    """Displays a simple error message dialog."""
+    msg_box = QMessageBox()
+    msg_box.setIcon(QMessageBox.Critical)
+    msg_box.setWindowTitle("Error")
+    msg_box.setText(message)
+    msg_box.exec()
+
+def centralized_exception_handler(exc_type, exc_value, exc_traceback):
+    """
+    Global exception handler that logs the exception and displays an error dialog.
+    """
+    # Allow KeyboardInterrupt to exit normally.
+    if issubclass(exc_type, KeyboardInterrupt):
+        sys.__excepthook__(exc_type, exc_value, exc_traceback)
+        return
+
+    # Log the exception with traceback.
+    logging.error("Unhandled exception", exc_info=(exc_type, exc_value, exc_traceback))
+    
+    # Show an error dialog to the user.
+    show_error_dialog(f"An unexpected error occurred: {exc_value}")
+
+# Install the global exception hook.
+sys.excepthook = centralized_exception_handler
 
 def load_stylesheet(app, qss):
     print("Loading stylesheet...")
@@ -16,21 +52,17 @@ def load_stylesheet(app, qss):
         print(f"Unable to load stylesheet: {e}")
 
 def main():
-
     os.environ["QT_QUICK_CONTROLS_STYLE"] = "Basic"
     app = QApplication(sys.argv)
     
     # Check if the 'utils' directory exists, create if it doesn't.
-    
     utils_dir = "utils"
-    
     if not os.path.exists(utils_dir):
         print("Creating utils dir.")
         os.makedirs(utils_dir)
     
     # Check if the config file exists, and create it if missing.
     config_path = os.path.join(utils_dir, "config.json")
-    
     if not os.path.exists(config_path):
         print("Creating config.json")
         default_config = '''{
@@ -190,12 +222,10 @@ def main():
         }
     """
     load_stylesheet(app, default_styles)
+    
     window = MainWindow()
     window.show()
     sys.exit(app.exec())
 
-        
-
 if __name__ == "__main__":
     main()
-

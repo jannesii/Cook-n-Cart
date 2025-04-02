@@ -1,14 +1,17 @@
-# File: ostoslistat_page.py (Revised)
-import sys
+# File: ostoslistat_page.py
+
+import functools
+import logging
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QScrollArea, QStackedWidget, QFrame, QLineEdit
+    QScrollArea, QStackedWidget, QFrame, QLineEdit, QMessageBox
 )
 from PySide6.QtCore import Qt
 from widgets_add_shoplist_widget import AddShoplistWidget
 from widgets_shoplist_detail_widget import ShoplistDetailWidget
 from root_controllers import ProductController, ShoppingListController
 from qml import MainSearchTextField, ScrollViewWidget
+from error_handler import catch_errors_ui
 
 TURKOOSI = "#00B0F0"
 HARMAA = "#808080"
@@ -45,7 +48,7 @@ class OstolistatPage(QWidget):
 
         # Page 2: Detail view
         self.page_detail = None
-        
+
         main_layout.addWidget(self.stacked, 1)
         self.setLayout(main_layout)
         self.stacked.setCurrentWidget(self.page_list)
@@ -87,28 +90,33 @@ class OstolistatPage(QWidget):
         self.populate_shopping_list()
         return layout
 
+    @catch_errors_ui
     def update_shopping_lists(self):
         """Fetch all shopping lists from the controller."""
         self.shopping_lists = self.shoplist_controller.get_all_shopping_lists()
 
+    @catch_errors_ui
     def populate_shopping_list(self, filter_text=""):
         """Populate the scroll area with a button for each shopping list."""
-        # Clear the scroll area before populating it again
+        # Clear the scroll area before populating it again.
         self.scroll_area.clear_items()
         for shoplist_id, shoplist in self.shopping_lists.items():
-            # Count how many items are purchased
-            purchased_count = self.shoplist_controller.get_purchased_count(shoplist_id)
-            total_items = len(self.shoplist_controller.get_items_by_shopping_list_id(shoplist_id))
-
-            # Create text showing purchased/total
+            # Count how many items are purchased.
+            purchased_count = self.shoplist_controller.get_purchased_count(
+                shoplist_id)
+            total_items = len(
+                self.shoplist_controller.get_items_by_shopping_list_id(shoplist_id))
+            # Create text showing purchased/total.
             text = f"{shoplist.title}\n{purchased_count}/{total_items}"
             if filter_text == "" or filter_text in shoplist.title.lower():
                 self.scroll_area.add_item(text, shoplist_id)
 
+    @catch_errors_ui
     def filter_shopping_lists(self, text):
         search_text = text.lower().strip()
         self.populate_shopping_list(filter_text=search_text)
 
+    @catch_errors_ui
     def open_add_shoplist_page(self):
         self.page_add_shoplist = AddShoplistWidget(
             shoplist_controller=self.shoplist_controller,
@@ -122,6 +130,7 @@ class OstolistatPage(QWidget):
         self.stacked.setCurrentWidget(self.page_add_shoplist)
         self.parent.hide_buttons()
 
+    @catch_errors_ui
     def display_shoplist_detail(self, shoplist_id):
         shoplist = self.shoplist_controller.get_shopping_list_by_id(
             shoplist_id)
@@ -133,6 +142,7 @@ class OstolistatPage(QWidget):
         self.stacked.setCurrentWidget(self.page_detail)
         self.parent.hide_buttons()
 
+    @catch_errors_ui
     def back_to_list(self):
         self.rm_add_shoplist_widget()
         self.rm_shoplist_detail_widget()
@@ -141,9 +151,11 @@ class OstolistatPage(QWidget):
         self.stacked.setCurrentWidget(self.page_list)
         self.parent.show_buttons()
 
+    @catch_errors_ui
     def on_shoplist_created(self, shoplist_id):
         self.back_to_list()
 
+    @catch_errors_ui
     def rm_page_list(self):
         if self.page_list:
             print("Removing page_list")
@@ -152,6 +164,7 @@ class OstolistatPage(QWidget):
             del self.page_list
             self.page_list = None
 
+    @catch_errors_ui
     def rm_add_shoplist_widget(self):
         if self.page_add_shoplist:
             print("Removing page_add_shoplist")
@@ -160,6 +173,7 @@ class OstolistatPage(QWidget):
             del self.page_add_shoplist
             self.page_add_shoplist = None
 
+    @catch_errors_ui
     def rm_shoplist_detail_widget(self):
         if self.page_detail:
             print("Removing page_detail")

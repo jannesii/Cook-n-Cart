@@ -1,16 +1,21 @@
 # File: widgets_add_categories_widget.py
+
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QInputDialog,
-    QStackedWidget, QLabel
+    QStackedWidget, QLabel, QMessageBox
 )
 from PySide6.QtCore import Signal, Qt
 from qml import TagSelectorWidget, MainSearchTextField, NormalTextField, WarningDialog
 from root_controllers import ProductController
+import functools
+import logging
+from error_handler import catch_errors_ui
 
 
 class AddCategoriesWidget(QWidget):
     finished = Signal(list)  # Emits a list of selected categories
 
+    @catch_errors_ui
     def __init__(self, selected_categories=None, parent=None):
         super().__init__(parent)
         self.product_controller = ProductController()
@@ -22,7 +27,6 @@ class AddCategoriesWidget(QWidget):
 
         main_layout = QVBoxLayout(self)
         self.stacked = QStackedWidget()
-
         self.main_page = None
         self.add_category_page = None
 
@@ -30,6 +34,7 @@ class AddCategoriesWidget(QWidget):
         main_layout.addWidget(self.stacked, 1)
         self._show_select_categories_page()
 
+    @catch_errors_ui
     def _select_categories_layout(self):
         layout = QVBoxLayout()
 
@@ -73,6 +78,7 @@ class AddCategoriesWidget(QWidget):
 
         return layout
 
+    @catch_errors_ui
     def _add_new_category_layout(self):
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignTop)
@@ -101,6 +107,7 @@ class AddCategoriesWidget(QWidget):
 
         return layout
 
+    @catch_errors_ui
     def _add_category(self):
         new_category = self.new_category_text_field.get_text().strip()
         if not new_category:
@@ -116,6 +123,7 @@ class AddCategoriesWidget(QWidget):
         self.populate_categories()
         self._show_select_categories_page()
 
+    @catch_errors_ui
     def _show_select_categories_page(self):
         if self.main_page is None:
             self.main_page = QWidget()
@@ -123,6 +131,7 @@ class AddCategoriesWidget(QWidget):
             self.stacked.addWidget(self.main_page)
         self.stacked.setCurrentWidget(self.main_page)
 
+    @catch_errors_ui
     def _show_add_category_page(self):
         if self.add_category_page is None:
             self.add_category_page = QWidget()
@@ -130,6 +139,7 @@ class AddCategoriesWidget(QWidget):
             self.stacked.addWidget(self.add_category_page)
         self.stacked.setCurrentWidget(self.add_category_page)
 
+    @catch_errors_ui
     def populate_categories(self, filter_text=""):
         """
         Populate the QML model in TagSelectorWidget with all categories.
@@ -147,6 +157,7 @@ class AddCategoriesWidget(QWidget):
         else:
             print("CategorySelectorWidget root object not found.")
 
+    @catch_errors_ui
     def filter_products(self, newText):
         """
         Called when the search bar text changes.
@@ -155,6 +166,7 @@ class AddCategoriesWidget(QWidget):
         search_text = newText.lower().strip()
         self.populate_categories(filter_text=search_text)
 
+    @catch_errors_ui
     def _finish_selection(self):
         """
         Retrieve the selected categories from the QML model, update stored selection,
@@ -170,6 +182,7 @@ class AddCategoriesWidget(QWidget):
         else:
             self.finished.emit([])
 
+    @catch_errors_ui
     def _cancel_selection(self):
         """
         Retrieve the current selection on cancel and emit it.
