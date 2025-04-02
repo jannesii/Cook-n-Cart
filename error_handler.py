@@ -18,7 +18,8 @@ def catch_errors_ui(func):
             return func(*args, **kwargs)
         except Exception as e:
             logging.error(f"Error in {func.__name__}: {e}", exc_info=True)
-            if QApplication.instance():
+            print(f"Error in {func.__name__}: {e}")
+            if False: #QApplication.instance():
                 msg_box = QMessageBox()
                 msg_box.setIcon(QMessageBox.Critical)
                 msg_box.setWindowTitle("Error")
@@ -39,5 +40,6 @@ def catch_errors(func):
             return func(*args, **kwargs)
         except Exception as e:
             logging.error(f"Error in {func.__name__}: {e}", exc_info=True)
+            print(f"Error in {func.__name__}: {e}")
             raise
     return wrapper

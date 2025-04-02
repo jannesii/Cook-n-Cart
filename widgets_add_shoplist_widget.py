@@ -75,7 +75,7 @@ class AddShoplistWidget(QWidget):
     @catch_errors_ui
     def _create_shoplist(self):
         """Create a new shopping list and emit its ID."""
-        title = self.title_input.text().strip()
+        title = self.title_input.get_text().strip()
         if not title:
             self.title_label.setText("Ostoslistan nimi: (Ei voi olla tyhjä!)")
             self.title_label.setStyleSheet("color: red;")
@@ -93,5 +93,4 @@ class AddShoplistWidget(QWidget):
         self.shoplist_created.emit(shopping_list.id)
 
         # Reset the form.
-        self.title_input.clear()
         self.selected_products = []
