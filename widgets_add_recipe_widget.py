@@ -143,7 +143,7 @@ class AddRecipeWidget(QWidget):
 
     def on_products_selected(self, selected_products):
         if selected_products:
-            print(f"Selected products: {selected_products}")
+            #print(f"Selected products: {selected_products}")
             self.selected_products = selected_products
         else:
             print("Ei valittuja tuotteita")
@@ -153,7 +153,7 @@ class AddRecipeWidget(QWidget):
     def on_tags_selected(self, selected_tags):
         if selected_tags:
             self.selected_tags = selected_tags
-            print(f"Selected tags: {selected_tags}")
+            #print(f"Selected tags: {selected_tags}")
             self.tags_display_label.setText(", ".join(selected_tags))
         else:
             print("Ei valittuja tageja")

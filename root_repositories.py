@@ -326,6 +326,16 @@ class ShoppingListRepository:
             items.append(item) 
         return items
     
+    def get_purchased_count_by_shopping_list_id(self, shopping_list_id: int) -> int:
+        query = """
+        SELECT COUNT(*) AS purchased_count
+        FROM shopping_list_items
+        WHERE shopping_list_id = ? AND is_purchased = 1
+        """
+        row = self.db.fetchone(query, (shopping_list_id,))
+        if row:
+            return row['purchased_count']
+    
     def update_shopping_list_items(self, items: List[ShoppingListItem]):
         """Updates the quantity or purchase status of multiple items in the shopping list."""
         for item in items:
@@ -335,6 +345,24 @@ class ShoppingListRepository:
             WHERE shopping_list_id = ? AND product_id = ?
             """
             self.db.execute_query(query, (item.quantity, item.is_purchased, item.shopping_list_id, item.product_id))
+            
+    def update_purchased_status(self, item_id: int, is_purchased: bool):
+        """Updates the purchase status of a single item in the shopping list."""
+        query = """
+        UPDATE shopping_list_items
+        SET is_purchased = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+        """
+        self.db.execute_query(query, (is_purchased, item_id))
+        
+    def update_total_sum(self, shopping_list_id: int, total_sum: float):
+        """Updates the total sum of a shopping list."""
+        query = """
+        UPDATE shopping_lists
+        SET total_sum = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+        """
+        self.db.execute_query(query, (total_sum, shopping_list_id))
     
     def delete_shopping_list_item(self, item_id: int):
         """Removes an item from the shopping list."""

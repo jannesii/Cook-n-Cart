@@ -34,7 +34,7 @@ class ReseptitPage(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-
+        self.parent = parent
         self.recipes_dict = {}
         self.update_recipes_dict()
 
@@ -144,6 +144,7 @@ class ReseptitPage(QWidget):
         self.stacked.addWidget(self.page_detail)         # index 1
         self.page_detail.set_recipe(recipe)
         self.stacked.setCurrentWidget(self.page_detail)
+        self.parent.hide_buttons()
 
     def back_to_recipe_detail(self):
         # Switch back to the recipe detail view (index 1)
@@ -164,6 +165,7 @@ class ReseptitPage(QWidget):
         self.stacked.addWidget(self.page_add_recipe)       # index 2
 
         self.stacked.setCurrentWidget(self.page_add_recipe)
+        self.parent.hide_buttons()
 
     def open_edit_recipe(self, recipe):
         """
@@ -182,6 +184,7 @@ class ReseptitPage(QWidget):
 
         self.page_edit_recipe.set_recipe(recipe)
         self.stacked.setCurrentWidget(self.page_edit_recipe)
+        self.parent.hide_buttons()
 
     def back_to_list(self):
         """
@@ -190,6 +193,7 @@ class ReseptitPage(QWidget):
         self.update_recipes_dict()
         self.populate_recipe_list()
         self.stacked.setCurrentWidget(self.page_list)
+        self.parent.show_buttons()
 
         # Remove the detail and add recipe pages from the stack
         if self.page_detail:

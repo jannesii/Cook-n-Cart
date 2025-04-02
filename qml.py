@@ -198,7 +198,7 @@ class MainSearchTextField(QWidget):
 
 
 class ScrollViewWidget(QWidget):
-    def __init__(self, list_model_name="myListModel", parent=None):
+    def __init__(self, list_model_name="myListModel", parent=None, height=50, main_height=200):
         super().__init__(parent)
         self.list_model_name = list_model_name  # dynamic objectName for ListModel
         layout = QVBoxLayout(self)
@@ -219,7 +219,7 @@ class ScrollViewWidget(QWidget):
         ScrollView {{
             id: scrollView
             width: 350
-            height: 200
+            height: {main_height}
 
             // Signal emitted when an item is clicked. Sends the productId.
             signal itemClicked(var productId)
@@ -230,12 +230,12 @@ class ScrollViewWidget(QWidget):
                 model: {self.list_model_name}
                 delegate: Item {{
                     width: listView.width   // Use ListView's width instead of parent's width.
-                    height: 50
+                    height: {height}
 
                     Rectangle {{
                         id: itemRect
                         width: parent.width 
-                        height: 45
+                        height: {height-5}
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.verticalCenter: parent.verticalCenter
                         radius: 8
@@ -458,6 +458,14 @@ class TagSelectorWidget(QWidget):
                 }
             }
 
+            // New function to mark all tags as checked.
+            function checkAllTags() {
+                for (var i = 0; i < tagModel.count; i++) {
+                    tagModel.setProperty(i, "checked", true)
+                }
+                reorderSelected()
+            }
+
             // A timer to reorder the model after initial population.
             Timer {
                 id: reorderTimer
@@ -473,6 +481,7 @@ class TagSelectorWidget(QWidget):
                 reorderTimer.start()
             }
         }
+
         '''
 
         component = QQmlComponent(self.quick_widget.engine())
@@ -526,6 +535,247 @@ class TagSelectorWidget(QWidget):
         else:
             print("Root object not found.")
         return []
+    
+    def check_all_tags(self):
+        """
+        Marks all tags as checked.
+        """
+        root_obj = self.get_root_object()
+        if root_obj is not None:
+            try:
+                root_obj.checkAllTags()
+            except Exception as e:
+                print("Error calling checkAllTags:", e)
+        else:
+            print("Root object not found.")
+class IngredientSelectorWidget(QWidget):
+    """
+    A QML-based widget that displays a scrollable list of tags with checkboxes.
+    Provides helper functions to populate the model, clear tags, and retrieve selected tags.
+    """
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        layout = QVBoxLayout(self)
+        self.quick_widget = QQuickWidget()
+        self.quick_widget.setResizeMode(QQuickWidget.SizeRootObjectToView)
+        layout.addWidget(self.quick_widget)
+        self.setLayout(layout)
+
+        qml_code = '''
+        import QtQuick 2.15
+        import QtQuick.Controls 2.15
+
+        Rectangle {
+            id: root
+            width: 300
+            height: 350
+            color: "transparent"
+
+            ListView {
+                id: tagListView
+                anchors.fill: parent
+                spacing: 5  // Vertical spacing between delegates
+                model: tagModel
+                delegate: Rectangle {
+                    id: delegateRect
+                    width: tagListView.width   // Screen-wide
+                    height: 30                 // Touch target size
+                    radius: 10
+                    color: model.checked ? "#00B0F0" : "#ffffff"
+                    border.width: 1
+                    border.color: "gray"
+
+                    Text {
+                        id: tagText
+                        text: model.text
+                        anchors.centerIn: parent
+                        font.pixelSize: 16
+                        color: model.checked ? "white" : "black"
+                        font.bold: true
+                    }
+
+                    // The entire delegate acts as a button.
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: {
+                            model.checked = !model.checked
+                            reorderSelected()
+                        }
+                    }
+                }
+            }
+
+            ListModel {
+                id: tagModel
+            }
+
+            // Helper function to add a tag into the model.
+            function addTag(text, checked, quantity, unit, id) {
+                // Ensure that roles are defined by providing safe defaults.
+                var safeText = text !== undefined ? text : ""
+                var safeChecked = checked !== undefined ? checked : false
+                var safeQuantity = quantity !== undefined ? quantity : 0
+                var safeUnit = unit !== undefined ? unit : ""
+                var safeId = id !== undefined ? id : ""
+                //console.log("Adding tag:", safeChecked, safeQuantity, safeUnit, safeId)
+                tagModel.append({
+                    "text": safeText,
+                    "checked": safeChecked,
+                    "quantity": safeQuantity,
+                    "unit": safeUnit,
+                    "id": safeId
+                })
+            }
+
+            // Helper function to clear all tags from the model.
+            function clearTags() {
+                while (tagModel.count > 0) {
+                    tagModel.remove(0)
+                }
+            }
+
+            // Helper function to return an array of selected tag details.
+            function getSelectedTags() {
+                var result = []
+                for (var i = 0; i < tagModel.count; i++) {
+                    var item = tagModel.get(i)
+                    if (item.checked) {
+                        //console.log("Exporting item:", item.id, item.quantity, item.unit)
+                        result.push({
+                            "id": item.id,
+                            "quantity": item.quantity,
+                            "unit": item.unit
+                        })
+                    }
+                }
+                return result
+            }
+
+            // Function to reorder the model so that all selected tags are at the top.
+            function reorderSelected() {
+                var selectedItems = []
+                var unselectedItems = []
+                // Split items into selected and unselected while ensuring defined roles.
+                for (var i = 0; i < tagModel.count; i++) {
+                    var item = tagModel.get(i)
+                    var fixedItem = {
+                        "text": item.text !== undefined ? item.text : "",
+                        "checked": item.checked !== undefined ? item.checked : false,
+                        "quantity": item.quantity !== undefined ? item.quantity : 0,
+                        "unit": item.unit !== undefined ? item.unit : "",
+                        "id": item.id !== undefined ? item.id : ""
+                    }
+                    if (fixedItem.checked) {
+                        selectedItems.push(fixedItem)
+                    } else {
+                        unselectedItems.push(fixedItem)
+                    }
+                }
+                // Clear the model.
+                while (tagModel.count > 0) {
+                    tagModel.remove(0)
+                }
+                // Append selected items first.
+                for (var i = 0; i < selectedItems.length; i++) {
+                    tagModel.append(selectedItems[i])
+                }
+                // Append the unselected items.
+                for (var i = 0; i < unselectedItems.length; i++) {
+                    tagModel.append(unselectedItems[i])
+                }
+            }
+
+            // New function to mark all tags as checked.
+            function checkAllTags() {
+                for (var i = 0; i < tagModel.count; i++) {
+                    tagModel.setProperty(i, "checked", true)
+                }
+                reorderSelected()
+            }
+
+            // A timer to reorder the model after initial population.
+            Timer {
+                id: reorderTimer
+                interval: 10   // Adjust delay as needed
+                running: false
+                repeat: false
+                onTriggered: {
+                    reorderSelected()
+                }
+            }
+
+            Component.onCompleted: {
+                reorderTimer.start()
+            }
+        }
+
+        '''
+
+        component = QQmlComponent(self.quick_widget.engine())
+        component.setData(qml_code.encode('utf-8'), QUrl())
+        if component.status() != QQmlComponent.Status.Ready:
+            for error in component.errors():
+                print("QML Error:", error.toString())
+        qml_item = component.create()
+        self.quick_widget.setContent(QUrl(), component, qml_item)
+
+    def get_root_object(self) -> QObject:
+        """Returns the root QML object for further interactions."""
+        return self.quick_widget.rootObject()
+
+    def add_tag(self, text: str, checked: bool = False):
+        """
+        Adds a tag with the given text and checked state to the QML ListModel.
+        """
+        root_obj = self.get_root_object()
+        if root_obj is not None:
+            try:
+                root_obj.addTag(text, checked)
+            except Exception as e:
+                print("Error calling addTag:", e)
+        else:
+            print("Root object not found.")
+
+    def clear_tags(self):
+        """
+        Clears all tags from the QML ListModel.
+        """
+        root_obj = self.get_root_object()
+        if root_obj is not None:
+            try:
+                root_obj.clearTags()
+            except Exception as e:
+                print("Error calling clearTags:", e)
+        else:
+            print("Root object not found.")
+
+    def get_selected_tags(self):
+        """
+        Retrieves an array of tag texts that are checked.
+        """
+        root_obj = self.get_root_object()
+        if root_obj is not None:
+            try:
+                return root_obj.getSelectedTags()
+            except Exception as e:
+                print("Error calling getSelectedTags:", e)
+        else:
+            print("Root object not found.")
+        return []
+    
+    def check_all_tags(self):
+        """
+        Marks all tags as checked.
+        """
+        root_obj = self.get_root_object()
+        if root_obj is not None:
+            try:
+                root_obj.checkAllTags()
+            except Exception as e:
+                print("Error calling checkAllTags:", e)
+        else:
+            print("Root object not found.")
 
 
 class ProductSelectorWidgetPage1(QWidget):
@@ -916,13 +1166,13 @@ class WarningDialog(QWidget):
         self.setWindowTitle("Warning")
         # Set the widget as a dialog
         self.setWindowFlags(Qt.Dialog | Qt.WindowTitleHint)
-        
+
         layout = QVBoxLayout(self)
         self.quick_widget = QQuickWidget()
         self.quick_widget.setResizeMode(QQuickWidget.SizeRootObjectToView)
         layout.addWidget(self.quick_widget)
         self.setLayout(layout)
-        
+
         qml_code = f'''
         import QtQuick 2.15
         import QtQuick.Controls 2.15
@@ -975,3 +1225,235 @@ class WarningDialog(QWidget):
         root_obj = self.quick_widget.rootObject()
         if root_obj is not None:
             root_obj.accepted.connect(self.close)
+
+
+class ShoplistWidget(QWidget):
+
+    def __init__(self, list_model_name="myListModel", parent=None):
+        super().__init__(parent)
+        layout = QVBoxLayout(self)
+        self.quick_widget = QQuickWidget()
+        self.quick_widget.setResizeMode(QQuickWidget.SizeRootObjectToView)
+        layout.addWidget(self.quick_widget)
+        self.setLayout(layout)
+
+        qml_code = '''
+        import QtQuick 2.15
+        import QtQuick.Controls 2.15
+
+        Rectangle {
+            id: root
+            width: 300
+            height: 400
+            color: "transparent"
+            
+            signal itemClicked(var id, var checked, var price)
+
+            ListView {
+                id: tagListView
+                anchors.fill: parent
+                spacing: 5                    // Vertical spacing between delegates
+                model: tagModel
+                delegate: Rectangle {
+                    id: delegateRect
+                    width: tagListView.width   // Full width
+                    height: 30                 // Increased height for a larger touch target
+                    radius: 10
+                    // When checked, use gray; when unchecked, use #00B0F0.
+                    color: model.checked ? "#d3d3d3" : "#00B0F0"
+                    border.width: 1
+                    border.color: "gray"
+
+                    Text {
+                        id: tagText
+                        // Use rich text formatting to allow strike-through.
+                        textFormat: Text.RichText
+                        // If checked, wrap text with <s> tags to cross it out.
+                        text: model.checked ? "<s>" + model.text + " - " + model.qty + " " + model.unit + " - " + model.price.toFixed(2) + "€</s>" : model.text + " - " + model.qty + " " + model.unit + " - " + model.price.toFixed(2) + "€"
+                        anchors.centerIn: parent
+                        font.pixelSize: 16
+                        // Use gray text when checked; otherwise, white text.
+                        color: model.checked ? "gray" : "white"
+                        font.bold: true
+                    }
+
+                    // The entire delegate acts as a button.
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: {
+                            // Toggle the checked state.
+                            model.checked = !model.checked;
+                            // Emit the itemClicked signal with the price of the clicked item.
+                            itemClicked(model.id, !model.checked, getTotalCost());
+                            // Reorder the entire model.
+                            reorderSelected();
+                        }
+                    }
+                }
+            }
+
+            ListModel {
+                id: tagModel
+            }
+
+            // Function to reorder the model so that selected items appear at the bottom.
+            function reorderSelected() {
+                var selectedItems = [];
+                var unselectedItems = [];
+                // Loop over each item in the model.
+                for (var i = 0; i < tagModel.count; i++) {
+                    var item = tagModel.get(i);
+                    // Ensure each property has a default value.
+                    var fixedItem = {
+                        "text": item.text !== undefined ? item.text : "",
+                        "id": item.id !== undefined ? item.id : 0,
+                        "checked": item.checked !== undefined ? item.checked : false,
+                        "qty": item.qty !== undefined ? item.qty : 0,
+                        "unit": item.unit !== undefined ? item.unit : "",
+                        "price": item.price !== undefined ? item.price : 0.0  // Include the price property
+                    };
+                    if (fixedItem.checked) {
+                        selectedItems.push(fixedItem);
+                    } else {
+                        unselectedItems.push(fixedItem);
+                    }
+                }
+                // Clear the model.
+                while (tagModel.count > 0) {
+                    tagModel.remove(0);
+                }
+                // Append unselected items first.
+                for (var i = 0; i < unselectedItems.length; i++) {
+                    tagModel.append(unselectedItems[i]);
+                }
+                // Append selected items next.
+                for (var i = 0; i < selectedItems.length; i++) {
+                    tagModel.append(selectedItems[i]);
+                }
+            }
+
+
+            // Timer to call reorderSelected after the model is initially populated.
+            Timer {
+                id: reorderTimer
+                interval: 10  // Adjust delay if necessary
+                running: false
+                repeat: false
+                onTriggered: {
+                    reorderSelected();
+                }
+            }
+
+            Component.onCompleted: {
+                // Start the timer so that the model is fully populated before reordering.
+                reorderTimer.start();
+            }
+
+            // Helper function to add a tag into the model.
+            function addTag(text, id, checked, qty, unit, price) {
+                tagModel.append({
+                    "text": text !== undefined ? text : "",
+                    "id": id !== undefined ? id : 0,
+                    "checked": checked !== undefined ? checked : false,
+                    "qty": qty !== undefined ? qty : 0,
+                    "unit": unit !== undefined ? unit : "",
+                    "price": price !== undefined ? price : 0.0  // Added price property
+                });
+            }
+            
+            // Helper function to clear all tags from the model.
+            function clearTags() {
+                while(tagModel.count > 0) {
+                    tagModel.remove(0);
+                }
+            }
+
+            // Helper function to return an array of selected tag IDs.
+            function getSelectedTags() {
+                var result = [];
+                for (var i = 0; i < tagModel.count; i++) {
+                    var item = tagModel.get(i);
+                    if (item.checked)
+                        result.push({"id": item.id, "qty": item.qty, "unit": item.unit});
+                }
+                return result;
+            }
+            
+            function getTotalCost() {
+                var total = 0;
+                for (var i = 0; i < tagModel.count; i++) {
+                    var item = tagModel.get(i);
+                    if (!item.checked) {
+                        total += item.price * item.qty;
+                    }
+                }
+                return total;
+            }
+        }
+
+
+        '''
+
+        component = QQmlComponent(self.quick_widget.engine())
+        component.setData(qml_code.encode('utf-8'), QUrl())
+        if component.status() != QQmlComponent.Status.Ready:
+            for error in component.errors():
+                print("QML Error:", error.toString())
+        qml_item = component.create()
+        self.quick_widget.setContent(QUrl(), component, qml_item)
+
+    def get_root_object(self) -> QObject:
+        """Returns the root QML object for further interactions."""
+        return self.quick_widget.rootObject()
+
+    def add_tag(self, text: str, checked: bool = False):
+        """
+        Adds a tag with the given text and checked state to the QML ListModel.
+        """
+        root_obj = self.get_root_object()
+        if root_obj is not None:
+            try:
+                root_obj.addTag(text, checked)
+            except Exception as e:
+                print("Error calling addTag:", e)
+        else:
+            print("Root object not found.")
+
+    def clear_tags(self):
+        """
+        Clears all tags from the QML ListModel.
+        """
+        root_obj = self.get_root_object()
+        if root_obj is not None:
+            try:
+                root_obj.clearTags()
+            except Exception as e:
+                print("Error calling clearTags:", e)
+        else:
+            print("Root object not found.")
+
+    def get_selected_tags(self):
+        """
+        Retrieves an array of tag texts that are checked.
+        """
+        root_obj = self.get_root_object()
+        if root_obj is not None:
+            try:
+                return root_obj.getSelectedTags()
+            except Exception as e:
+                print("Error calling getSelectedTags:", e)
+        else:
+            print("Root object not found.")
+        return []
+
+    def connect_item_clicked(self, slot):
+        """
+        Connects a Python slot to the QML 'itemClicked' signal.
+        The slot should accept one argument, the itemId.
+        """
+        root_obj = self.get_root_object()
+        if root_obj is not None:
+            root_obj.itemClicked.connect(slot)
+        else:
+            print("Root object not found.")
+            raise RuntimeError("Root object not found.")

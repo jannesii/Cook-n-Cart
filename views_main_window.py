@@ -74,27 +74,41 @@ class MainWindow(QMainWindow):
         # Asetetaan oletussivuksi Ostolistat (index 0)
         self.open_ostolistat()
 
+    def hide_buttons(self):
+        """Piilottaa navigointipalkin napit."""
+        self.btn_ostolistat.hide()
+        self.btn_reseptit.hide()
+        self.btn_tuotteet.hide()
+        self.btn_asetukset.hide()
+        
+    def show_buttons(self):
+        """Näyttää navigointipalkin napit."""
+        self.btn_ostolistat.show()
+        self.btn_reseptit.show()
+        self.btn_tuotteet.show()
+        self.btn_asetukset.show()
+
     def open_ostolistat(self):
         #self.clearMemory()
-        self.ostolistat_page = OstolistatPage()
+        self.ostolistat_page = OstolistatPage(parent=self)
         self.stacked_widget.addWidget(self.ostolistat_page)  # index 0
         self.stacked_widget.setCurrentWidget(self.ostolistat_page)
 
     def open_reseptit(self):
         #self.clearMemory()
-        self.reseptit_page = ReseptitPage()
+        self.reseptit_page = ReseptitPage(parent=self)
         self.stacked_widget.addWidget(self.reseptit_page)    # index 1
         self.stacked_widget.setCurrentWidget(self.reseptit_page)
 
     def open_tuotteet(self):
         #self.clearMemory()
-        self.products_page = TuotteetPage()
+        self.products_page = TuotteetPage(parent=self)
         self.stacked_widget.addWidget(self.products_page)    # index 2
         self.stacked_widget.setCurrentWidget(self.products_page)
 
     def open_asetukset(self):
         #self.clearMemory()
-        self.asetukset_page = AsetuksetPage()
+        self.asetukset_page = AsetuksetPage(parent=self)
         self.stacked_widget.addWidget(self.asetukset_page)   # index 3
         self.stacked_widget.setCurrentWidget(self.asetukset_page)
 

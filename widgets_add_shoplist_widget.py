@@ -1,39 +1,31 @@
 # add_shoplist_widget.py
 
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QLineEdit, QPushButton, QLabel, QHBoxLayout
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Signal, Qt
 
 from widgets_add_products_widget import AddProductsWidget
 from root_controllers import ProductController as PC
+from qml import NormalTextField
+
 
 class AddShoplistWidget(QWidget):
     """
     Widget for creating a new shopping list with a title and optional items.
     """
-    shoplist_created = Signal(int)  # Emits the ID of the newly created shopping list
+    shoplist_created = Signal(
+        int)  # Emits the ID of the newly created shopping list
 
-    def __init__(self, shoplist_controller, product_controller, parent=None):
+    def __init__(self, shoplist_controller=None, product_controller=None, parent=None):
         super().__init__(parent)
         self.shoplist_controller = shoplist_controller
         self.product_controller = product_controller
         self.selected_products = []  # Store selected products from AddProductsWidget
 
-        self.layout = QVBoxLayout(self)
+        layout = QVBoxLayout(self)
 
-        # Title input
-        self.title_label = QLabel("Ostoslistan nimi:")
-        self.layout.addWidget(self.title_label)
 
-        self.title_input = QLineEdit()
-        self.layout.addWidget(self.title_input)
-
-        # Product selection widget
-        self.product_selection_label = QLabel("Valitse tuotteita (valinnainen):")
-        self.layout.addWidget(self.product_selection_label)
-
-        self.add_products_widget = AddProductsWidget(self.product_controller, self)
-        self.add_products_widget.finished.connect(self._handle_finished_add_products)
-        self.layout.addWidget(self.add_products_widget)
+        self.title_input = NormalTextField(placeholder_text="Ostoslistan nimi...", text_field_id="shoplist_title_input")
+        layout.addWidget(self.title_input)
 
         # Buttons layout
         buttons_layout = QHBoxLayout()
@@ -45,35 +37,37 @@ class AddShoplistWidget(QWidget):
         self.cancel_btn.setObjectName("gray_button")
         buttons_layout.addWidget(self.cancel_btn)
 
-        self.layout.addLayout(buttons_layout)
+        layout.setAlignment(Qt.AlignTop)
+        layout.addLayout(buttons_layout)
 
     def _handle_finished_add_products(self, selected_products):
         """Handles the selection of products from AddProductsWidget."""
 
         self.selected_products = []
-        
+
         for product_data in selected_products:
             product_id = product_data.get("id")
-            quantity = product_data.get("quantity", 1)  
-            
+            quantity = product_data.get("quantity", 1)
+
             # Ensure product_id is valid
             if not product_id:
-                print("ERROR: Missing product ID in selected product data:", product_data)
+                print(
+                    "ERROR: Missing product ID in selected product data:", product_data)
                 continue
-            
+
             # Fetch full product details from the database
             product = self.product_controller.get_product_by_id(product_id)
             if not product:
-                print(f"ERROR: Product with ID {product_id} not found in database.")
+                print(
+                    f"ERROR: Product with ID {product_id} not found in database.")
                 continue  # Skip if product is not found
-            
+
             # Append correctly structured data
             self.selected_products.append({
-                "product": product,  
-                "quantity": quantity,  
+                "product": product,
+                "quantity": quantity,
                 "unit": product_data.get("unit", "kpl")  # Default unit
             })
-
 
     def _create_shoplist(self):
         """Create a new shopping list and emit its ID."""
@@ -86,7 +80,8 @@ class AddShoplistWidget(QWidget):
 
         # Create the shopping list with selected products
         try:
-            shopping_list = self.shoplist_controller.add_shopping_list(title=title, items=self.selected_products)
+            shopping_list = self.shoplist_controller.add_shopping_list(
+                title=title, items=self.selected_products)
         except ValueError as e:
             print(f"Error creating shopping list: {e}")
             return
@@ -97,4 +92,4 @@ class AddShoplistWidget(QWidget):
         # Reset the form
         self.title_input.clear()
         self.selected_products = []
-        self.add_products_widget.set_selected_products([])  # Reset selection in widget
+        # self.add_products_widget.set_selected_products([])  # Reset selection in widget

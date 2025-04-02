@@ -6,6 +6,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Signal, Qt
 from qml import TagSelectorWidget, MainSearchTextField, NormalTextField, WarningDialog
 
+
 class AddTagsWidget(QWidget):
     finished = Signal(list)  # Emits a list of selected tags
 

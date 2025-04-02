@@ -12,6 +12,7 @@ from root_controllers import ProductController as PC
 from root_controllers import ShoppingListController as SLC
 from root_controllers import RecipeController as RC
 from widgets_product_detail_widget import ProductDetailWidget
+from widgets_add_categories_widget import AddCategoriesWidget
 from qml import NormalTextField, MainSearchTextField, ScrollViewWidget, WarningDialog
 
 TURKOOSI = "#00B0F0"
@@ -27,7 +28,7 @@ class TuotteetPage(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-
+        self.parent = parent
         self.product_controller = PC()
 
         self.products_dict = {}
@@ -39,6 +40,7 @@ class TuotteetPage(QWidget):
         self.page_add_form = None
         self.page_detail = None
         self.unit_selector = None
+        self.category_selector = None
 
         # Start with the list page
         self.setLayout(main_layout)
@@ -137,7 +139,6 @@ class TuotteetPage(QWidget):
         self.unit_edit = QPushButton("Valitse yksikkö")
         self.unit_edit.clicked.connect(self._show_unit_selector)
 
-        # Optional: style the button so it looks more like a text field
         self.unit_edit.setStyleSheet("""
             QPushButton {
                 background-color: white;
@@ -160,9 +161,19 @@ class TuotteetPage(QWidget):
 
         # -- Kategoria --
         kategoria_label = QLabel("Kategoria:")
-        self.category_edit = NormalTextField(
-            text_field_id="category_edit", placeholder_text="Syötä kategoria..."
-        )
+        self.category_edit = QPushButton("Valitse kategoria")
+        self.category_edit.clicked.connect(self._show_category_selector)
+        self.category_edit.setStyleSheet("""
+            QPushButton {
+                background-color: white;
+                border: 1px solid #C0C0C0;
+                border-radius: 3px;
+                padding: 4px 8px;
+            }
+            QPushButton:hover {
+                background-color: #E6E6E6;
+            }
+        """)
         form_layout.addRow(kategoria_label, self.category_edit)
 
         # -- Buttons row --
@@ -182,6 +193,22 @@ class TuotteetPage(QWidget):
         main_layout.addStretch()
 
         return main_layout
+    
+    def _show_category_selector(self):
+        # Create and store the category selector widget so we can remove it later.
+        self.category_selector = AddCategoriesWidget()
+        self.category_selector.finished.connect(self._on_category_selected)
+        self.category_selector.cancel_btn.clicked.connect(self.back_to_list)
+        self.stacked.addWidget(self.category_selector)
+        self.stacked.setCurrentWidget(self.category_selector)
+        
+    def _on_category_selected(self, categories):
+        # Set the selected category on the category_edit button.
+        categories = ", ".join(categories) if categories else "Valitse kategoria"
+        self.category_edit.setText(categories)
+        # Return back to the add product form page.
+        if self.page_add_form is not None:
+            self.stacked.setCurrentWidget(self.page_add_form)
 
     def _show_unit_selector(self):
         # Create and store the unit selector widget so we can remove it later.
@@ -218,7 +245,7 @@ class TuotteetPage(QWidget):
         name = self.name_edit.get_text().strip()
         unit = self.unit_edit.text().strip()
         price_str = self.price_edit.get_text().strip().replace(",", ".")
-        cat = self.category_edit.get_text().strip()
+        cat = self.category_edit.text().strip()
 
         missing_fields = []
         if not name:
@@ -271,6 +298,7 @@ class TuotteetPage(QWidget):
             self.page_add_form.setLayout(self._create_add_form_layout())
             self.stacked.addWidget(self.page_add_form)
         self.stacked.setCurrentWidget(self.page_add_form)
+        self.parent.hide_buttons()
 
     def show_product_details(self, product):
         self.page_detail = ProductDetailWidget()
@@ -281,15 +309,18 @@ class TuotteetPage(QWidget):
         self.page_detail.remove_btn.clicked.connect(
             lambda checked: self.remove_product(product))
         self.stacked.setCurrentWidget(self.page_detail)
+        self.parent.hide_buttons()
 
     def back_to_list(self):
         self.rm_page_add()
         self.rm_page_detail()
         self.rm_page_unit_selector()
+        self.rm_page_category_selector()
         self.page_list = QWidget()
         self.page_list.setLayout(self._create_list_layout())
         self.stacked.addWidget(self.page_list)
         self.stacked.setCurrentWidget(self.page_list)
+        self.parent.show_buttons()
 
     def rm_page_add(self):
         if self.page_add_form:
@@ -318,6 +349,13 @@ class TuotteetPage(QWidget):
             self.stacked.removeWidget(self.unit_selector)
             self.unit_selector.deleteLater()
             self.unit_selector = None
+    
+    def rm_page_category_selector(self):
+        if self.category_selector:
+            print("Removing category_selector")
+            self.stacked.removeWidget(self.category_selector)
+            self.category_selector.deleteLater()
+            self.category_selector = None
 
     def remove_product(self, product):
         self.product_controller.delete_product(product.id)

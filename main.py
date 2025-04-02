@@ -121,8 +121,9 @@ def main():
             background-color: red;
             color: white;
             font-weight: bold;
+            border: none;
             border-radius: 5px;
-            padding: 10px;
+            padding: 8px;
         }
 
         QPushButton:hover#delete_button {

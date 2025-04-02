@@ -121,6 +121,12 @@ class ShoppingListController:
     def update_volume_unit(self, new_unit: str):
         self.volume_unit = new_unit
         self.save_units()
+        
+    def update_total_sum(self, shopping_list_id: int, total_sum: float):
+        """
+        Päivittää ostoslistan kokonaisarvon tietokannassa.
+        """
+        self.repo.update_total_sum(shopping_list_id, total_sum)
 
     def calculate_total_cost(self, shopping_list_id: int):
 
@@ -183,6 +189,9 @@ class ShoppingListController:
             shopping_list.total_sum = self.calculate_total_cost(
                 shopping_list_id)
         return shopping_list
+    
+    def get_purchased_count(self, shopping_list_id: int) -> int:
+        return self.repo.get_purchased_count_by_shopping_list_id(shopping_list_id)
 
     def add_shopping_list(self, title: str, items: List[dict]):
         # Create a new ShoppingList object
@@ -260,6 +269,17 @@ class ShoppingListController:
 
         self.repo.update_shopping_list(shopping_list_id, shopping_list)
         return shopping_list
+    
+    def update_purchased_status(self, item_id: int, is_purchased: bool):
+        """
+        Päivittää ostoslistan tuotteen ostetun tilan.
+        """
+        if is_purchased:
+            is_purchased = 1
+        else:
+            is_purchased = 0
+
+        self.repo.update_purchased_status(item_id, is_purchased)
 
     def delete_shopping_list_by_id(self, shoplist_id: int):
         """

@@ -119,7 +119,7 @@ class AddProductsWidget(QWidget):
         Handle the cancel button click event.
         """
         print("Cancel button clicked")
-        self.finished.emit([])
+        self.finished.emit(self.selected_products)
         self.clearMemory()
 
     def handle_next(self):
@@ -198,7 +198,7 @@ class AddProductsWidget(QWidget):
                     is_checked = False
                     
                 if is_checked:
-                    print(f"Product {product.name} is checked")
+                    #print(f"Product {product.name} is checked")
                     item = next((item for item in self.selected_products if item['id'] == product.id), None)
 
                     if item:
