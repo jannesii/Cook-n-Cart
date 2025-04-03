@@ -1,0 +1,11 @@
+1. wsl --install -d Debian
+
+2. sudo apt update && sudo apt upgrade -y
+
+3. sudo apt install git -y
+
+4. git clone https://github.com/jannesii/Cook-n-Cart
+
+5. cd Cook-n-Cart/
+
+6. ./build/install_packages.sh
