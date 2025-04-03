@@ -1,0 +1,9 @@
+[project]
+name = "CookAndCart"
+version = "0.5.2"
+description = "A brief description of my project."
+readme = "README.md"
+authors = [
+  { name = "Your Name", email = "your.email@example.com" }
+]
+
