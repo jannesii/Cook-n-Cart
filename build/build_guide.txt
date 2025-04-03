@@ -1,13 +1,86 @@
-1. wsl --install -d Debian
+Guide to Build the Python Project into an APK Using WSL (Debian) on Windows
+-------------------------------------------------------------------------------------
 
-2. sudo apt update && sudo apt upgrade -y
+Prerequisites:
+--------------
+- Windows 10 (version 2004 or later) or Windows 11.
+- Administrator privileges on Windows.
+- A stable internet connection.
+- Familiarity with basic command line tools (Git, apt, etc.).
 
-3. sudo apt install git -y
+Installing WSL (if missing):
+-----------------------------
+1. Open PowerShell as Administrator.
+2. Run the following command to install WSL:
+      wsl --install
+   This command will enable the necessary Windows features and install WSL with the default Linux distribution.
+3. To install Debian, run:
+      wsl --install -d Debian
+4. Restart your computer if prompted.
+5. Launch Debian by either searching for "Debian" in the Start menu or by running:
+      wsl -d Debian
 
-4. git clone https://github.com/jannesii/Cook-n-Cart
+Disclaimer:
+-----------
+Steps 1–5 (updating packages, installing Git, cloning the repository, and running the setup script) can be completed by running the following one-liner command in your Debian terminal:
+      cd && sudo apt update && sudo apt upgrade -y && sudo apt install git -y && git clone https://github.com/jannesii/Cook-n-Cart && cd Cook-n-Cart/ && ./build/setup-pyside6-android.sh && source .venv/bin/activate
+After executing this command, proceed to Step 6 for building the APK.
 
-5. cd Cook-n-Cart/
+Step 1: Update System Packages
+-------------------------------
+1. In the Debian terminal, change to your home directory:
+      cd
+2. Update package lists and upgrade installed packages:
+      sudo apt update && sudo apt upgrade -y
 
-6. ./build/install_packages.sh
+Step 2: Install Git
+-------------------
+Install Git by running:
+      sudo apt install git -y
 
-7. source .venv/bin/activate
+Step 3: Clone the Project Repository
+--------------------------------------
+1. Clone the repository from GitHub:
+      git clone https://github.com/jannesii/Cook-n-Cart
+2. Change into the project directory:
+      cd Cook-n-Cart/
+
+Step 4: Run the PySide6 Android Setup Script
+---------------------------------------------
+Execute the setup script:
+      ./build/setup-pyside6-android.sh
+   This script will:
+      - Install required system packages.
+      - Create and activate a Python virtual environment.
+      - Install Python dependencies.
+      - Clone the pyside-setup repository and download the Android NDK/SDK.
+      - Clean up after the download.
+
+Step 5: Activate the Python Virtual Environment
+-------------------------------------------------
+Activate the virtual environment by running:
+      source .venv/bin/activate
+You should now see the virtual environment’s name (typically ".venv") in your prompt.
+
+Step 6: Build the APK
+---------------------
+Run the APK build script:
+      ./apkBuild.sh
+This command will compile your Python project and package it into an APK.
+
+Future APK Builds:
+------------------
+After the initial build, if you need to rebuild the APK later:
+1. Ensure that your virtual environment is activated (if not, run: 
+      source .venv/bin/activate).
+2. Update your project repository by running:
+      git pull
+3. Then, rebuild the APK by running:
+      ./apkBuild.sh
+
+Final Notes:
+------------
+- If you encounter errors, review the terminal output for troubleshooting hints and ensure that all dependencies are installed.
+- Maintain a stable internet connection throughout the process.
+
+Happy Building!
