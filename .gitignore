@@ -34,6 +34,7 @@ MANIFEST
 *.spec
 #!pysidedeploy.spec
 !build/
+deployment/
 
 # Installer logs
 pip-log.txt
