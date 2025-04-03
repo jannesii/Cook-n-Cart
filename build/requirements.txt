@@ -4,3 +4,4 @@ Jinja2
 tqdm
 packaging
 pyside6
+tomlkit

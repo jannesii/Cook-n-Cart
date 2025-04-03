@@ -16,8 +16,16 @@ pip install -r ./build/requirements.txt
 # Clone the pyside-setup repository
 git clone https://code.qt.io/pyside/pyside-setup
 
+cd pyside-setup
+
 # This script will download the Android NDK and SDK packages required into your home directory as a directory called .pyside6-android-deploy.
-python3 pyside-setup/tools/cross_compile_android/main.py --download-only --skip-update --auto-accept-license
+python3 tools/cross_compile_android/main.py --download-only --skip-update --auto-accept-license
+
+cd ..
 
 # Clean up
 rm -rf pyside-setup/
+
+pyside6-android-deploy --init \
+	--wheel-pyside=$HOME/Cook-n-Cart/whl/PySide6-6.8.0.2-6.8.0-cp311-cp311-android_aarch64.whl \
+	--wheel-shiboken=$HOME/Cook-n-Cart/whl/shiboken6-6.8.0.2-6.8.0-cp311-cp311-android_aarch64.whl

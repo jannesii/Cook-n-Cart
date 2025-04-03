@@ -9,3 +9,5 @@
 5. cd Cook-n-Cart/
 
 6. ./build/install_packages.sh
+
+7. source .venv/bin/activate
