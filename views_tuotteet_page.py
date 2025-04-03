@@ -156,7 +156,7 @@ class TuotteetPage(QWidget):
         form_layout.addRow(yksikko_label, self.unit_edit)
 
         # -- Hinta --
-        hinta_label = QLabel("Hinta:")
+        hinta_label = QLabel("Hinta per yksikkö:")
         self.price_edit = NormalTextField(
             text_field_id="price_edit", placeholder_text="Syötä hinta..."
         )

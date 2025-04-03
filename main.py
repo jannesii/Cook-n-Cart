@@ -60,7 +60,8 @@ def main():
     if not os.path.exists(utils_dir):
         print("Creating utils dir.")
         os.makedirs(utils_dir)
-    
+        
+    """
     # Check if the config file exists, and create it if missing.
     config_path = os.path.join(utils_dir, "config.json")
     if not os.path.exists(config_path):
@@ -77,6 +78,7 @@ def main():
                 config_file.write(default_config)
         except Exception as e:
             print(f"Unable to write config file: {e}")
+    """
     
     default_styles = """
         /* style.qss */

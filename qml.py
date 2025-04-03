@@ -9,8 +9,6 @@ import functools
 import logging
 from error_handler import catch_errors
 
-# --- Centralized Error Handling Decorator ---
-
 
 class NormalTextField(QWidget):
     @catch_errors
