@@ -13,31 +13,6 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
-def show_error_dialog(message):
-    """Displays a simple error message dialog."""
-    msg_box = QMessageBox()
-    msg_box.setIcon(QMessageBox.Critical)
-    msg_box.setWindowTitle("Error")
-    msg_box.setText(message)
-    msg_box.exec()
-
-def centralized_exception_handler(exc_type, exc_value, exc_traceback):
-    """
-    Global exception handler that logs the exception and displays an error dialog.
-    """
-    # Allow KeyboardInterrupt to exit normally.
-    if issubclass(exc_type, KeyboardInterrupt):
-        sys.__excepthook__(exc_type, exc_value, exc_traceback)
-        return
-
-    # Log the exception with traceback.
-    logging.error("Unhandled exception", exc_info=(exc_type, exc_value, exc_traceback))
-    
-    # Show an error dialog to the user.
-    show_error_dialog(f"An unexpected error occurred: {exc_value}")
-
-# Install the global exception hook.
-sys.excepthook = centralized_exception_handler
 
 def load_stylesheet(app, qss):
     print("Loading stylesheet...")

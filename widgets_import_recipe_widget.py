@@ -8,9 +8,9 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Signal, Qt
 from root_controllers import RecipeController, ProductController
-from qml import WarningDialog, ScrollViewWidget, MainSearchTextField, IngredientSelectorWidget
+from qml import ScrollViewWidget, MainSearchTextField, IngredientSelectorWidget
 
-from error_handler import catch_errors_ui
+from error_handler import catch_errors_ui, show_error_toast
 
 
 class ImportRecipeWidget(QWidget):
@@ -168,5 +168,4 @@ class ImportRecipeWidget(QWidget):
 
     @catch_errors_ui
     def _show_error(self, message):
-        warning = WarningDialog(f"Virhe: {message}", self)
-        warning.show()
+        show_error_toast(self, message=message, pos="top")

@@ -7,9 +7,9 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Signal, Qt
 from root_controllers import ProductController
-from qml import NormalTextField, WarningDialog
+from qml import NormalTextField
 
-from error_handler import catch_errors_ui
+from error_handler import catch_errors_ui, show_error_toast
 
 
 class EditProductWidget(QWidget):
@@ -159,13 +159,13 @@ class EditProductWidget(QWidget):
         category = self.category_edit.get_text().strip()
 
         if not name:
-            self._show_error("Virhe: Tuotteen nimi on pakollinen.")
+            self._show_error("Tuotteen nimi on pakollinen.")
             return
 
         try:
             price = float(price_str)
         except ValueError:
-            self._show_error("Virhe: Hinnan tulee olla numero.")
+            self._show_error("Hinnan tulee olla numero.")
             return
 
         try:
@@ -177,7 +177,7 @@ class EditProductWidget(QWidget):
             )
             self.product_updated.emit(updated_product)
         except Exception as e:
-            self._show_error(f"Tuotteen päivitys epäonnistui: {e}")
+            raise Exception(f"Virhe tuotteen tallentamisessa: {e}")
 
     @catch_errors_ui
     def _cancel_edit(self):
@@ -186,5 +186,4 @@ class EditProductWidget(QWidget):
 
     @catch_errors_ui
     def _show_error(self, message):
-        warning = WarningDialog(f"Virhe: {message}", self)
-        warning.show()
+        show_error_toast(self, message=message, pos="top")

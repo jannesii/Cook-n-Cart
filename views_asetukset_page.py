@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
 from root_controllers import ProductController as PC
 from root_controllers import ShoppingListController as SLC
 from root_controllers import RecipeController as RC
-from error_handler import catch_errors_ui
+from error_handler import catch_errors_ui, catch_errors
 
 TURKOOSI = "#00B0F0"
 HARMAA = "#808080"
@@ -53,7 +53,7 @@ class AsetuksetPage(QWidget):
         main_layout.addWidget(top_bar_frame, 0)
 
         # --- Helper Functions with Error Handling ---
-        @catch_errors_ui
+        @catch_errors
         def load_settings():
             """Lataa asetukset config.json-tiedostosta."""
             # NOTE: The following default is returned immediately.

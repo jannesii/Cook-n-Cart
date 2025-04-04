@@ -12,7 +12,7 @@ from PySide6.QtCore import Qt, QTimer, QEventLoop
 
 def catch_errors_ui(func):
     """
-    Decorator that logs the error, shows an error dialog (if a QApplication exists),
+    Decorator that logs the error, shows a toast error message (if a QApplication exists),
     and then re-raises the exception.
     """
     @functools.wraps(func)
@@ -22,13 +22,25 @@ def catch_errors_ui(func):
         except Exception as e:
             logging.error(f"Error in {func.__name__}: {e}", exc_info=True)
             print(f"Error in {func.__name__}: {e}")
-            if False: #QApplication.instance():
-                msg_box = QMessageBox()
-                msg_box.setIcon(QMessageBox.Critical)
-                msg_box.setWindowTitle("Error")
-                # Avoid showing overly technical details to the user.
-                msg_box.setText("An unexpected error occurred. Please try again later.")
-                msg_box.exec()
+            
+            # Check if a QApplication exists
+            app = QApplication.instance()
+            if app is not None:
+                # Try to determine a parent widget for the toast.
+                # If the decorated function is a method of a widget, its first argument (self) can be used.
+                if args and hasattr(args[0], "width") and hasattr(args[0], "height"):
+                    parent = args[0]
+                else:
+                    parent = app.activeWindow()
+                
+                # If a parent widget was found, show the toast.
+                if parent is not None:
+                    show_error_toast(
+                        parent, 
+                        message="An unexpected error occurred.\nPlease check the logs for more details.", 
+                        pos="top",
+                        lines=2
+                    )
             raise
     return wrapper
 
@@ -52,7 +64,7 @@ def catch_errors(func):
 def show_error_toast(
     parent, 
     message: str = "An unexpected error occurred.", 
-    pos: Literal["bot", "mid", "top"] = "bot", 
+    pos: Literal["bot", "mid", "top"] = "top", 
     duration: int = 3000,
     background_color: str = "red",
     text_color: str = "white",

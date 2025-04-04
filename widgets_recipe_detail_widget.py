@@ -8,9 +8,8 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, Signal
 from root_controllers import RecipeController, ProductController
-from qml import WarningDialog
 
-from error_handler import catch_errors_ui
+from error_handler import catch_errors_ui, show_error_toast
 
 TURKOOSI = "#00B0F0"
 HARMAA = "#808080"
@@ -107,5 +106,4 @@ class RecipeDetailWidget(QWidget):
 
     @catch_errors_ui
     def _show_error(self, message):
-        warning = WarningDialog(f"Virhe: {message}", self)
-        warning.show()
+        show_error_toast(self, message, pos="top")

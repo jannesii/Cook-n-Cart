@@ -6,7 +6,7 @@ import logging
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QPushButton, QScrollArea, QStackedWidget,
-    QFrame, QLineEdit, QCompleter, QFormLayout, QMessageBox
+    QFrame, QLineEdit, QCompleter, QFormLayout
 )
 from PySide6.QtCore import Qt, QStringListModel
 
@@ -243,7 +243,6 @@ class TuotteetPage(QWidget):
             layout.addWidget(button)
         return layout
 
-    @catch_errors_ui
     def _save_new_product(self):
         name = self.name_edit.get_text().strip()
         unit = self.unit_edit.text().strip()
@@ -260,12 +259,11 @@ class TuotteetPage(QWidget):
         if not price_str:
             price_str = "0.0"
 
-
         try:
             price = float(price_str)
         except ValueError:
             show_error_toast(
-                self, "Virheellinen hinta!\nSyötä kelvollinen numeerinen arvo.", pos="top", height=80
+                self, "Virheellinen hinta!\nSyötä kelvollinen numeerinen arvo.", pos="top", lines=2
             )
             return
 

@@ -9,15 +9,14 @@ from PySide6.QtGui import QDoubleValidator
 from PySide6.QtCore import Signal, Qt, QTimer
 from time import sleep
 from qml import (
-    ProductSelectorWidgetPage1, MainSearchTextField, ProductSelectorWidgetPage2,
-    WarningDialog
+    ProductSelectorWidgetPage1, MainSearchTextField, ProductSelectorWidgetPage2
 )
 from root_controllers import ProductController as PC
 
 import functools
 import logging
 
-from error_handler import catch_errors_ui
+from error_handler import catch_errors_ui, show_error_toast
 
 TURKOOSI = "#00B0F0"
 HARMAA = "#808080"
@@ -157,16 +156,10 @@ class AddProductsWidget(QWidget):
             try:
                 quantity = float(product["qty"])
                 if quantity <= 0:
-                    warning = WarningDialog(
-                        f"Invalid Quantity\nQuantity for product '{product['name']}' must be positive.", self
-                    )
-                    warning.show()
+                    show_error_toast(self, message="Invalid quantity.\nQuantity must be positive.", lines=2)
                     return  # Stop if invalid
             except ValueError:
-                warning = WarningDialog(
-                    f"Invalid Input\nPlease enter a valid number for the quantity of product '{product['name']}'.", self
-                )
-                warning.show()
+                show_error_toast(self, message="Invalid input.\nPlease enter a valid number.", lines=2)
                 return
             new_selection.append({
                 "id": product["id"],
