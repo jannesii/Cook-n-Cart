@@ -4,12 +4,12 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QInputDialog,
     QStackedWidget, QLabel, QMessageBox
 )
-from PySide6.QtCore import Signal, Qt
+from PySide6.QtCore import Signal, Qt, QTimer
 from qml import TagSelectorWidget, MainSearchTextField, NormalTextField, WarningDialog
 from root_controllers import ProductController
 import functools
 import logging
-from error_handler import catch_errors_ui
+from error_handler import catch_errors_ui, show_error_toast
 
 
 class AddCategoriesWidget(QWidget):
@@ -112,8 +112,9 @@ class AddCategoriesWidget(QWidget):
         new_category = self.new_category_text_field.get_text().strip()
         if not new_category:
             # Inform the user that the category cannot be empty.
-            warning = WarningDialog("Kategoria ei voi olla tyhjä.", self)
-            warning.show()
+            #warning = WarningDialog("Kategoria ei voi olla tyhjä.", self)
+            #warning.show()
+            show_error_toast(self, "Kategoria ei voi olla tyhjä.")
             return  # Stop processing if the category is empty
         if new_category not in self.all_categories:
             self.all_categories.append(new_category)
