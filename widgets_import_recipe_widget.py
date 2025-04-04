@@ -48,6 +48,8 @@ class ImportRecipeWidget(QWidget):
     @catch_errors_ui
     def _init_recipe_selection_page(self):
         layout = QVBoxLayout(self.page_recipes)
+        layout.setAlignment(Qt.AlignTop)
+        
         # Top bar: title and search field
         top_bar = QHBoxLayout()
         title = QLabel("Valitse resepti")

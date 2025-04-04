@@ -37,6 +37,7 @@ class AddTagsWidget(QWidget):
     @catch_errors_ui
     def _select_tags_layout(self):
         layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignTop)
 
         # -- Search Bar --
         top_bar_search_layout = QHBoxLayout()
@@ -81,7 +82,7 @@ class AddTagsWidget(QWidget):
     @catch_errors_ui
     def _add_new_tag_layout(self):
         layout = QVBoxLayout()
-        layout.setAlignment(Qt.AlignTop)
+        layout.setAlignment(Qt.AlignCenter)
 
         self.new_tag_text_field = NormalTextField(
             text_field_id="new_tag_text_field",

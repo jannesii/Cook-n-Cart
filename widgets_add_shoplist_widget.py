@@ -26,6 +26,7 @@ class AddShoplistWidget(QWidget):
         self.selected_products = []  # Store selected products from AddProductsWidget
 
         layout = QVBoxLayout(self)
+        layout.setAlignment(Qt.AlignCenter)
 
         self.title_input = NormalTextField(
             placeholder_text="Ostoslistan nimi...", text_field_id="shoplist_title_input")
@@ -44,7 +45,6 @@ class AddShoplistWidget(QWidget):
         self.cancel_btn.setObjectName("gray_button")
         buttons_layout.addWidget(self.cancel_btn)
 
-        layout.setAlignment(Qt.AlignTop)
         layout.addLayout(buttons_layout)
 
     @catch_errors_ui
