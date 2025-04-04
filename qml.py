@@ -12,7 +12,7 @@ from error_handler import catch_errors
 
 class NormalTextField(QWidget):
     @catch_errors
-    def __init__(self, text_field_id="mobileTextField", placeholder_text="Enter value...", parent=None):
+    def __init__(self, text_field_id="mobileTextField", placeholder_text="Enter value...", parent=None, width=200):
         super().__init__(parent)
         self.text_field_id = text_field_id
 
@@ -29,7 +29,7 @@ class NormalTextField(QWidget):
 
         Rectangle {{
             id: root
-            width: 200
+            width: {width}
             height: 40
             color: "transparent"
             radius: 3
@@ -363,7 +363,7 @@ class TagSelectorWidget(QWidget):
     Provides helper functions to populate the model, clear tags, and retrieve selected tags.
     """
     @catch_errors
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, main_height=350):
         super().__init__(parent)
         layout = QVBoxLayout(self)
         self.quick_widget = QQuickWidget()

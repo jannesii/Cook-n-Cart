@@ -15,8 +15,8 @@ from root_controllers import ShoppingListController as SLC
 from root_controllers import RecipeController as RC
 from widgets_product_detail_widget import ProductDetailWidget
 from widgets_add_categories_widget import AddCategoriesWidget
-from qml import NormalTextField, MainSearchTextField, ScrollViewWidget, WarningDialog
-from error_handler import catch_errors_ui
+from qml import NormalTextField, MainSearchTextField, ScrollViewWidget
+from error_handler import catch_errors_ui, show_error_toast
 
 TURKOOSI = "#00B0F0"
 HARMAA = "#808080"
@@ -193,6 +193,7 @@ class TuotteetPage(QWidget):
         main_layout.addLayout(form_layout)
         main_layout.addLayout(btn_layout)
         main_layout.addStretch()
+        main_layout.setAlignment(Qt.AlignCenter)
 
         return main_layout
 
@@ -232,10 +233,11 @@ class TuotteetPage(QWidget):
     @catch_errors_ui
     def _create_unit_selector_layout(self):
         layout = QVBoxLayout()
-        layout.setAlignment(Qt.AlignTop)
+        layout.setAlignment(Qt.AlignCenter)
         units = ["kpl", "mg", "g", "kg", "ml", "dl", "l"]
         for unit in units:
             button = QPushButton(unit)
+            button.setFixedWidth(int(self.width() * 0.8))
             button.clicked.connect(lambda checked=True,
                                    u=unit: self._select_unit(u))
             layout.addWidget(button)
@@ -251,26 +253,20 @@ class TuotteetPage(QWidget):
         missing_fields = []
         if not name:
             missing_fields.append("Name")
-        if unit == "Valitse yksikkö":
-            missing_fields.append("Unit")
-        if not price_str:
-            missing_fields.append("Price")
-
-        if missing_fields:
-            missing_str = ", ".join(missing_fields)
-            warning = WarningDialog(
-                f"Missing Information!\nPlease provide a value for: \n{missing_str}.", self
-            )
-            warning.show()
+            show_error_toast(self, "Nimi ei voi olla tyhjä!", pos="top")
             return
+        if unit == "Valitse yksikkö":
+            unit = "kpl"
+        if not price_str:
+            price_str = "0.0"
+
 
         try:
             price = float(price_str)
         except ValueError:
-            warning = WarningDialog(
-                "Invalid Price!\nPlease enter a valid numeric value for: \nPrice.", self
+            show_error_toast(
+                self, "Virheellinen hinta!\nSyötä kelvollinen numeerinen arvo.", pos="top", height=80
             )
-            warning.show()
             return
 
         print(f"Adding product: {name}, {unit}, {price}, {cat}")

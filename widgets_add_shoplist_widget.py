@@ -8,7 +8,7 @@ from widgets_add_products_widget import AddProductsWidget
 from root_controllers import ProductController as PC
 from qml import NormalTextField
 
-from error_handler import catch_errors_ui
+from error_handler import catch_errors_ui, show_error_toast
 
 
 class AddShoplistWidget(QWidget):
@@ -77,8 +77,10 @@ class AddShoplistWidget(QWidget):
         """Create a new shopping list and emit its ID."""
         title = self.title_input.get_text().strip()
         if not title:
-            self.title_label.setText("Ostoslistan nimi: (Ei voi olla tyhjä!)")
-            self.title_label.setStyleSheet("color: red;")
+            show_error_toast(
+                self, "Ostoslistan nimi ei voi olla tyhjä.", pos="top")
+            # self.title_label.setText("Ostoslistan nimi: (Ei voi olla tyhjä!)")
+            # self.title_label.setStyleSheet("color: red;")
             return
 
         # Create the shopping list with selected products.

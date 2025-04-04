@@ -7,10 +7,10 @@ from PySide6.QtWidgets import (
     QStackedWidget, QLabel, QMessageBox
 )
 from PySide6.QtCore import Signal, Qt
-from qml import TagSelectorWidget, MainSearchTextField, NormalTextField, WarningDialog
+from qml import TagSelectorWidget, MainSearchTextField, NormalTextField
 from root_controllers import ProductController
 
-from error_handler import catch_errors_ui
+from error_handler import catch_errors_ui, show_error_toast
 
 
 class AddTagsWidget(QWidget):
@@ -112,8 +112,7 @@ class AddTagsWidget(QWidget):
         new_tag = self.new_tag_text_field.get_text().strip()
         if not new_tag:
             # Inform the user that the tag cannot be empty.
-            warning = WarningDialog("Tagi ei voi olla tyhjä.", self)
-            warning.show()
+            show_error_toast(self, "Tagi ei voi olla tyhjä.", pos="top")
             return  # Stop processing if the tag is empty
         if new_tag not in self.all_tags:
             self.all_tags.append(new_tag)

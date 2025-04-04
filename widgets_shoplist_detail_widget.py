@@ -15,9 +15,9 @@ from root_controllers import ShoppingListController as SLC
 from root_models import ShoppingList, ShoppingListItem
 from widgets_add_products_widget import AddProductsWidget
 from widgets_import_recipe_widget import ImportRecipeWidget
-from qml import WarningDialog, ShoplistWidget
+from qml import ShoplistWidget
 
-from error_handler import catch_errors_ui
+from error_handler import catch_errors_ui, show_error_toast, ask_confirmation
 
 TURKOOSI = "#00B0F0"
 HARMAA = "#808080"
@@ -299,24 +299,15 @@ class ShoplistDetailWidget(QWidget):
     def _delete_shoplist(self):
         if not self.shoppinglist:
             return
-        try:
+        
+        confirm = ask_confirmation(self, pos="mid", yes_text="Poista", no_text="Peruuta")
+        if confirm:
             self.shoplist_controller.delete_shopping_list_by_id(
                 self.shoppinglist.id)
-            self._show_message("Ostoslista on poistettu onnistuneesti.")
+            show_error_toast(self.parent, "Ostoslista poistettu onnistuneesti.", pos="top", background_color="green", text_color="black")
             self.finished.emit()
-        except Exception as e:
-            self._show_error(f"Ostoslistan poistaminen epäonnistui: {str(e)}")
+
 
     @catch_errors_ui
     def _go_back(self):
         self.finished.emit()
-
-    @catch_errors_ui
-    def _show_error(self, message):
-        warning = WarningDialog(f"Virhe: {message}", self)
-        warning.show()
-
-    @catch_errors_ui
-    def _show_message(self, message):
-        msg = WarningDialog(f"Viesti: {message}", self)
-        msg.show()

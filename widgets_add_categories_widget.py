@@ -5,7 +5,7 @@ from PySide6.QtWidgets import (
     QStackedWidget, QLabel, QMessageBox
 )
 from PySide6.QtCore import Signal, Qt, QTimer
-from qml import TagSelectorWidget, MainSearchTextField, NormalTextField, WarningDialog
+from qml import TagSelectorWidget, MainSearchTextField, NormalTextField
 from root_controllers import ProductController
 import functools
 import logging
@@ -68,6 +68,7 @@ class AddCategoriesWidget(QWidget):
         btn_layout.addWidget(self.ok_btn)
         btn_layout.addWidget(self.cancel_btn)
         bottom_bar_layout.addLayout(btn_layout)
+        bottom_bar_layout.setAlignment(Qt.AlignBottom)
         layout.addLayout(bottom_bar_layout)
 
         # Connect the OK and Cancel buttons.
@@ -112,10 +113,7 @@ class AddCategoriesWidget(QWidget):
     def _add_category(self):
         new_category = self.new_category_text_field.get_text().strip()
         if not new_category:
-            # Inform the user that the category cannot be empty.
-            #warning = WarningDialog("Kategoria ei voi olla tyhjä.", self)
-            #warning.show()
-            show_error_toast(self, "Kategoria ei voi olla tyhjä.", pos="mid")
+            show_error_toast(self, "Kategoria ei voi olla tyhjä.", pos="top")
             return  # Stop processing if the category is empty
         if new_category not in self.all_categories:
             self.all_categories.append(new_category)

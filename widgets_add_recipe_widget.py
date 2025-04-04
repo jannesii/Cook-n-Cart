@@ -10,9 +10,9 @@ from PySide6.QtCore import Qt, Signal, QTimer
 
 from widgets_add_tags_widget import AddTagsWidget
 from widgets_add_products_widget import AddProductsWidget
-from qml import NormalTextField, TallTextField, WarningDialog
+from qml import NormalTextField, TallTextField
 
-from error_handler import catch_errors_ui
+from error_handler import catch_errors_ui, show_error_toast
 
 TURKOOSI = "#00B0F0"
 HARMAA = "#808080"
@@ -208,8 +208,7 @@ class AddRecipeWidget(QWidget):
             self._show_error("Reseptin nimi on pakollinen.")
             return
         if not instructions:
-            self._show_error("Valmistusohjeet ovat pakolliset.")
-            return
+            instructions = ""
 
         # Validate selected products
         for p in self.selected_products:
@@ -263,7 +262,7 @@ class AddRecipeWidget(QWidget):
                     ingredients=ingredients
                 )
         except Exception as e:
-            self._show_error(f"Reseptin tallennus epäonnistui: {e}")
+            print(f"Reseptin tallennus epäonnistui: {e}")
             return
 
         self.recipe_saved.emit(recipe)
@@ -277,5 +276,6 @@ class AddRecipeWidget(QWidget):
 
     @catch_errors_ui
     def _show_error(self, message):
-        warning = WarningDialog(f"Virhe: {message}", self)
-        warning.show()
+        show_error_toast(
+            self, message=message, pos="top"
+        )

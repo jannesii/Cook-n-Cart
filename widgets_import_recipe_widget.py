@@ -49,7 +49,7 @@ class ImportRecipeWidget(QWidget):
     def _init_recipe_selection_page(self):
         layout = QVBoxLayout(self.page_recipes)
         layout.setAlignment(Qt.AlignTop)
-        
+
         # Top bar: title and search field
         top_bar = QHBoxLayout()
         title = QLabel("Valitse resepti")
@@ -64,7 +64,7 @@ class ImportRecipeWidget(QWidget):
         layout.addLayout(top_bar_search_layout)
         # Recipe list
         self.recipe_list_widget = ScrollViewWidget(
-            parent=self, main_height=300)
+            parent=self, main_height=400)
         layout.addWidget(self.recipe_list_widget)
         # Populate the list of recipes
         self._populate_recipe_list()
