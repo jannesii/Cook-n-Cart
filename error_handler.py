@@ -2,11 +2,13 @@
 
 # File: error_handler.py
 
+from typing import Literal
 import functools
 import logging
 import sys
 from PySide6.QtWidgets import QApplication, QMessageBox, QLabel
 from PySide6.QtCore import Qt, QTimer
+
 
 def catch_errors_ui(func):
     """
@@ -45,44 +47,43 @@ def catch_errors(func):
             raise
     return wrapper
 
-from PySide6.QtWidgets import QLabel
-from PySide6.QtCore import QTimer, Qt, QSysInfo
 
-def show_error_toast(parent, message, duration=3000):
-    if QSysInfo().productType() == 'android':
-        # Use native Android toast via JNI
-        from PySide6.QtCore import QAndroidJniObject
-        # Get the Android application context
-        context = QAndroidJniObject.callStaticObjectMethod(
-            "android/app/ActivityThread",
-            "currentApplication",
-            "()Landroid/app/Application;"
-        )
-        # Create and show the native Toast (0 for short duration, 1 for long)
-        QAndroidJniObject.callStaticMethod(
-            "android/widget/Toast",
-            "makeText",
-            "(Landroid/content/Context;Ljava/lang/CharSequence;I)Landroid/widget/Toast;",
-            context.object(),
-            QAndroidJniObject.fromString(message).object(),
-            0
-        ).callMethod("show", "()V")
+
+def show_error_toast(parent, message, pos: Literal["bot", "mid", "top"] = "bot", duration=3000):
+    """
+    Display a toast message indicating an error.
+
+    Parameters:
+        parent: The parent widget.
+        message: The error message to display.
+        pos (Literal["bot", "mid", "top"]): Position for the toast.
+            "bot" - Bottom of the parent widget (default)
+            "mid" - Middle of the parent widget
+            "top" - Top of the parent widget
+        duration: Duration (in milliseconds) for which the toast is displayed.
+    """
+    toast = QLabel(parent)
+    toast.setText(message)
+    toast.setStyleSheet("""
+        background-color: red;
+        color: white;
+        padding: 10px;
+        border-radius: 5px;
+        font-weight: bold;
+    """)
+    toast.setAlignment(Qt.AlignCenter)
+    toast.setAttribute(Qt.WA_TransparentForMouseEvents)
+    toast.resize(int(parent.width() * 0.8), 40)
+    
+    if pos == "bot":
+        height_bot = parent.height() - toast.height() - 20
+        toast.move((parent.width() - toast.width()) // 2, height_bot)
+    elif pos == "mid":
+        height_mid = (parent.height() - toast.height()) // 2
+        toast.move((parent.width() - toast.width()) // 2, height_mid)
     else:
-        # Create a custom QLabel-based toast for non-Android platforms
-        toast = QLabel(parent)
-        toast.setText(message)
-        toast.setStyleSheet("""
-            background-color: rgba(50, 50, 50, 0.8);
-            color: white;
-            padding: 10px;
-            border-radius: 5px;
-        """)
-        toast.setAlignment(Qt.AlignCenter)
-        toast.setAttribute(Qt.WA_TransparentForMouseEvents)
-        # Position and size the toast near the bottom of the parent widget
-        toast.resize(int(parent.width() * 0.8), 40)
-        toast.move((parent.width() - toast.width()) // 2, parent.height() - toast.height() - 20)
-        toast.show()
-        # Automatically remove the toast after the specified duration
-        QTimer.singleShot(duration, toast.deleteLater)
-
+        height_top = 20
+        toast.move((parent.width() - toast.width()) // 2, height_top)
+    toast.show()
+    
+    QTimer.singleShot(duration, toast.deleteLater)

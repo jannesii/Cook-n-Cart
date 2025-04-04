@@ -114,7 +114,7 @@ class AddCategoriesWidget(QWidget):
             # Inform the user that the category cannot be empty.
             #warning = WarningDialog("Kategoria ei voi olla tyhjä.", self)
             #warning.show()
-            show_error_toast(self, "Kategoria ei voi olla tyhjä.")
+            show_error_toast(self, "Kategoria ei voi olla tyhjä.", pos="mid")
             return  # Stop processing if the category is empty
         if new_category not in self.all_categories:
             self.all_categories.append(new_category)
