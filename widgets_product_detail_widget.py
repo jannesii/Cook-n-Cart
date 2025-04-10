@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from root_controllers import ProductController, ShoppingListController, RecipeController
 from root_models import Product
-from widgets_edit_product_widget import EditProductWidget
+from widgets_product_form_widget import ProductFormWidget
 
 from error_handler import catch_errors_ui
 
@@ -100,11 +100,11 @@ class ProductDetailWidget(QWidget):
     @catch_errors_ui
     def _switch_to_edit_view(self):
         """Switches the stacked widget to display the edit product view."""
-        self.edit_view = EditProductWidget()
-        self.edit_view.product_updated.connect(self._on_product_updated)
-        self.edit_view.edit_cancelled.connect(self._on_edit_cancelled)
+        self.edit_view = ProductFormWidget(
+            self.product_controller, parent=self, product=self.product)
+        self.edit_view.finished.connect(self._on_product_updated)
+        self.edit_view.canceled.connect(self._on_edit_cancelled)
         self.stacked.addWidget(self.edit_view)  # index 1
-        self.edit_view.set_product(self.product)
         self.stacked.setCurrentWidget(self.edit_view)
 
     @catch_errors_ui
