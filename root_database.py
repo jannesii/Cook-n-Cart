@@ -128,6 +128,14 @@ class DatabaseManager:
                 FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
                 UNIQUE(shopping_list_id, product_id)
             );
+            
+            CREATE TABLE IF NOT EXISTS error_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                error_message TEXT NOT NULL,
+                error_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                traceback TEXT,
+                func_name TEXT
+            );
             """
             cursor.executescript(create_tables)
             print("Tables created successfully.")

@@ -1,13 +1,11 @@
 # repositories.py
 
 from root_database import DatabaseManager
-from root_models import Recipe, Product, RecipeIngredient, ShoppingList, ShoppingListItem
+from root_models import Recipe, Product, RecipeIngredient, ShoppingList, ShoppingListItem, ErrorLog
 from typing import List, Dict
 import functools
 import logging
 from error_handler import catch_errors
-
-
 
 
 class RecipeRepository:
@@ -415,3 +413,69 @@ class ShoppingListRepository:
             self.db.execute_query(delete_list_query, (shoplist_id,))
         except Exception as e:
             raise Exception(f"Failed to delete shopping list: {str(e)}")
+
+
+class ErrorRepository:
+    @catch_errors
+    def __init__(self):
+        self.db = DatabaseManager.get_instance()
+
+    @catch_errors
+    def insert_error_log(self, error_log: ErrorLog) -> int:
+        """
+        Inserts a new error log into the database.
+
+        Parameters:
+            error_log (ErrorLog): An instance containing the error details.
+
+        Returns:
+            int: The ID of the newly inserted error log.
+        """
+        query = """
+        INSERT INTO error_logs (error_message, traceback, func_name)
+        VALUES (?, ?, ?)
+        """
+        cursor = self.db.execute_query(
+            query, (error_log.error_message, error_log.traceback, error_log.func_name))
+        return cursor.lastrowid
+
+    @catch_errors
+    def delete_error_log(self, error_id: int):
+        """
+        Deletes an error log from the database by its ID.
+
+        Parameters:
+            error_id (int): The primary key of the error log to delete.
+        """
+        query = "DELETE FROM error_logs WHERE id = ?"
+        self.db.execute_query(query, (error_id,))
+
+    @catch_errors
+    def get_all_error_logs(self, sort_order: str = "DESC") -> List[ErrorLog]:
+        """
+        Retrieves all error logs from the database, sorted by error_time.
+
+        Parameters:
+            sort_order (str): Sort order by 'ASC' or 'DESC'. Default is "DESC".
+
+        Returns:
+            List[ErrorLog]: A list of ErrorLog objects.
+        """
+        # Validate and set the sort order
+        order = "ASC" if sort_order.upper() == "ASC" else "DESC"
+        query = f"SELECT * FROM error_logs ORDER BY error_time {order}"
+        rows = self.db.fetchall(query)
+        error_logs: List[ErrorLog] = []
+
+        for row in rows:
+            # Create an ErrorLog instance from each row.
+            error_log = ErrorLog(
+                id=row["id"],
+                error_message=row["error_message"],
+                error_time=row["error_time"],
+                # Using .get() in case these fields are null.
+                traceback=row.get("traceback"),
+                func_name=row.get("func_name")
+            )
+            error_logs.append(error_log)
+        return error_logs

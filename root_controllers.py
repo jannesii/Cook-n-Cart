@@ -5,9 +5,10 @@ import json
 import functools
 import logging
 
-from root_models import Recipe, RecipeIngredient, Product, ShoppingList, ShoppingListItem
-from root_repositories import RecipeRepository, ProductRepository, ShoppingListRepository
+from root_models import Recipe, RecipeIngredient, Product, ShoppingList, ShoppingListItem, ErrorLog
+from root_repositories import RecipeRepository, ProductRepository, ShoppingListRepository, ErrorRepository
 from error_handler import catch_errors
+from datetime import datetime
 
 CONFIG_FILE = "utils/config.json"
 
@@ -359,3 +360,54 @@ class ProductController:
     @catch_errors
     def delete_product(self, product_id: int):
         self.repo.delete_product(product_id)
+
+class ErrorController:
+    def __init__(self):
+        self.repo = ErrorRepository()
+
+    @catch_errors
+    def log_error(self, error_message: str, tb: str = "", func_name: str = "") -> int:
+        """
+        Creates a new error log entry and inserts it into the database.
+        
+        Parameters:
+            error_message (str): The error message describing the problem.
+            tb (str): The traceback details (optional).
+            func_name (str): The name of the function where the error occurred (optional).
+        
+        Returns:
+            int: The ID of the newly inserted error log.
+        """
+        # Create an ErrorLog instance.
+        # Note: 'id' is set to 0 and 'error_time' is set to the current datetime.
+        error_log = ErrorLog(
+            id=0,  # Database will auto-assign a new ID.
+            error_message=error_message,
+            error_time=datetime.now(),
+            traceback=tb,
+            func_name=func_name
+        )
+        return self.repo.insert_error_log(error_log)
+
+    @catch_errors
+    def delete_error_log(self, error_id: int):
+        """
+        Deletes an error log entry from the database.
+        
+        Parameters:
+            error_id (int): The ID of the error log record to delete.
+        """
+        self.repo.delete_error_log(error_id)
+
+    @catch_errors
+    def get_all_error_logs(self, sort_order: str = "DESC") -> List[ErrorLog]:
+        """
+        Retrieves all error log entries sorted by the error time.
+        
+        Parameters:
+            sort_order (str): "ASC" for ascending or "DESC" for descending order. Default is "DESC".
+            
+        Returns:
+            List[ErrorLog]: A list of error log records.
+        """
+        return self.repo.get_all_error_logs(sort_order)

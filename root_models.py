@@ -58,3 +58,11 @@ class ShoppingListItem:
     is_purchased: bool
     created_at: datetime
     updated_at: datetime
+
+@dataclass
+class ErrorLog:
+    id: int
+    error_message: str
+    error_time: datetime
+    traceback: Optional[str] = field(default=None)
+    func_name: Optional[str] = field(default=None)

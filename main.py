@@ -6,6 +6,7 @@ import logging
 from PySide6.QtWidgets import QApplication, QMessageBox
 from views_main_window import MainWindow
 
+
 # Set up logging to a file (for example, error.log)
 logging.basicConfig(
     filename="utils/error.log",
