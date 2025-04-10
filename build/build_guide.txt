@@ -22,7 +22,7 @@ Installing WSL (if missing):
 
 Disclaimer:
 -----------
-Steps 1–5 (updating packages, installing Git, cloning the repository, and running the setup script) can be completed by running the following one-liner command in your Debian terminal:
+Steps 1–5 can be completed by running the following one-liner command in your Debian terminal:
       cd && sudo apt update && sudo apt upgrade -y && sudo apt install git -y && git clone https://github.com/jannesii/Cook-n-Cart && cd Cook-n-Cart/ && ./build/setup-pyside6-android.sh && source .venv/bin/activate
 After executing this command, proceed to Step 6 for building the APK.
 
