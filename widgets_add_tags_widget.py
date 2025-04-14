@@ -129,6 +129,11 @@ class AddTagsWidget(QWidget):
             self.main_page.setLayout(self._select_tags_layout())
             self.stacked.addWidget(self.main_page)
         self.stacked.setCurrentWidget(self.main_page)
+        
+        if self.add_tag_page:
+            self.stacked.removeWidget(self.add_tag_page)
+            self.add_tag_page.deleteLater()
+            self.add_tag_page = None
 
     @catch_errors_ui
     def _show_add_tag_page(self):
