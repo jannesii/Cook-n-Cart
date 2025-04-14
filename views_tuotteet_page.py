@@ -143,6 +143,7 @@ class TuotteetPage(QWidget):
         
     @catch_errors_ui
     def on_product_added(self, product):
+        show_error_toast(self, "Tuote luotu onnistuneesti.", pos="top", background_color="green", text_color="black")
         self.update_products_dict()
         self.populate_product_list()
         self.back_to_list()

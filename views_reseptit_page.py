@@ -14,7 +14,7 @@ from root_controllers import RecipeController as RC
 from widgets_add_recipe_widget import AddRecipeWidget
 from widgets_recipe_detail_widget import RecipeDetailWidget
 from qml import MainSearchTextField, ScrollViewWidget
-from error_handler import catch_errors_ui
+from error_handler import catch_errors_ui, show_error_toast
 
 TURKOOSI = "#00B0F0"
 HARMAA = "#808080"
@@ -219,10 +219,12 @@ class ReseptitPage(QWidget):
 
     @catch_errors_ui
     def on_recipe_added(self, recipe):
+        show_error_toast(self, "Resepti luotu onnistuneesti.", pos="top", background_color="green", text_color="black")
         self.back_to_list()
 
     @catch_errors_ui
     def on_recipe_updated(self, recipe):
+        show_error_toast(self, "Resepti päivitetty onnistuneesti.", pos="top", background_color="green", text_color="black")
         self.back_to_list()
 
     @catch_errors_ui

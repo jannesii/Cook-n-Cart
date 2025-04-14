@@ -10,7 +10,7 @@ from root_controllers import ProductController, ShoppingListController, RecipeCo
 from root_models import Product
 from widgets_product_form_widget import ProductFormWidget
 
-from error_handler import catch_errors_ui
+from error_handler import catch_errors_ui, show_error_toast
 
 
 class ProductDetailWidget(QWidget):
@@ -110,6 +110,7 @@ class ProductDetailWidget(QWidget):
     @catch_errors_ui
     def _on_product_updated(self, updated_product):
         """Called when the product is updated via the edit widget."""
+        show_error_toast(self, "Tuote päivitetty onnistuneesti.", pos="top", background_color="green", text_color="black")
         self.set_product(updated_product)
         # Switch back to the detail view.
         self.stacked.setCurrentWidget(self.detail_view)
