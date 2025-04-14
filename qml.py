@@ -1075,6 +1075,7 @@ class ProductSelectorWidgetPage2(QWidget):
                                     tagListView.model.setProperty(delegateIndex, "qty", parseInt(text) || 1)
                                 }
                             }
+                            /*
                             Text {
                                 id: tagUnitLabel
                                 text: unit       // using the unit role directly
@@ -1083,7 +1084,7 @@ class ProductSelectorWidgetPage2(QWidget):
                                 color: "black"
                                 verticalAlignment: Text.AlignVCenter
                             }
-
+                            */
                             ComboBox {
                                 id: unitCombo
                                 // Use a property alias to fall back to "kpl" if unit is empty
