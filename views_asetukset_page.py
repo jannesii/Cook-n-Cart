@@ -1,18 +1,17 @@
 # asetukset_page.py
 
-import sys
-import json
-import functools
-import logging
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout,
-    QLabel, QComboBox, QFrame, QMessageBox
+    QLabel, QFrame, QPushButton, QStackedWidget
 )
+from PySide6.QtCore import Qt
 
 from root_controllers import ProductController as PC
 from root_controllers import ShoppingListController as SLC
 from root_controllers import RecipeController as RC
+from root_controllers import ErrorController
 from error_handler import catch_errors_ui, catch_errors
+from qml import ScrollableLabel
 
 TURKOOSI = "#00B0F0"
 HARMAA = "#808080"
@@ -28,133 +27,106 @@ class AsetuksetPage(QWidget):
     """
     Asetukset-sivu:
       - Yläpalkki: "Asetukset" -otsikko
-      - Keskialue: 3 "nappiriviä" (tai kehyksiä), joihin on sijoitettu Label + ComboBox:
-          1) "Valuutta" - '€'
-          2) "Painon yksikkö" - 'kg'
-          3) "Nestemäärän yksikkö" - 'l'
+      - Keskialue: Käyttää QStackedWidget:iä mahdollistamaan
+        useiden widget-sivujen lisäämisen, esimerkkinä ensimmäinen sivu sisältää
+        "Lue virheloki" -napin.
     """
 
     def __init__(self, parent=None):
         super().__init__(parent)
 
+        self.error_controller = ErrorController()
+
+        self.error_log = None
+        self.update_error_log()  # Now references the class method
+
+        # Main layout for the page.
         main_layout = QVBoxLayout(self)
+        self.error_log_page = None
 
         # -- Yläpalkki --
         top_bar_layout = QHBoxLayout()
         label = QLabel("Asetukset")
         label.setObjectName("top_bar_title_label")
+        self.back_button = QPushButton("Takaisin")
+        self.back_button.setObjectName("top_bar_new_button")
+        self.back_button.clicked.connect(self.display_main_page)
+
         top_bar_layout.addWidget(label)
         top_bar_layout.addStretch()
+        top_bar_layout.addWidget(self.back_button)
 
         top_bar_frame = QFrame()
         top_bar_frame.setLayout(top_bar_layout)
         top_bar_frame.setObjectName("top_bar_frame")
-
+        top_bar_frame.setFixedHeight(50)
         main_layout.addWidget(top_bar_frame, 0)
 
-        # --- Helper Functions with Error Handling ---
-        @catch_errors
-        def load_settings():
-            """Lataa asetukset config.json-tiedostosta."""
-            # NOTE: The following default is returned immediately.
-            # You may want to remove the default return and actually load from file.
-            try:
-                with open(CONFIG_FILE, "r", encoding="utf-8") as file:
-                    return json.load(file).get("settings", {"currency": "€", "weight_unit": "kg", "volume_unit": "l"})
-            except (FileNotFoundError, json.JSONDecodeError):
-                return {"currency": "€", "weight_unit": "kg", "volume_unit": "l"}
+        # -- Keskialue: Stacked Widget Setup --
+        self.stacked_widget = QStackedWidget()
 
-        @catch_errors_ui
-        def save_settings():
-            """Tallentaa asetukset config.json-tiedostoon."""
-            settings = {
-                "settings": {
-                    "currency": self.currency_combo.currentText(),
-                    "weight_unit": self.weight_combo.currentText(),
-                    "volume_unit": self.volume_combo.currentText()
-                }
-            }
-            with open(CONFIG_FILE, "w", encoding="utf-8") as file:
-                json.dump(settings, file, indent=4)
+        # Create the initial page with the "Lue virheloki" button.
+        self.initial_page = QWidget()
+        initial_layout = QVBoxLayout(self.initial_page)
+        read_error_log_button = QPushButton("Lue virheloki")
+        read_error_log_button.setObjectName("main_list_button")
+        read_error_log_button.clicked.connect(self.display_error_log)
+        initial_layout.addWidget(read_error_log_button)
+        initial_layout.addStretch()  # Adds spacing if desired.
 
-        self.settings = load_settings()
+        self.stacked_widget.addWidget(self.initial_page)
+        main_layout.addWidget(self.stacked_widget, 1)
+        self.display_main_page()
 
-        # --- Currency Row ---
-        currency_frame = QFrame()
-        currency_frame.setObjectName("asetukset_frame")
-        currency_layout = QHBoxLayout(currency_frame)
+    @catch_errors_ui
+    def update_error_log(self):
+        """
+        Update the instance's error_log attribute by retrieving error logs as a single string.
+        """
+        self.error_log = self.error_controller.get_all_error_logs_as_one_string(
+            sort_order="ASC")
 
-        currency_label = QLabel("Valuutta")
-        currency_label.setObjectName("asetukset_label")
+    @catch_errors_ui
+    def init_error_log(self):
+        """
+        Initialize a layout containing a scrollable error log label.
+        """
+        layout = QVBoxLayout()
+        error_log_label = ScrollableLabel(
+            parent=self, placeholder_text="Ei virhelokiviestejä.")
 
-        self.currency_combo = QComboBox()
-        self.currency_combo.addItems(["€"])
-        self.currency_combo.setObjectName("asetukset_combobox")
-        self.currency_combo.setCurrentText(self.settings.get("currency", "€"))
-        self.currency_combo.currentTextChanged.connect(save_settings)
+        self.update_error_log()
+        error_log_label.set_text(self.error_log)
 
-        currency_layout.addWidget(currency_label)
-        currency_layout.addStretch()
-        currency_layout.addWidget(self.currency_combo)
+        layout.addWidget(error_log_label)
 
-        # --- Weight Unit Row ---
-        weight_frame = QFrame()
-        weight_frame.setObjectName("asetukset_frame")
-        weight_layout = QHBoxLayout(weight_frame)
+        return layout
 
-        weight_label = QLabel("Painon yksikkö")
-        weight_label.setObjectName("asetukset_label")
+    @catch_errors_ui
+    def display_error_log(self):
+        """
+        Display the error log in the stacked widget.
+        """
+        self.window().hide_buttons()
 
-        self.weight_combo = QComboBox()
-        self.weight_combo.addItems(["kg"])
-        self.weight_combo.setObjectName("asetukset_combobox")
-        self.weight_combo.setCurrentText(
-            self.settings.get("weight_unit", "kg"))
+        self.error_log_page = QWidget()
+        self.back_button.show()
+        self.error_log_page.setLayout(self.init_error_log())
 
-        @catch_errors_ui
-        def update_weight_unit():
-            save_settings()
-            new_unit = self.weight_combo.currentText()
-            ProductController.update_weight_unit(new_unit)
-            ShoppingListController.update_weight_unit(new_unit)
+        self.stacked_widget.addWidget(self.error_log_page)
+        self.stacked_widget.setCurrentWidget(self.error_log_page)
 
-        self.weight_combo.currentTextChanged.connect(update_weight_unit)
+    @catch_errors_ui
+    def display_main_page(self):
+        """
+        Return to the main page of the application.
+        """
+        self.window().show_buttons()
 
-        weight_layout.addWidget(weight_label)
-        weight_layout.addStretch()
-        weight_layout.addWidget(self.weight_combo)
+        self.back_button.hide()
+        self.stacked_widget.setCurrentWidget(self.initial_page)
 
-        # --- Volume Unit Row ---
-        volume_frame = QFrame()
-        volume_frame.setObjectName("asetukset_frame")
-        volume_layout = QHBoxLayout(volume_frame)
-
-        volume_label = QLabel("Nestemäärän yksikkö")
-        volume_label.setObjectName("asetukset_label")
-
-        self.volume_combo = QComboBox()
-        self.volume_combo.addItems(["l"])
-        self.volume_combo.setObjectName("asetukset_combobox")
-        self.volume_combo.setCurrentText(self.settings.get("volume_unit", "l"))
-
-        @catch_errors_ui
-        def update_volume_unit():
-            save_settings()
-            new_unit = self.volume_combo.currentText()
-            ProductController.update_volume_unit(new_unit)
-            ShoppingListController.update_volume_unit(new_unit)
-
-        self.volume_combo.currentTextChanged.connect(update_volume_unit)
-
-        volume_layout.addWidget(volume_label)
-        volume_layout.addStretch()
-        volume_layout.addWidget(self.volume_combo)
-
-        # --- Combine Rows ---
-        content_layout = QVBoxLayout()
-        content_layout.addWidget(currency_frame)
-        content_layout.addWidget(weight_frame)
-        content_layout.addWidget(volume_frame)  # Lisää nesteyksikkö
-        content_layout.addStretch()
-
-        main_layout.addLayout(content_layout, 1)
+        if self.error_log_page is not None:
+            self.stacked_widget.removeWidget(self.error_log_page)
+            self.error_log_page.deleteLater()
+            self.error_log_page = None

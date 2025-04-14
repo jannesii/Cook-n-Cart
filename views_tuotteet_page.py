@@ -32,7 +32,6 @@ class TuotteetPage(QWidget):
     @catch_errors_ui
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.parent = parent
         self.product_controller = PC()
 
         self.products_dict = {}
@@ -139,7 +138,7 @@ class TuotteetPage(QWidget):
             self.page_add_form.canceled.connect(self.back_to_list)
             self.page_add_form.finished.connect(self.on_product_added)
         self.stacked.setCurrentWidget(self.page_add_form)
-        self.parent.hide_buttons()
+        self.window().hide_buttons()
         
     @catch_errors_ui
     def on_product_added(self, product):
@@ -158,7 +157,7 @@ class TuotteetPage(QWidget):
         self.page_detail.remove_btn.clicked.connect(
             lambda checked: self.remove_product(product))
         self.stacked.setCurrentWidget(self.page_detail)
-        self.parent.hide_buttons()
+        self.window().hide_buttons()
 
     @catch_errors_ui
     def back_to_list(self):
@@ -168,7 +167,7 @@ class TuotteetPage(QWidget):
         self.page_list.setLayout(self._create_list_layout())
         self.stacked.addWidget(self.page_list)
         self.stacked.setCurrentWidget(self.page_list)
-        self.parent.show_buttons()
+        self.window().show_buttons()
 
     @catch_errors_ui
     def rm_page_add(self):

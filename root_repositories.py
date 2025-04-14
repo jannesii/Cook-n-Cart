@@ -461,21 +461,53 @@ class ErrorRepository:
         Returns:
             List[ErrorLog]: A list of ErrorLog objects.
         """
-        # Validate and set the sort order
+        # Validate and set the sort order.
         order = "ASC" if sort_order.upper() == "ASC" else "DESC"
         query = f"SELECT * FROM error_logs ORDER BY error_time {order}"
         rows = self.db.fetchall(query)
         error_logs: List[ErrorLog] = []
 
         for row in rows:
-            # Create an ErrorLog instance from each row.
+            # Directly access the row items using keys.
             error_log = ErrorLog(
                 id=row["id"],
                 error_message=row["error_message"],
                 error_time=row["error_time"],
-                # Using .get() in case these fields are null.
-                traceback=row.get("traceback"),
-                func_name=row.get("func_name")
+                traceback=row["traceback"],  # Returns None if the field is NULL.
+                func_name=row["func_name"]     # Returns None if the field is NULL.
             )
             error_logs.append(error_log)
         return error_logs
+
+    @catch_errors
+    def get_error_logs_as_string(self, sort_order: str = "DESC") -> str:
+        """
+        Retrieves all error logs from the database and returns a single formatted string 
+        with a clear separation between each error log.
+
+        Parameters:
+            sort_order (str): Sort order by 'ASC' or 'DESC'. Default is "DESC".
+
+        Returns:
+            str: A formatted string containing all error logs.
+        """
+        error_logs = self.get_all_error_logs(sort_order)
+        if not error_logs:
+            return "No error logs found."
+
+        log_strings = []
+        for log in error_logs:
+            # Build a formatted string for each error log using direct attributes.
+            log_str = (
+                f"Error ID: {log.id}\n"
+                f"Time: {log.error_time}\n"
+                f"Function: {log.func_name if log.func_name else 'N/A'}\n"
+                f"Message: {log.error_message}\n"
+                f"Traceback: {log.traceback if log.traceback else 'None'}\n"
+            )
+            log_strings.append(log_str)
+        
+        # Define a clear separation line between logs.
+        separator = "\n" + "-" * 50 + "\n"
+        # Join all error log strings using the separator.
+        return separator.join(log_strings)

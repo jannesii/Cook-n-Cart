@@ -411,3 +411,17 @@ class ErrorController:
             List[ErrorLog]: A list of error log records.
         """
         return self.repo.get_all_error_logs(sort_order)
+    
+    @catch_errors
+    def get_all_error_logs_as_one_string(self, sort_order: str = "DESC") -> str:
+        """
+        Retrieves all error logs from the database and returns a single formatted string 
+        with a clear separation between each error log.
+        
+        Parameters:
+            sort_order (str): Sort order by 'ASC' or 'DESC'. Default is "DESC".
+
+        Returns:
+            str: A formatted string containing all error logs.
+        """
+        return self.repo.get_error_logs_as_string(sort_order)

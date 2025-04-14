@@ -29,7 +29,6 @@ class OstolistatPage(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.parent = parent
         self.shoplist_controller = ShoppingListController()
         self.product_controller = ProductController()
         self.shopping_lists = {}
@@ -128,7 +127,7 @@ class OstolistatPage(QWidget):
         self.page_add_shoplist.cancel_btn.clicked.connect(self.back_to_list)
         self.stacked.addWidget(self.page_add_shoplist)
         self.stacked.setCurrentWidget(self.page_add_shoplist)
-        self.parent.hide_buttons()
+        self.window().hide_buttons()
 
     @catch_errors_ui
     def display_shoplist_detail(self, shoplist_id):
@@ -140,7 +139,7 @@ class OstolistatPage(QWidget):
         self.page_detail.finished.connect(self.back_to_list)
         self.stacked.addWidget(self.page_detail)
         self.stacked.setCurrentWidget(self.page_detail)
-        self.parent.hide_buttons()
+        self.window().hide_buttons()
 
     @catch_errors_ui
     def back_to_list(self):
@@ -149,7 +148,7 @@ class OstolistatPage(QWidget):
         self.update_shopping_lists()
         self.populate_shopping_list()
         self.stacked.setCurrentWidget(self.page_list)
-        self.parent.show_buttons()
+        self.window().show_buttons()
 
     @catch_errors_ui
     def on_shoplist_created(self, shoplist_id):

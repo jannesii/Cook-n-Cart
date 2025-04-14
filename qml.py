@@ -1432,3 +1432,79 @@ class ShoplistWidget(QWidget):
         else:
             print("Root object not found.")
             raise RuntimeError("Root object not found.")
+
+
+class ScrollableLabel(QWidget):
+    @catch_errors
+    def __init__(self, label_id="scrollableLabel", placeholder_text="No text set", parent=None, width=300, height=300):
+        super().__init__(parent)
+        self.label_id = label_id
+
+        layout = QVBoxLayout(self)
+        self.quick_widget = QQuickWidget()
+        self.quick_widget.setResizeMode(QQuickWidget.SizeRootObjectToView)
+        layout.addWidget(self.quick_widget)
+        self.setLayout(layout)
+
+        # Revised QML:
+        # The TextArea is placed inside a ScrollView.
+        # We set the ScrollView to fill the Rectangle.
+        # The TextArea sets its width to parent.width instead of anchoring completely.
+        qml_code = f'''
+        import QtQuick 2.15
+        import QtQuick.Controls 2.15
+
+        Rectangle {{
+            id: root
+            width: {width}
+            height: {height}
+            color: "transparent"
+            radius: 3
+            border.width: 1
+            border.color: "gray"
+
+            ScrollView {{
+                anchors.fill: parent
+
+                TextArea {{
+                    id: {self.label_id}
+                    objectName: "{self.label_id}"  // Enables findChild() by this name
+                    width: parent.width
+                    font.pixelSize: 16
+                    text: "{placeholder_text}"
+                    wrapMode: TextArea.Wrap  // Enable word wrapping
+                    readOnly: true         // Prevent editing while allowing selection and copy
+                    selectByMouse: true    // Allows text selection (works with touch on phones)
+                    background: Rectangle {{ color: "transparent" }}  // Custom background if desired
+                }}
+            }}
+        }}
+        '''
+        component = QQmlComponent(self.quick_widget.engine())
+        component.setData(qml_code.encode('utf-8'), QUrl())
+        if component.status() != QQmlComponent.Status.Ready:
+            for error in component.errors():
+                print("QML Error:", error.toString())
+        item = component.create()
+        self.quick_widget.setContent(QUrl(), component, item)
+
+    @catch_errors
+    def get_text(self):
+        # Retrieve the QML root object and then the TextArea.
+        root_obj = self.quick_widget.rootObject()
+        if root_obj is not None:
+            text_area = root_obj.findChild(QObject, self.label_id)
+            if text_area is not None:
+                return text_area.property("text")
+        return ""
+
+    @catch_errors
+    def set_text(self, text: str):
+        """
+        Update the text in the read-only scrollable label.
+        """
+        root_obj = self.quick_widget.rootObject()
+        if root_obj is not None:
+            text_area = root_obj.findChild(QObject, self.label_id)
+            if text_area is not None:
+                text_area.setProperty("text", text)
