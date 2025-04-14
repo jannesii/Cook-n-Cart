@@ -211,12 +211,14 @@ class ProductFormWidget(QWidget):
             missing_fields.append("Name")
             show_error_toast(self, "Nimi ei voi olla tyhjä!", pos="top")
             return
-        if unit == "Valitse yksikkö":
+        
+        if unit == "Valitse yksikkö" or unit == "Kappaletavara (€/kpl)":
             unit = "kpl"
         elif unit == "Painoperusteinen (€/kg)":
             unit = "kg"
-        elif unit == "Tilavuusperusteinen (€/L)":
+        elif unit == "Tilavuusperusteinen (€/l)":
             unit = "l"
+            
         if not price_str:
             price_str = "0.0"
         if cat == "Valitse kategoria":
@@ -252,8 +254,14 @@ class ProductFormWidget(QWidget):
             missing_fields.append("Name")
             show_error_toast(self, "Nimi ei voi olla tyhjä!", pos="top")
             return
-        if unit == "Valitse yksikkö":
+        
+        if unit == "Valitse yksikkö" or unit == "Kappaletavara (€/kpl)":
             unit = "kpl"
+        elif unit == "Painoperusteinen (€/kg)":
+            unit = "kg"
+        elif unit == "Tilavuusperusteinen (€/l)":
+            unit = "l"
+            
         if not price_str:
             price_str = "0.0"
         if cat == "Valitse kategoria":
