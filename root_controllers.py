@@ -274,6 +274,18 @@ class ShoppingListController:
     @catch_errors
     def get_items_by_shopping_list_id(self, shoplist_id):
         return self.repo.get_items_by_shopping_list_id(shoplist_id)
+    
+    @catch_errors
+    def get_product_id_by_shopping_list_item_id(self, shopping_list_item_id: int) -> int:
+        """
+        Retrieves the product id for the shopping list item with the given id.
+        This method expects that your repository provides a method to fetch a single
+        shopping list item by its id (e.g., get_shopping_list_item_by_id).
+        """
+        item = self.repo.get_shopping_list_item_by_id(shopping_list_item_id)
+        if not item:
+            raise ValueError(f"Shopping list item with id {shopping_list_item_id} not found.")
+        return item.product_id
 
 
 class ProductController:
@@ -344,7 +356,7 @@ class ProductController:
         return self.repo.add_product(product)
 
     @catch_errors
-    def update_product(self, product_id: int, name: str = None, price_per_unit: float = None, category: str = None):
+    def update_product(self, product_id: int, name: str = None, price_per_unit: float = None, category: str = None, unit: str = None):
         product = self.repo.get_product_by_id(product_id)
         if not product:
             raise ValueError("Product not found")
@@ -354,6 +366,8 @@ class ProductController:
             product.price_per_unit = price_per_unit
         if category:
             product.category = category
+        if unit:
+            product.unit = unit
         self.repo.update_product(product_id, product)
         return product
 

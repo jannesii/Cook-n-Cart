@@ -35,12 +35,11 @@ class ShoplistDetailWidget(QWidget):
         super().__init__(parent)
         self.parent = parent
         self.shoplist_controller = SLC()
+        self.pc = PC()
         self.shoppinglist = None  # Current shopping list
         self.layout = QVBoxLayout(self)
         self.stacked_widget = QStackedWidget()
         self.layout.addWidget(self.stacked_widget)
-
-        self.pc = PC()
 
         # Page 0: Detail view
         self.detail_page = QWidget()
@@ -124,12 +123,33 @@ class ShoplistDetailWidget(QWidget):
         for item in shopping_list_items:
             product = self.pc.get_all_products().get(item.product_id)
             if product:
-                total_price = product.price_per_unit * item.quantity
+                # Determine product_price based on the unit
+                if product.unit == "kpl":
+                    product_price = product.price_per_unit * item.quantity
+                elif product.unit == "kg":
+                    product_price = product.price_per_unit * item.quantity
+                elif product.unit == "g":
+                    product_price = product.price_per_unit * \
+                        (item.quantity / 1000.0)
+                elif product.unit == "mg":
+                    product_price = product.price_per_unit * \
+                        (item.quantity / 1000000.0)
+                elif product.unit == "l":
+                    product_price = product.price_per_unit * item.quantity
+                elif product.unit == "dl":
+                    product_price = product.price_per_unit * \
+                        (item.quantity / 10.0)
+                elif product.unit == "ml":
+                    product_price = product.price_per_unit * \
+                        (item.quantity / 1000.0)
+                else:
+                    product_price = 0  # Or handle unknown units appropriately
+
                 if not item.is_purchased:
-                    total_cost += total_price
+                    total_cost += product_price
                 checked = True if item.is_purchased == 1 else False
                 self.add_tag(text=product.name, checked=checked, id=item.id,
-                             quantity=item.quantity, unit=product.unit, price=total_price)
+                             quantity=item.quantity, unit=product.unit, price=product_price)
         self._update_total_cost_label(total_cost)
 
     @catch_errors_ui
@@ -261,6 +281,11 @@ class ShoplistDetailWidget(QWidget):
         for product_data in selected_products:
             product_id = product_data["id"]
             quantity = product_data.get("quantity", 1)
+            unit = product_data.get("unit")
+
+            if unit is not None:
+                self.pc.update_product(product_id=product_id, unit=unit)
+
             if product_id in existing_items_dict:
                 existing_item = existing_items_dict[product_id]
                 if existing_item.quantity != quantity:
@@ -299,14 +324,15 @@ class ShoplistDetailWidget(QWidget):
     def _delete_shoplist(self):
         if not self.shoppinglist:
             return
-        
-        confirm = ask_confirmation(self, pos="mid", yes_text="Poista", no_text="Peruuta")
+
+        confirm = ask_confirmation(
+            self, pos="mid", yes_text="Poista", no_text="Peruuta")
         if confirm:
             self.shoplist_controller.delete_shopping_list_by_id(
                 self.shoppinglist.id)
-            show_error_toast(self.parent, "Ostoslista poistettu onnistuneesti.", pos="top", background_color="green", text_color="black")
+            show_error_toast(self.parent, "Ostoslista poistettu onnistuneesti.",
+                             pos="top", background_color="green", text_color="black")
             self.finished.emit()
-
 
     @catch_errors_ui
     def _go_back(self):

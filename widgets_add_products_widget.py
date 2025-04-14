@@ -166,6 +166,8 @@ class AddProductsWidget(QWidget):
                 "quantity": quantity,
                 "unit": product["unit"],
             })
+            print(f"Product ID: {product['id']}, Quantity: {quantity}, Unit: {product['unit']}")
+            
         self.finished.emit(new_selection)
         self.clearMemory()
 

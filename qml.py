@@ -1033,7 +1033,7 @@ class ProductSelectorWidgetPage2(QWidget):
                 anchors.fill: parent
                 spacing: 10
                 model: tagModel
-                
+
                 delegate: Rectangle {
                     id: delegateRect
                     property int delegateIndex: index  // capture the model index at creation time
@@ -1053,7 +1053,7 @@ class ProductSelectorWidgetPage2(QWidget):
                         Row {
                             Text {
                                 id: tagLabel
-                                text: model.text
+                                text: model.text       // direct role access
                                 font.pixelSize: 16
                                 font.bold: true
                                 color: "black"
@@ -1067,44 +1067,38 @@ class ProductSelectorWidgetPage2(QWidget):
 
                             TextField {
                                 id: qtyField
-                                text: model.qty.toString()
+                                text: qty.toString()  // using the qty role directly
                                 width: 40
                                 height: 30
                                 inputMethodHints: Qt.ImhDigitsOnly
                                 onEditingFinished: {
-                                    // Update the model via setProperty to ensure proper ListModel update.
                                     tagListView.model.setProperty(delegateIndex, "qty", parseInt(text) || 1)
                                 }
                             }
                             Text {
                                 id: tagUnitLabel
-                                text: model.unit
+                                text: unit       // using the unit role directly
                                 font.pixelSize: 16
                                 font.bold: false
                                 color: "black"
                                 verticalAlignment: Text.AlignVCenter
                             }
 
-                            /*ComboBox {
+                            ComboBox {
                                 id: unitCombo
-                                model: ["kpl", "kg", "l"]
-
-                                Timer {
-                                    interval: 0   // triggers as soon as possible after construction
-                                    running: true
-                                    repeat: false
-                                    onTriggered: {
-                                        unitCombo.currentIndex = model.unit === "kpl" ? 0 :
-                                                                (model.unit === "kg" ? 1 :
-                                                                (model.unit === "l" ? 2 : 0))
-                                    }
+                                // Use a property alias to fall back to "kpl" if unit is empty
+                                property string initialUnit: unit !== "" ? unit : "kpl"
+                                model: root.getUnitOptions(initialUnit)
+                                Component.onCompleted: {
+                                    var options = root.getUnitOptions(initialUnit)
+                                    var idx = options.indexOf(initialUnit)
+                                    currentIndex = idx >= 0 ? idx : 0
                                 }
-
-                                onActivated: function(activatedIndex) {
+                                onActivated: {
                                     tagListView.model.setProperty(delegateIndex, "unit", currentText)
                                     console.log("Updated unit for delegate index", delegateIndex, "to", currentText)
                                 }
-                            }*/
+                            }
                         }
                     }
                 }
@@ -1115,27 +1109,53 @@ class ProductSelectorWidgetPage2(QWidget):
             }
 
             // Helper function to add a tag into the model.
-            // The id defaults to the text value if not provided.
+            // If no valid unit is provided, defaults to "kpl".
             function addTag(name, id, qty, unit) {
-                tagModel.append({"text": name, "id": id, "qty": qty, "unit": unit});
+                tagModel.append({
+                    "text": name,
+                    "id": id,
+                    "qty": qty,
+                    "unit": unit && unit !== "" ? unit : "kpl"
+                });
             }
 
             // Helper function to clear all tags from the model.
             function clearTags() {
-                while(tagModel.count > 0) {
+                while (tagModel.count > 0) {
                     tagModel.remove(0);
                 }
             }
 
-            // Helper function to return an array of selected tag IDs.
+            // Function to return an array of selected tag objects,
+            // which now reflects the unit currently selected in the ComboBox.
             function getSelectedTags() {
                 var result = [];
-                for(var i = 0; i < tagModel.count; i++) {
+                for (var i = 0; i < tagModel.count; i++) {
                     var item = tagModel.get(i);
-                    
-                    result.push({"id": item.id, "qty": item.qty, "unit": item.unit, "name": item.text});
+                    result.push({
+                        "id": item.id,
+                        "qty": item.qty,
+                        "unit": item.unit,
+                        "name": item.text
+                    });
                 }
                 return result;
+            }
+
+            // Function that returns a list of unit options based on the provided unit.
+            function getUnitOptions(unit) {
+                if (!unit || unit === "") {
+                    return ["kpl"];
+                }
+                if (unit === "kg" || unit === "g" || unit === "mg") {
+                    return ["kg", "g", "mg"];
+                } else if (unit === "l" || unit === "dl" || unit === "ml") {
+                    return ["l", "dl", "ml"];
+                } else if (unit === "kpl") {
+                    return ["kpl", "l", "dl", "ml", "kg", "g", "mg"];
+                }
+                // Fallback: return the unit itself.
+                return [unit];
             }
         }
         '''

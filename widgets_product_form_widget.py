@@ -134,10 +134,10 @@ class ProductFormWidget(QWidget):
     @catch_errors_ui
     def finish(self):
         """Handle finish action."""
-        if not self.edit_mode:
-            self._save_new_product()
-        else:
+        if self.edit_mode:
             self._finish_edit()
+        else:
+            self._save_new_product()
 
     @catch_errors_ui
     def _populate_fields(self):
@@ -190,7 +190,7 @@ class ProductFormWidget(QWidget):
     def _create_unit_selector_layout(self):
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignCenter)
-        units = ["kpl", "mg", "g", "kg", "ml", "dl", "l"]
+        units = ["Kappaletavara (€/kpl)", "Painoperusteinen (€/kg)", "Tilavuusperusteinen (€/l)",]
         for unit in units:
             button = QPushButton(unit)
             button.setFixedWidth(int(self.width() * 0.8))
@@ -213,6 +213,10 @@ class ProductFormWidget(QWidget):
             return
         if unit == "Valitse yksikkö":
             unit = "kpl"
+        elif unit == "Painoperusteinen (€/kg)":
+            unit = "kg"
+        elif unit == "Tilavuusperusteinen (€/L)":
+            unit = "l"
         if not price_str:
             price_str = "0.0"
         if cat == "Valitse kategoria":
