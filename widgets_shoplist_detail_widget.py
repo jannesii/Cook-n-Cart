@@ -59,13 +59,19 @@ class ShoplistDetailWidget(QWidget):
     @catch_errors_ui
     def _create_detail_layout(self):
         layout = QVBoxLayout()
-        # Title for the shopping list
-        self.shoplist_label = QLabel("Shopping List Details")
-        self.shoplist_label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(self.shoplist_label)
-
         # List of products already in the shopping list
         self.product_list = ShoplistWidget(parent=self)
+        # Title for the shopping list
+        self.top_bar_layout = QHBoxLayout()
+        self.shoplist_label = QLabel("Shopping List Details")
+        self.set_all_checked_button = QPushButton("Merkitse kaikki ostetuksi")
+        self.set_all_checked_button.clicked.connect(self.product_list.set_all_checked)
+        
+        self.top_bar_layout.addWidget(self.shoplist_label)
+        self.top_bar_layout.addStretch()
+        self.top_bar_layout.addWidget(self.set_all_checked_button)
+        layout.addLayout(self.top_bar_layout)
+
         # Connect itemClicked signal so that toggling the checkbox updates the purchase status.
         self.product_list.connect_item_clicked(self._on_item_clicked)
         layout.addWidget(self.product_list)

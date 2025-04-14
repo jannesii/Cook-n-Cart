@@ -1379,9 +1379,15 @@ class ShoplistWidget(QWidget):
                 }
                 return total;
             }
+            
+            function setAllChecked() {
+                for (var i = 0; i < tagModel.count; i++) {
+                    tagModel.setProperty(i, "checked", true);
+                }
+                // Optionally, reorder the items if needed.
+                reorderSelected();
+            }
         }
-
-
         '''
 
         component = QQmlComponent(self.quick_widget.engine())
@@ -1439,6 +1445,20 @@ class ShoplistWidget(QWidget):
         else:
             print("Root object not found.")
         return []
+    
+    @catch_errors
+    def set_all_checked(self):
+        """
+        Sets all tag items in the QML ListModel to the checked state.
+        """
+        root_obj = self.get_root_object()
+        if root_obj is not None:
+            try:
+                root_obj.setAllChecked()
+            except Exception as e:
+                print("Error calling setAllChecked:", e)
+        else:
+            print("Root object not found.")
 
     @catch_errors
     def connect_item_clicked(self, slot):
