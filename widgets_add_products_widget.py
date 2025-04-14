@@ -100,17 +100,26 @@ class AddProductsWidget(QWidget):
         button_layout = QHBoxLayout()
         self.finish_button = QPushButton("Valmis")
         button_layout.addWidget(self.finish_button)
-        self.cancel_button = QPushButton("Peruuta")
-        self.cancel_button.setObjectName("gray_button")
-        button_layout.addWidget(self.cancel_button)
+        self.back_button = QPushButton("Takaisin")
+        self.back_button.setObjectName("gray_button")
+        button_layout.addWidget(self.back_button)
         layout.addLayout(button_layout)
 
         self.finish_button.clicked.connect(self.handle_finish)
-        self.cancel_button.clicked.connect(self.handle_cancel)
+        self.back_button.clicked.connect(self.handle_back)
 
         # Initially populate the list.
         self.populate_product_list2(self.scroll_area2, products)
         return layout
+    
+    @catch_errors_ui
+    def handle_back(self):
+        """
+        Handle the back button click event.
+        """
+        print("Back button clicked")
+        self.stacked.setCurrentIndex(0)
+        self.clearMemory(rem_page1=False)
 
     @catch_errors_ui
     def handle_cancel(self):
@@ -216,7 +225,7 @@ class AddProductsWidget(QWidget):
             root_obj.clearTags()
             for p in products:
                 product = self.product_controller.get_product_by_id(p["id"])
-                root_obj.addTag(product.name, p["id"], p["qty"], product.unit)
+                root_obj.addTag(product.name, p["id"], p["quantity"], product.unit)
 
     @catch_errors_ui
     def filter_products(self, newText):
@@ -236,16 +245,16 @@ class AddProductsWidget(QWidget):
         print(f"Product clicked: {product_id}")
 
     @catch_errors_ui
-    def clearMemory(self):
+    def clearMemory(self, rem_page1=True, rem_page2=True):
         """
         Clear the memory of the widget.
         """
-        if self.page1:
+        if self.page1 and rem_page1:
             print("Removing add_products page1")
             self.stacked.removeWidget(self.page1)
             self.page1.deleteLater()
             self.page1 = None
-        if self.page2:
+        if self.page2 and rem_page2:
             print("Removing add_products page2")
             self.stacked.removeWidget(self.page2)
             self.page2.deleteLater()

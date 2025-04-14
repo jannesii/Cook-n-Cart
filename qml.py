@@ -942,7 +942,7 @@ class ProductSelectorWidgetPage1(QWidget):
                 for (var i = 0; i < tagModel.count; i++) {
                     var item = tagModel.get(i);
                     if (item.checked)
-                        result.push({"id": item.id, "qty": item.qty, "unit": item.unit});
+                        result.push({"id": item.id, "quantity": item.qty, "unit": item.unit});
                 }
                 return result;
             }

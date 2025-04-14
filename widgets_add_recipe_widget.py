@@ -94,21 +94,30 @@ class AddRecipeWidget(QWidget):
         layout.addWidget(self.instructions_edit)
 
         # 3) Tags selection: show current tags and a button to edit them.
-        tags_label = QLabel("Tagit:")
         self.tags_display_label = QLabel()
         if self.selected_tags:
-            self.tags_display_label.setText(", ".join(self.selected_tags))
+            self.tags_display_label.setText(f"Tagit: {', '.join(self.selected_tags)}")
         else:
             self.tags_display_label.setText("Ei valittuja tageja")
         self.select_tags_btn = QPushButton("Valitse tageja")
         self.select_tags_btn.clicked.connect(self._open_tags_page)
-        layout.addWidget(tags_label)
         layout.addWidget(self.tags_display_label)
         layout.addWidget(self.select_tags_btn)
 
         # 4) Products selection: button opens product selection widget.
+        self.products_display_label = QLabel()
+        if self.selected_products:
+            product_count = len(self.selected_products)
+            if product_count == 1:
+                self.products_display_label.setText(f"{product_count} tuote valittu")
+            else:
+                self.products_display_label.setText(f"{product_count} tuotetta valittu")
+        else:
+            self.products_display_label.setText("Ei valittuja tuotteita")
+            
         self.add_products_btn = QPushButton("+ Lisää tuotteita")
         self.add_products_btn.clicked.connect(self._open_products_page)
+        layout.addWidget(self.products_display_label)
         layout.addWidget(self.add_products_btn)
 
         # 5) Save and Cancel buttons
@@ -155,17 +164,24 @@ class AddRecipeWidget(QWidget):
     @catch_errors_ui
     def on_products_selected(self, selected_products):
         if selected_products:
+            print("Selected products:", selected_products)
             self.selected_products = selected_products
+            product_count = len(self.selected_products)
+            if product_count == 1:
+                self.products_display_label.setText(f"{product_count} tuote valittu")
+            else:
+                self.products_display_label.setText(f"{product_count} tuotetta valittu")
         else:
             print("Ei valittuja tuotteita")
             self.selected_products = []
+            self.products_display_label.setText("Ei valittuja tuotteita")
         self._open_form_page()
 
     @catch_errors_ui
     def on_tags_selected(self, selected_tags):
         if selected_tags:
             self.selected_tags = selected_tags
-            self.tags_display_label.setText(", ".join(selected_tags))
+            self.tags_display_label.setText(f"Tagit: {', '.join(self.selected_tags)}")
         else:
             print("Ei valittuja tageja")
             self.tags_display_label.setText("Ei valittuja tageja")
@@ -188,7 +204,7 @@ class AddRecipeWidget(QWidget):
         else:
             tags_list = []
         self.selected_tags = tags_list
-        self.tags_display_label.setText(", ".join(tags_list))
+        self.tags_display_label.setText(f"Tagit: {', '.join(self.selected_tags)}")
         # Prepopulate selected products from recipe ingredients.
         self.selected_products = []
         for ingredient in recipe.ingredients:
@@ -197,6 +213,15 @@ class AddRecipeWidget(QWidget):
                 "quantity": ingredient.quantity,
                 "unit": ingredient.unit
             })
+            
+        if self.selected_products:
+            product_count = len(self.selected_products)
+            if product_count == 1:
+                self.products_display_label.setText(f"{product_count} tuote valittu")
+            else:
+                self.products_display_label.setText(f"{product_count} tuotetta valittu")
+        else:
+            self.products_display_label.setText("Ei valittuja tuotteita")
 
     @catch_errors_ui
     def _save_recipe(self):
