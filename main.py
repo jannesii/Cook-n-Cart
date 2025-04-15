@@ -6,7 +6,7 @@ import logging
 from PySide6.QtWidgets import QApplication, QMessageBox
 from PySide6.QtCore import QObject, QEvent, Qt
 from views_main_window import MainWindow
-import requests #testing
+import requests  # testing
 
 
 # Set up logging to a file (for example, error.log)
@@ -16,10 +16,11 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
+
 class BackKeyFilter(QObject):
     def eventFilter(self, obj, event):
-        if event.type() == QEvent.KeyPress and event.key() in (Qt.Key_Back, Qt.Key_Escape):
-            # Ignore the event so it won’t bubble to the system handler.
+        # Check for key press events and ignore Backspace and Return keys.
+        if event.type() == QEvent.KeyPress and event.key() in (Qt.Key_Backspace, Qt.Key_Return):
             print("Key pressed, ignoring:", event)
             return True  # Returning True stops further processing.
         print("Key pressed:", event)
@@ -38,24 +39,25 @@ def load_stylesheet(app, qss):
     except Exception as e:
         print(f"Unable to load stylesheet: {e}")
 
+
 def main():
     try:
         print("Requests module imported successfully!")
         print("Version:", requests.__version__)
     except Exception as e:
         print("An error occurred while importing requests:", e)
-    
+
     os.environ["QT_QUICK_CONTROLS_STYLE"] = "Basic"
     app = QApplication(sys.argv)
-    
+
     app.installEventFilter(BackKeyFilter(app))
-    
+
     # Check if the 'utils' directory exists, create if it doesn't.
     utils_dir = "utils"
     if not os.path.exists(utils_dir):
         print("Creating utils dir.")
         os.makedirs(utils_dir)
-        
+
     """
     # Check if the config file exists, and create it if missing.
     config_path = os.path.join(utils_dir, "config.json")
@@ -74,7 +76,7 @@ def main():
         except Exception as e:
             print(f"Unable to write config file: {e}")
     """
-    
+
     default_styles = """
         /* style.qss */
 
@@ -219,10 +221,11 @@ def main():
         }
     """
     load_stylesheet(app, default_styles)
-    
+
     window = MainWindow()
     window.show()
     sys.exit(app.exec())
+
 
 if __name__ == "__main__":
     main()
