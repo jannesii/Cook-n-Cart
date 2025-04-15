@@ -1,7 +1,0 @@
-<application android:label="@string/app_name" ...>
-    <activity android:name="org.cookandcart.cookandcart.MyActivity"
-              android:configChanges="orientation|keyboardHidden"
-              android:launchMode="singleTask">
-        <!-- Other settings if needed -->
-    </activity>
-</application>
