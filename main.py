@@ -17,25 +17,6 @@ logging.basicConfig(
 )
 
 
-class BackKeyFilter(QObject):
-    def eventFilter(self, obj, event):
-        # Check for key events across several relevant types.
-        if event.type() in (QEvent.KeyPress, QEvent.KeyRelease, QEvent.ShortcutOverride):
-            if event.key() in (Qt.Key_Backspace, Qt.Key_Return):
-                print(
-                    f"IGNORED Event: {event}, Key: {event.key()}, Type: {event.type()}"
-                )
-                return True  # Ignore these events completely.
-            else:
-                print(
-                    f"Key event passed: {event}, Key: {event.key()}, Type: {event.type()}"
-                )
-        else:
-            # For all other events, you might not need to print key info.
-            print(f"Non-key event: {event}, Type: {event.type()}")
-        return super().eventFilter(obj, event)
-
-
 def load_stylesheet(app, qss):
     print("Loading stylesheet...")
     try:
@@ -58,8 +39,6 @@ def main():
 
     os.environ["QT_QUICK_CONTROLS_STYLE"] = "Basic"
     app = QApplication(sys.argv)
-
-    app.installEventFilter(BackKeyFilter(app))
 
     # Check if the 'utils' directory exists, create if it doesn't.
     utils_dir = "utils"
