@@ -21,6 +21,7 @@ HARMAA = "#808080"
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        
 
         self.setWindowTitle("Cook and Cart")
         self.setMinimumSize(400, 600)

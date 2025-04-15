@@ -4,6 +4,7 @@ import sys
 import os
 import logging
 from PySide6.QtWidgets import QApplication, QMessageBox
+from PySide6.QtCore import QObject, QEvent, Qt
 from views_main_window import MainWindow
 import requests #testing
 
@@ -15,6 +16,14 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
+class BackKeyFilter(QObject):
+    def eventFilter(self, obj, event):
+        if event.type() == QEvent.KeyPress and event.key() in (Qt.Key_Back, Qt.Key_Escape):
+            # Ignore the event so it won’t bubble to the system handler.
+            print("Key pressed, ignoring:", event)
+            return True  # Returning True stops further processing.
+        print("Key pressed:", event)
+        return super().eventFilter(obj, event)
 
 
 def load_stylesheet(app, qss):
@@ -38,6 +47,8 @@ def main():
     
     os.environ["QT_QUICK_CONTROLS_STYLE"] = "Basic"
     app = QApplication(sys.argv)
+    
+    app.installEventFilter(BackKeyFilter(app))
     
     # Check if the 'utils' directory exists, create if it doesn't.
     utils_dir = "utils"
