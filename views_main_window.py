@@ -6,6 +6,8 @@ from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout,
     QHBoxLayout, QPushButton, QStackedWidget, QMessageBox
 )
+from PySide6.QtCore import Qt
+
 from views_ostoslistat_page import OstolistatPage
 from views_reseptit_page import ReseptitPage
 from views_tuotteet_page import TuotteetPage
@@ -130,3 +132,13 @@ class MainWindow(QMainWindow):
             self.asetukset_page.deleteLater()
             del self.asetukset_page
             self.asetukset_page = None
+    
+    def keyPressEvent(self, event):
+        # Qt maps the Android back button to both Qt.Key_Escape and Qt.Key_Back
+        if event.key() in (Qt.Key_Escape, Qt.Key_Back):
+            # Do nothing (or hide the keyboard instead)
+            print("Button press ignored")
+            event.ignore()
+        else:
+            super().keyPressEvent(event)
+
