@@ -1112,6 +1112,7 @@ class ProductSelectorWidgetPage2(QWidget):
             // Helper function to add a tag into the model.
             // If no valid unit is provided, defaults to "kpl".
             function addTag(name, id, qty, unit) {
+                console.log("Adding tag:", name, id, qty, unit)
                 tagModel.append({
                     "text": name,
                     "id": id,

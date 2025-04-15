@@ -147,15 +147,21 @@ class AddCategoriesWidget(QWidget):
         """
         root_obj = self.category_selector.get_root_object()
         if root_obj is not None:
-            # Clear any existing categories from the QML model.
+            # Retrieve the current selected categories from QML.
+            js_value = root_obj.getSelectedTags()
+            selected = js_value.toVariant()  # should be a list of category strings
+            self.selected_categories = selected[:]  # update our internal list
+
             root_obj.clearTags()
             # Add each category from all_categories.
             for category in self.all_categories:
                 is_checked = category in self.selected_categories
-                if filter_text == "" or filter_text in category.lower():
+                if filter_text == "" or filter_text in category.lower() or is_checked:
                     root_obj.addTag(category, is_checked)
+                    root_obj.reorderSelected()
         else:
             print("CategorySelectorWidget root object not found.")
+
 
     @catch_errors_ui
     def filter_products(self, newText):

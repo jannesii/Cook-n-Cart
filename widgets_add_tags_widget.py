@@ -129,7 +129,7 @@ class AddTagsWidget(QWidget):
             self.main_page.setLayout(self._select_tags_layout())
             self.stacked.addWidget(self.main_page)
         self.stacked.setCurrentWidget(self.main_page)
-        
+
         if self.add_tag_page:
             self.stacked.removeWidget(self.add_tag_page)
             self.add_tag_page.deleteLater()
@@ -151,13 +151,20 @@ class AddTagsWidget(QWidget):
         """
         root_obj = self.tag_selector.get_root_object()
         if root_obj is not None:
-            # Clear any existing tags from the QML model.
+            # Get the current selected tags from the QML side.
+            js_value = root_obj.getSelectedTags()
+            selected = js_value.toVariant()  # this should return a native list of tag strings
+            self.selected_tags = selected[:]  # update our internal list
+
             root_obj.clearTags()
             # Add each tag from all_tags.
             for tag in self.all_tags:
                 is_checked = tag in self.selected_tags
-                if filter_text == "" or filter_text in tag.lower():
+                # Always add the tag if the filter is empty,
+                # if it matches the filter text, or if it is already selected.
+                if filter_text == "" or filter_text in tag.lower() or is_checked:
                     root_obj.addTag(tag, is_checked)
+                    root_obj.reorderSelected()
         else:
             print("TagSelectorWidget root object not found.")
 

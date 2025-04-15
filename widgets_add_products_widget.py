@@ -12,6 +12,8 @@ from qml import (
     ProductSelectorWidgetPage1, MainSearchTextField, ProductSelectorWidgetPage2
 )
 from root_controllers import ProductController as PC
+from root_controllers import ShoppingListController as SLC
+from root_controllers import RecipeController as RC
 
 import functools
 import logging
@@ -141,6 +143,7 @@ class AddProductsWidget(QWidget):
             js_value = root_obj.getSelectedTags()
             # Convert the QJSValue to a native Python list.
             selected = js_value.toVariant()
+            print("selected products in handle_next:", selected)
             self.selected_products = selected
             self.page2 = QWidget()
             self.page2.setLayout(self.create_page2_layout(selected))
@@ -185,9 +188,21 @@ class AddProductsWidget(QWidget):
         """
         Clear and repopulate the QML ListModel in the ScrollViewWidget
         with product names, optionally filtering by filter_text.
+        Always include items that are already selected.
         """
         root_obj = target.get_root_object()
         if root_obj is not None:
+            js_value = root_obj.getSelectedTags()
+            # Convert the QJSValue to a native Python list.
+            selected = js_value.toVariant()
+            
+            for item in selected:
+                self.selected_products.append({
+                    "id": item["id"],
+                    "quantity": item["quantity"],
+                    "unit": item["unit"]
+                })
+           
             root_obj.clearTags()
             # Sort products by name (case-insensitive)
             sorted_products = sorted(
@@ -195,24 +210,31 @@ class AddProductsWidget(QWidget):
                 key=lambda p: p.name.lower()
             )
             for product in sorted_products:
-                if any(item['id'] == product.id for item in self.selected_products):
-                    is_checked = True
-                else:
-                    is_checked = False
+                # Check if the product is already selected.
+                is_selected = any(item['id'] == product.id for item in self.selected_products)
+                
+                # Only add the product if it matches the filter text,
+                # or if it has already been selected.
+                if filter_text == "" or filter_text in product.name.lower() or is_selected:
+                    if is_selected:
+                        is_checked = True
+                        # Get the previously stored quantity and unit.
+                        selected_item = next(
+                            (item for item in self.selected_products if item['id'] == product.id), None)
+                        if selected_item:
+                            quantity = selected_item['quantity']
+                            unit = selected_item['unit']
+                        else:
+                            quantity = 1
+                            unit = "kpl"
+                    else:
+                        is_checked = False
+                        quantity = 1
+                        unit = "kpl"
 
-                if is_checked:
-                    item = next(
-                        (item for item in self.selected_products if item['id'] == product.id), None)
-                    if item:
-                        quantity = item['quantity']
-                        unit = item['unit']
-                else:
-                    quantity = 1
-                    unit = "kpl"
+                    root_obj.addTag(product.name, product.id, is_checked, quantity, unit)
+                    root_obj.reorderSelected()
 
-                if filter_text == "" or filter_text in product.name.lower():
-                    root_obj.addTag(product.name, product.id,
-                                    is_checked, quantity, unit)
 
     @catch_errors_ui
     def populate_product_list2(self, target, products, filter_text=""):
@@ -225,7 +247,7 @@ class AddProductsWidget(QWidget):
             root_obj.clearTags()
             for p in products:
                 product = self.product_controller.get_product_by_id(p["id"])
-                root_obj.addTag(product.name, p["id"], p["quantity"], product.unit)
+                root_obj.addTag(product.name, p["id"], p["quantity"], p["unit"])
 
     @catch_errors_ui
     def filter_products(self, newText):
