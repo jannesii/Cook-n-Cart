@@ -237,7 +237,7 @@ class ShoppingListRepository:
         shopping_lists = []
 
         for row in rows:
-            # Fetch items for this shopping list
+            # Fetch items for this shopping list including the unit column.
             items_query = "SELECT * FROM shopping_list_items WHERE shopping_list_id = ?"
             items_rows = self.db.fetchall(items_query, (row['id'],))
 
@@ -247,6 +247,7 @@ class ShoppingListRepository:
                     shopping_list_id=item_row['shopping_list_id'],
                     product_id=item_row['product_id'],
                     quantity=item_row['quantity'],
+                    unit=item_row['unit'],  # NEW: include unit from the row
                     is_purchased=item_row['is_purchased'],
                     created_at=item_row['created_at'],
                     updated_at=item_row['updated_at'],
@@ -276,6 +277,7 @@ class ShoppingListRepository:
         query = "SELECT * FROM shopping_lists WHERE id = ?"
         row = self.db.fetchone(query, (shopping_list_id,))
         if row:
+            # Here we assume that the products repository's method is also updated
             shopping_list = ShoppingList(
                 id=row['id'],
                 title=row['title'],
@@ -297,24 +299,27 @@ class ShoppingListRepository:
         cursor = self.db.execute_query(
             query, (shoppinglist.title, shoppinglist.total_sum, shoppinglist.purchased_count))
         list_id = cursor.lastrowid
-        for items in shoppinglist.items:
-            self.add_shopping_list_items(list_id, items)
         return list_id
 
     @catch_errors
     def add_shopping_list_items(self, shopping_list_id: int, items: List[ShoppingListItem]):
         for item in items:
             print(
-                f"Attempting to insert item with values: shopping_list_id={shopping_list_id}, product_id={item.product_id}, quantity={item.quantity}, is_purchased={item.is_purchased}")
+                f"Attempting to insert item with values: shopping_list_id={shopping_list_id}, "
+                f"product_id={item.product_id}, quantity={item.quantity}, "
+                f"unit={item.unit}, is_purchased={item.is_purchased}")
             try:
                 query = """
-                INSERT INTO shopping_list_items (shopping_list_id, product_id, quantity, is_purchased, created_at, updated_at)
-                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                INSERT INTO shopping_list_items 
+                (shopping_list_id, product_id, quantity, unit, is_purchased, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
                 """
                 self.db.execute_query(
-                    query, (item.shopping_list_id, item.product_id, item.quantity, item.is_purchased))
+                    query, (item.shopping_list_id, item.product_id, item.quantity, item.unit, item.is_purchased)
+                )
             except Exception as e:
                 print(f"Error inserting item: {item}, Error: {e}")
+
 
     @catch_errors
     def update_shopping_list(self, shopping_list_id: int, shopping_list: ShoppingList):
@@ -327,13 +332,14 @@ class ShoppingListRepository:
                                       shopping_list.purchased_count, shopping_list_id))
         self.db.execute_query(
             "DELETE FROM shopping_list_items WHERE shopping_list_id = ?", (shopping_list_id,))
-        for items in shopping_list.items:
-            self.add_shopping_list_items(shopping_list_id, items)
+        for item in shopping_list.items:
+            self.add_shopping_list_items(shopping_list_id, item)
 
     @catch_errors
     def get_items_by_shopping_list_id(self, shopping_list_id: int) -> List[ShoppingListItem]:
+        # NEW: Update the SELECT statement to include the unit column.
         query = """
-        SELECT id, shopping_list_id, product_id, quantity, is_purchased, created_at, updated_at
+        SELECT id, shopping_list_id, product_id, quantity, unit, is_purchased, created_at, updated_at
         FROM shopping_list_items
         WHERE shopping_list_id = ?
         """
@@ -345,6 +351,7 @@ class ShoppingListRepository:
                 shopping_list_id=row['shopping_list_id'],
                 product_id=row['product_id'],
                 quantity=row['quantity'],
+                unit=row['unit'],  # NEW: read the unit value
                 is_purchased=row['is_purchased'],
                 created_at=row['created_at'],
                 updated_at=row['updated_at'],
@@ -365,15 +372,16 @@ class ShoppingListRepository:
 
     @catch_errors
     def update_shopping_list_items(self, items: List[ShoppingListItem]):
-        """Updates the quantity or purchase status of multiple items in the shopping list."""
+        """Updates the quantity, unit, or purchase status of multiple items in the shopping list."""
         for item in items:
+            # NEW: Update query now also sets the unit column.
             query = """
             UPDATE shopping_list_items
-            SET quantity = ?, is_purchased = ?, updated_at = CURRENT_TIMESTAMP
+            SET quantity = ?, unit = ?, is_purchased = ?, updated_at = CURRENT_TIMESTAMP
             WHERE shopping_list_id = ? AND product_id = ?
             """
             self.db.execute_query(
-                query, (item.quantity, item.is_purchased, item.shopping_list_id, item.product_id))
+                query, (item.quantity, item.unit, item.is_purchased, item.shopping_list_id, item.product_id))
 
     @catch_errors
     def update_purchased_status(self, item_id: int, is_purchased: bool):
@@ -473,8 +481,10 @@ class ErrorRepository:
                 id=row["id"],
                 error_message=row["error_message"],
                 error_time=row["error_time"],
-                traceback=row["traceback"],  # Returns None if the field is NULL.
-                func_name=row["func_name"]     # Returns None if the field is NULL.
+                # Returns None if the field is NULL.
+                traceback=row["traceback"],
+                # Returns None if the field is NULL.
+                func_name=row["func_name"]
             )
             error_logs.append(error_log)
         return error_logs
@@ -506,7 +516,7 @@ class ErrorRepository:
                 f"Traceback: {log.traceback if log.traceback else 'None'}\n"
             )
             log_strings.append(log_str)
-        
+
         # Define a clear separation line between logs.
         separator = "\n" + "-" * 50 + "\n"
         # Join all error log strings using the separator.

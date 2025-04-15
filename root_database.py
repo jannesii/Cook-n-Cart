@@ -121,6 +121,7 @@ class DatabaseManager:
                 shopping_list_id INTEGER NOT NULL,
                 product_id INTEGER NOT NULL,
                 quantity REAL NOT NULL,
+                unit TEXT NOT NULL,
                 is_purchased BOOLEAN NOT NULL DEFAULT 0,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,

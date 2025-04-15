@@ -55,9 +55,10 @@ class ShoppingListItem:
     shopping_list_id: int
     product_id: int
     quantity: float
-    is_purchased: bool
-    created_at: datetime
-    updated_at: datetime
+    is_purchased: bool = False  # now has a default value
+    unit: str = ""              # default value
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
 @dataclass
 class ErrorLog:

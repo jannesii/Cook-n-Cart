@@ -147,6 +147,7 @@ class ShoppingListController:
         for item in items:
             product = self.product_repo.get_product_by_id(item.product_id)
             if product:
+                # Calculation remains as price * quantity.
                 total_cost += product.price_per_unit * item.quantity
         total_cost = round(total_cost, 2)
         return total_cost
@@ -166,13 +167,14 @@ class ShoppingListController:
             raise ValueError("Shopping list not found")
         items_with_prices = []
         for item in shopping_list.items:
-            product = self.repo.get_product_by_id(item.product_id)
+            product = self.product_repo.get_product_by_id(item.product_id)
             if product:
                 total_price = round(product.price_per_unit * item.quantity, 2)
                 items_with_prices.append({
                     "product_id": item.product_id,
                     "name": product.name,
-                    "unit": product.unit,
+                    # Use the unit from the shopping list item if available; otherwise use the product default.
+                    "unit": item.unit if item.unit else product.unit,
                     "price_per_unit": product.price_per_unit,
                     "quantity": item.quantity,
                     "total_price": total_price,
@@ -211,27 +213,6 @@ class ShoppingListController:
         shopping_list_id = self.repo.add_shopping_list(shopping_list)
         shopping_list.id = shopping_list_id  # Update with the correct ID
 
-        shopping_list_items = []
-        for item in items:
-            product = item.get('product')
-            if not product or 'quantity' not in item:
-                raise ValueError(
-                    "Invalid product data: 'product' or 'quantity' is missing.")
-            shopping_list_item = ShoppingListItem(
-                id=0,
-                shopping_list_id=shopping_list_id,
-                product_id=product.id,
-                quantity=item['quantity'],
-                is_purchased=item.get('is_purchased', False),
-                created_at=None,
-                updated_at=None
-            )
-            shopping_list_items.append(shopping_list_item)
-
-        self.repo.add_shopping_list_items(
-            shopping_list_id, shopping_list_items)
-        shopping_list.items = self.repo.get_items_by_shopping_list_id(
-            shopping_list_id)
         return shopping_list
 
     @catch_errors
@@ -242,6 +223,7 @@ class ShoppingListController:
         if title:
             shopping_list.title = title
         if items:
+            # Delete existing shopping list items.
             self.repo.delete_shopping_list_item(shopping_list_id)
             for item in items:
                 shopping_list_item = ShoppingListItem(
@@ -249,6 +231,8 @@ class ShoppingListController:
                     shopping_list_id=shopping_list_id,
                     product_id=item['product_id'],
                     quantity=item['quantity'],
+                    # NEW: Use unit provided, defaulting to empty string.
+                    unit=item.get('unit', ""),
                     is_purchased=item.get('is_purchased', False),
                     created_at=None,
                     updated_at=None,
@@ -274,7 +258,7 @@ class ShoppingListController:
     @catch_errors
     def get_items_by_shopping_list_id(self, shoplist_id):
         return self.repo.get_items_by_shopping_list_id(shoplist_id)
-    
+
     @catch_errors
     def get_product_id_by_shopping_list_item_id(self, shopping_list_item_id: int) -> int:
         """
@@ -284,7 +268,8 @@ class ShoppingListController:
         """
         item = self.repo.get_shopping_list_item_by_id(shopping_list_item_id)
         if not item:
-            raise ValueError(f"Shopping list item with id {shopping_list_item_id} not found.")
+            raise ValueError(
+                f"Shopping list item with id {shopping_list_item_id} not found.")
         return item.product_id
 
 
@@ -375,6 +360,7 @@ class ProductController:
     def delete_product(self, product_id: int):
         self.repo.delete_product(product_id)
 
+
 class ErrorController:
     def __init__(self):
         self.repo = ErrorRepository()
@@ -383,12 +369,12 @@ class ErrorController:
     def log_error(self, error_message: str, tb: str = "", func_name: str = "") -> int:
         """
         Creates a new error log entry and inserts it into the database.
-        
+
         Parameters:
             error_message (str): The error message describing the problem.
             tb (str): The traceback details (optional).
             func_name (str): The name of the function where the error occurred (optional).
-        
+
         Returns:
             int: The ID of the newly inserted error log.
         """
@@ -407,7 +393,7 @@ class ErrorController:
     def delete_error_log(self, error_id: int):
         """
         Deletes an error log entry from the database.
-        
+
         Parameters:
             error_id (int): The ID of the error log record to delete.
         """
@@ -417,21 +403,21 @@ class ErrorController:
     def get_all_error_logs(self, sort_order: str = "DESC") -> List[ErrorLog]:
         """
         Retrieves all error log entries sorted by the error time.
-        
+
         Parameters:
             sort_order (str): "ASC" for ascending or "DESC" for descending order. Default is "DESC".
-            
+
         Returns:
             List[ErrorLog]: A list of error log records.
         """
         return self.repo.get_all_error_logs(sort_order)
-    
+
     @catch_errors
     def get_all_error_logs_as_one_string(self, sort_order: str = "DESC") -> str:
         """
         Retrieves all error logs from the database and returns a single formatted string 
         with a clear separation between each error log.
-        
+
         Parameters:
             sort_order (str): Sort order by 'ASC' or 'DESC'. Default is "DESC".
 

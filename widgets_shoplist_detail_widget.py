@@ -130,22 +130,22 @@ class ShoplistDetailWidget(QWidget):
             product = self.pc.get_all_products().get(item.product_id)
             if product:
                 # Determine product_price based on the unit
-                if product.unit == "kpl":
+                if item.unit == "kpl":
                     product_price = product.price_per_unit * item.quantity
-                elif product.unit == "kg":
+                elif item.unit == "kg":
                     product_price = product.price_per_unit * item.quantity
-                elif product.unit == "g":
+                elif item.unit == "g":
                     product_price = product.price_per_unit * \
                         (item.quantity / 1000.0)
-                elif product.unit == "mg":
+                elif item.unit == "mg":
                     product_price = product.price_per_unit * \
                         (item.quantity / 1000000.0)
-                elif product.unit == "l":
+                elif item.unit == "l":
                     product_price = product.price_per_unit * item.quantity
-                elif product.unit == "dl":
+                elif item.unit == "dl":
                     product_price = product.price_per_unit * \
                         (item.quantity / 10.0)
-                elif product.unit == "ml":
+                elif item.unit == "ml":
                     product_price = product.price_per_unit * \
                         (item.quantity / 1000.0)
                 else:
@@ -155,7 +155,7 @@ class ShoplistDetailWidget(QWidget):
                     total_cost += product_price
                 checked = True if item.is_purchased == 1 else False
                 self.add_tag(text=product.name, checked=checked, id=item.id,
-                             quantity=item.quantity, unit=product.unit, price=product_price)
+                             quantity=item.quantity, unit=item.unit, price=product_price)
         self._update_total_cost_label(total_cost)
 
     @catch_errors_ui
@@ -289,9 +289,6 @@ class ShoplistDetailWidget(QWidget):
             quantity = product_data.get("quantity", 1)
             unit = product_data.get("unit")
 
-            if unit is not None:
-                self.pc.update_product(product_id=product_id, unit=unit)
-
             if product_id in existing_items_dict:
                 existing_item = existing_items_dict[product_id]
                 if existing_item.quantity != quantity:
@@ -303,6 +300,7 @@ class ShoplistDetailWidget(QWidget):
                     shopping_list_id=self.shoppinglist.id,
                     product_id=product_id,
                     quantity=quantity,
+                    unit=unit,
                     is_purchased=False,
                     created_at=None,
                     updated_at=None
