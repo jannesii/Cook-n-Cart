@@ -284,11 +284,15 @@ class ShoplistDetailWidget(QWidget):
         if not self.shoppinglist:
             print("No shopping list is set.")
             return
-        if not selected_products:
-            print("No products selected.")
-            return
         existing_items = self.shoplist_controller.get_items_by_shopping_list_id(
             self.shoppinglist.id)
+        if not selected_products:
+            print("No products selected.")
+            for item in existing_items:
+                self.shoplist_controller.repo.delete_shopping_list_item(
+                    item.id)
+            self._refresh_product_list()
+            return
         existing_items_dict = {
             item.product_id: item for item in existing_items}
         new_items = []

@@ -145,10 +145,15 @@ class AddProductsWidget(QWidget):
             selected = js_value.toVariant()
             print("selected products in handle_next:", selected)
             self.selected_products = selected
-            self.page2 = QWidget()
-            self.page2.setLayout(self.create_page2_layout(selected))
-            self.stacked.addWidget(self.page2)
-            self.stacked.setCurrentIndex(1)
+            
+            if self.selected_products:
+                self.page2 = QWidget()
+                self.page2.setLayout(self.create_page2_layout(selected))
+                self.stacked.addWidget(self.page2)
+                self.stacked.setCurrentIndex(1)
+            else:
+                self.finished.emit(self.selected_products)
+                self.clearMemory()
 
     @catch_errors_ui
     def handle_finish(self):
