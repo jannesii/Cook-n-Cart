@@ -65,7 +65,7 @@ class ShoplistDetailWidget(QWidget):
         self.top_bar_layout = QHBoxLayout()
         self.shoplist_label = QLabel("Shopping List Details")
         self.set_all_checked_button = QPushButton("Merkitse kaikki ostetuksi")
-        self.set_all_checked_button.clicked.connect(self.product_list.set_all_checked)
+        self.set_all_checked_button.clicked.connect(self.set_all_checked)
         
         self.top_bar_layout.addWidget(self.shoplist_label)
         self.top_bar_layout.addStretch()
@@ -105,6 +105,8 @@ class ShoplistDetailWidget(QWidget):
 
         layout.addLayout(button_layout)
         return layout
+    
+
 
     @catch_errors_ui
     def set_shopping_list(self, shopping_list: ShoppingList):
@@ -192,6 +194,15 @@ class ShoplistDetailWidget(QWidget):
             self.shoppinglist.id, total_cost)
         self._update_total_cost_label(total_cost)
         self.parent.populate_shopping_list()
+        
+    @catch_errors_ui
+    def set_all_checked(self):
+        self.product_list.set_all_checked()
+        shopping_list_items = self.shoplist_controller.repo.get_items_by_shopping_list_id(
+            self.shoppinglist.id)
+        for item in shopping_list_items:
+            self.shoplist_controller.update_purchased_status(
+                item.id, True)  # Set all items as purchased
 
     @catch_errors_ui
     def get_selected_products(self):
