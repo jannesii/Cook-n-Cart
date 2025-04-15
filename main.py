@@ -15,8 +15,7 @@ logging.basicConfig(
     level=logging.ERROR,
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
-sys.stdout = open(os.devnull, "w")
-sys.stderr = open(os.devnull, "w")
+
 
 def load_stylesheet(app, qss):
     print("Loading stylesheet...")
