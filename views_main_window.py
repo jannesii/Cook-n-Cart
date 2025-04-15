@@ -134,13 +134,4 @@ class MainWindow(QMainWindow):
             del self.asetukset_page
             self.asetukset_page = None
     
-    def keyPressEvent(self, event):
-        if event.key() in (Qt.Key_Back, Qt.Key_Escape):
-            # Tell Qt to “ignore” this, so it does NOT trigger the exit toast
-            event.ignore()
-            print("Back or Escape key pressed, ignoring event.")
-            return
-        # Otherwise, proceed with normal behavior
-        print("Key pressed:", event.key())
-        super().keyPressEvent(event)
 

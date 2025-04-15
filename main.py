@@ -19,11 +19,20 @@ logging.basicConfig(
 
 class BackKeyFilter(QObject):
     def eventFilter(self, obj, event):
-        # Check for key press events and ignore Backspace and Return keys.
-        if event.type() == QEvent.KeyPress and event.key() in (Qt.Key_Backspace, Qt.Key_Return):
-            print("Key pressed, ignoring:", event)
-            return True  # Returning True stops further processing.
-        print("Key pressed:", event)
+        # Check for key events across several relevant types.
+        if event.type() in (QEvent.KeyPress, QEvent.KeyRelease, QEvent.ShortcutOverride):
+            if event.key() in (Qt.Key_Backspace, Qt.Key_Return):
+                print(
+                    f"IGNORED Event: {event}, Key: {event.key()}, Type: {event.type()}"
+                )
+                return True  # Ignore these events completely.
+            else:
+                print(
+                    f"Key event passed: {event}, Key: {event.key()}, Type: {event.type()}"
+                )
+        else:
+            # For all other events, you might not need to print key info.
+            print(f"Non-key event: {event}, Type: {event.type()}")
         return super().eventFilter(obj, event)
 
 
