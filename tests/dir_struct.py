@@ -19,7 +19,7 @@ def print_directory_structure(root_dir, prefix='', exclude=None):
 def main():
     # Hard-coded settings
     directory_to_list = os.getcwd()  # Change this to your desired directory
-    exclude_dirs = ["__pycache__", ".git", "build", "dist", "tests"]
+    exclude_dirs = ["__pycache__", ".git", "build", "dist", "tests", ".buildozer"]
 
     print(f"Directory structure for: {directory_to_list}\n")
     print_directory_structure(directory_to_list, exclude=exclude_dirs)
