@@ -134,11 +134,12 @@ class MainWindow(QMainWindow):
             self.asetukset_page = None
     
     def keyPressEvent(self, event):
-        # Qt maps the Android back button to both Qt.Key_Escape and Qt.Key_Back
-        if event.key() in (Qt.Key_Escape, Qt.Key_Back):
-            # Do nothing (or hide the keyboard instead)
-            print("Button press ignored")
+        if event.key() in (Qt.Key_Back, Qt.Key_Escape):
+            # Tell Qt to “ignore” this, so it does NOT trigger the exit toast
             event.ignore()
-        else:
-            super().keyPressEvent(event)
+            print("Back or Escape key pressed, ignoring event.")
+            return
+        # Otherwise, proceed with normal behavior
+        print("Key pressed:", event.key())
+        super().keyPressEvent(event)
 
