@@ -6,7 +6,6 @@ import logging
 from PySide6.QtWidgets import QApplication, QMessageBox
 from PySide6.QtCore import QObject, QEvent, Qt
 from views_main_window import MainWindow
-import requests  # testing
 
 
 # Set up logging to a file (for example, error.log)
@@ -31,12 +30,6 @@ def load_stylesheet(app, qss):
 
 
 def main():
-    try:
-        print("Requests module imported successfully!")
-        print("Version:", requests.__version__)
-    except Exception as e:
-        print("An error occurred while importing requests:", e)
-
     os.environ["QT_QUICK_CONTROLS_STYLE"] = "Basic"
     app = QApplication(sys.argv)
 
