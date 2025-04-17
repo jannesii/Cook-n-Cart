@@ -35,6 +35,7 @@ MANIFEST
 #!pysidedeploy.spec
 !build/
 deployment/
+apk/
 
 # Installer logs
 pip-log.txt
