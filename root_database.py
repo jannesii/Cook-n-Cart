@@ -1,4 +1,4 @@
-# database.py
+# File: root_database.py --------------------------------------------------------------------
 
 import sqlite3
 from typing import List, Dict

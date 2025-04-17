@@ -1,4 +1,4 @@
-# qml.py
+# File: qml.py --------------------------------------------------------------------
 
 from PySide6.QtQuickWidgets import QQuickWidget
 from PySide6.QtCore import QUrl, QObject

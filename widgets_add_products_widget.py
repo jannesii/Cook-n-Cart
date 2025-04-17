@@ -1,4 +1,4 @@
-# widgets_add_products_widget.py
+# File: widgets_add_products_widget.py --------------------------------------------------------------------
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,

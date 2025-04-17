@@ -1,4 +1,4 @@
-# File: widgets_add_tags_widget.py
+# File: widgets_add_tags_widget.py --------------------------------------------------------------------
 
 import functools
 import logging

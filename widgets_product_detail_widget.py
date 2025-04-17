@@ -1,4 +1,4 @@
-# File: product_detail_widget.py
+# File: product_detail_widget.py --------------------------------------------------------------------
 
 import functools
 import logging

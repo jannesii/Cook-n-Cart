@@ -1,4 +1,4 @@
-# File: reseptit_page.py
+# File: views_reseptit_page.py --------------------------------------------------------------------
 
 import functools
 import logging

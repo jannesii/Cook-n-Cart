@@ -1,4 +1,4 @@
-# widgets_product_form_widget.py
+# File: widgets_product_form_widget.py --------------------------------------------------------------------
 
 import functools
 import logging

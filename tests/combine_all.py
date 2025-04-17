@@ -1,7 +1,7 @@
 import os
 
 
-def combine_files(directories, output_file, extensions=(".py", ".qss")):
+def combine_files(directories, output_file, extensions=(".py", ".qss", ".sh")):
     total_lines = 0
     all_code = ""
 
@@ -29,6 +29,7 @@ def main():
     views_dir = os.path.join(root_dir, "views")
     widgets_dir = os.path.join(root_dir, "widgets")
     utils_dir = os.path.join(root_dir, "utils")
+    build_dir = os.path.join(root_dir, "build")
     output_file = r"tests\combined\all_combined.py"
 
     # Combine all files with the specified extensions into one
@@ -37,8 +38,9 @@ def main():
     #directories_to_combine.append(views_dir)
     #directories_to_combine.append(widgets_dir)
     #directories_to_combine.append(utils_dir)
+    directories_to_combine.append(build_dir)
 
-    extensions_to_include = (".py")
+    extensions_to_include = (".py", ".sh")
 
     combine_files(directories_to_combine, output_file,
                   extensions=extensions_to_include)

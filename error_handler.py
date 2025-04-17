@@ -1,4 +1,4 @@
-# error_handler.py
+# File: error_handler.py --------------------------------------------------------------------
 
 from typing import Literal
 import functools

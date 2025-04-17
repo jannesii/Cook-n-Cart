@@ -1,4 +1,4 @@
-# tuotteet_page.py
+# File: views_tuotteet_page.py --------------------------------------------------------------------
 
 import sys
 import functools

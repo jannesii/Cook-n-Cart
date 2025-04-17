@@ -1,4 +1,4 @@
-# File: widgets_add_categories_widget.py
+# File: widgets_add_categories_widget.py --------------------------------------------------------------------
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QInputDialog,

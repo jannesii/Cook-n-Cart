@@ -1,4 +1,4 @@
-# recipe_detail_widget.py
+# File: recipe_detail_widget.py --------------------------------------------------------------------
 
 import functools
 import logging

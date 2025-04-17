@@ -1,4 +1,4 @@
-# File: ostoslistat_page.py
+# File: views_ostoslistat_page.py --------------------------------------------------------------------
 
 import functools
 import logging

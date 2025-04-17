@@ -1,4 +1,4 @@
-# add_recipe_widget.py
+# File: add_recipe_widget.py --------------------------------------------------------------------
 
 import functools
 import logging

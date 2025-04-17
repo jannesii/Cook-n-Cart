@@ -1,4 +1,4 @@
-# asetukset_page.py
+# File: views_asetukset_page.py --------------------------------------------------------------------
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout,

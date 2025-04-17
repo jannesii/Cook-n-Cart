@@ -1,4 +1,4 @@
-# File: shoplist_detail_widget.py
+# File: shoplist_detail_widget.py --------------------------------------------------------------------
 
 import functools
 import logging

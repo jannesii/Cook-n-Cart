@@ -1,4 +1,4 @@
-# repositories.py
+# File: root_repositories.py --------------------------------------------------------------------
 
 from root_database import DatabaseManager
 from root_models import Recipe, Product, RecipeIngredient, ShoppingList, ShoppingListItem, ErrorLog

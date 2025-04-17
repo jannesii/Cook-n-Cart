@@ -1,4 +1,4 @@
-# main_window.py
+# File: views_main_window.py --------------------------------------------------------------------
 
 import functools
 import logging
