@@ -13,6 +13,8 @@
 - [Android‑APK:n rakentaminen](#android-apkn-rakentaminen)
 - [Konfigurointi](#konfigurointi)
 - [Contributing](#contributing)
+- [Lisenssi](#lisenssi)
+
 
 ---
 
@@ -112,6 +114,12 @@ $ python main.py
 4. Lähetä pull request.
 
 > Kaikki apu — bugiraportit, ominaisuuspyynnöt, dokumentointiparannukset — on tervetulleita!
+
+---
+
+## Lisenssi
+
+Tämä projekti on lisensoitu **MIT‑lisenssillä**. Katso `LICENSE`‑tiedosto lisätietoja.
 
 ---
 
