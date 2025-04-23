@@ -3,8 +3,7 @@
 import sys
 import os
 import logging
-from PySide6.QtWidgets import QApplication, QMessageBox
-from PySide6.QtCore import QObject, QEvent, Qt
+from PySide6.QtWidgets import QApplication
 from views_main_window import MainWindow
 
 

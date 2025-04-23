@@ -1,9 +1,6 @@
 # File: root_controllers.py --------------------------------------------------------------------
 
 from typing import Dict, List
-import json
-import functools
-import logging
 
 from root_models import Recipe, RecipeIngredient, Product, ShoppingList, ShoppingListItem, ErrorLog
 from root_repositories import RecipeRepository, ProductRepository, ShoppingListRepository, ErrorRepository
@@ -97,41 +94,6 @@ class ShoppingListController:
     def __init__(self):
         self.repo = ShoppingListRepository()
         self.product_repo = ProductRepository()
-        self.weight_unit, self.volume_unit = self.load_units()
-
-    @catch_errors
-    def load_units(self):
-        """Lataa asetetut yksiköt config.json-tiedostosta."""
-        try:
-            with open(CONFIG_FILE, "r", encoding="utf-8") as file:
-                settings = json.load(file).get("settings", {})
-                return settings.get("weight_unit", "kg"), settings.get("volume_unit", "l")
-        except (FileNotFoundError, json.JSONDecodeError):
-            return "kg", "l"  # Oletusyksiköt
-
-    @catch_errors
-    def save_units(self):
-        """Tallentaa yksikköasetukset config.json-tiedostoon."""
-        try:
-            with open(CONFIG_FILE, "r", encoding="utf-8") as file:
-                config = json.load(file)
-        except (FileNotFoundError, json.JSONDecodeError):
-            config = {}
-        config["settings"] = config.get("settings", {})
-        config["settings"]["weight_unit"] = self.weight_unit
-        config["settings"]["volume_unit"] = self.volume_unit
-        with open(CONFIG_FILE, "w", encoding="utf-8") as file:
-            json.dump(config, file, indent=4)
-
-    @catch_errors
-    def update_weight_unit(self, new_unit: str):
-        self.weight_unit = new_unit
-        self.save_units()
-
-    @catch_errors
-    def update_volume_unit(self, new_unit: str):
-        self.volume_unit = new_unit
-        self.save_units()
 
     @catch_errors
     def update_total_sum(self, shopping_list_id: int, total_sum: float):
@@ -139,18 +101,6 @@ class ShoppingListController:
         Päivittää ostoslistan kokonaisarvon tietokannassa.
         """
         self.repo.update_total_sum(shopping_list_id, total_sum)
-
-    @catch_errors
-    def calculate_total_cost(self, shopping_list_id: int):
-        items = self.repo.get_items_by_shopping_list_id(shopping_list_id)
-        total_cost = 0.0
-        for item in items:
-            product = self.product_repo.get_product_by_id(item.product_id)
-            if product:
-                # Calculation remains as price * quantity.
-                total_cost += product.price_per_unit * item.quantity
-        total_cost = round(total_cost, 2)
-        return total_cost
 
     @catch_errors
     def get_all_shopping_lists(self) -> Dict[int, ShoppingList]:
@@ -276,33 +226,6 @@ class ShoppingListController:
 class ProductController:
     def __init__(self):
         self.repo = ProductRepository()
-        self.weight_unit, self.volume_unit = self.load_units()
-        self.currency, self.currency_multiplier = self.load_currency()
-
-    @catch_errors
-    def load_currency(self):
-        try:
-            with open(CONFIG_FILE, "r", encoding="utf-8") as file:
-                settings = json.load(file).get("settings", {})
-                currency = settings.get("currency", "€")
-            multiplier = 1
-            return currency, multiplier
-        except (FileNotFoundError, json.JSONDecodeError):
-            return "€", 1
-
-    @catch_errors
-    def get_price_with_currency(self, price_per_unit: float) -> str:
-        converted_price = price_per_unit * self.currency_multiplier
-        return f"{converted_price:.2f} {self.currency}"
-
-    @catch_errors
-    def load_units(self):
-        try:
-            with open(CONFIG_FILE, "r", encoding="utf-8") as file:
-                settings = json.load(file).get("settings", {})
-                return settings.get("weight_unit", "kg"), settings.get("volume_unit", "l")
-        except (FileNotFoundError, json.JSONDecodeError):
-            return "kg", "l"
 
     @catch_errors
     def get_all_products(self) -> Dict[int, Product]:
@@ -319,13 +242,6 @@ class ProductController:
     @catch_errors
     def get_items_by_shopping_list_id(self, shopping_list_id: int) -> List[ShoppingListItem]:
         return self.repo.get_products_by_shoplist_id(shopping_list_id)
-
-    @catch_errors
-    def calculate_total_cost(self, product_id: int, quantity: float):
-        product = self.repo.get_product_by_id(product_id)
-        if not product:
-            raise ValueError("Product not found")
-        return self.get_price_with_currency(product.price_per_unit * quantity)
 
     @catch_errors
     def add_product(self, name: str, unit: str, price_per_unit: float, category: str):

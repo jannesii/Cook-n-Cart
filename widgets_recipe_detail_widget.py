@@ -1,12 +1,10 @@
 # File: recipe_detail_widget.py --------------------------------------------------------------------
 
-import functools
-import logging
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QPushButton,
-    QHBoxLayout, QStackedWidget, QMessageBox
+    QHBoxLayout, QStackedWidget
 )
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Signal
 from root_controllers import RecipeController, ProductController
 
 from error_handler import catch_errors_ui, show_error_toast

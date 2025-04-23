@@ -4,14 +4,14 @@ from typing import Literal
 import functools
 import traceback
 import logging
-import sys
 from PySide6.QtWidgets import (
-    QApplication, QMessageBox, QLabel, QPushButton, QVBoxLayout,
+    QApplication, QLabel, QPushButton, QVBoxLayout,
     QHBoxLayout, QWidget, QGraphicsDropShadowEffect
 )
 from PySide6.QtCore import Qt, QTimer, QEventLoop
 
 _error_controller_instance = None
+
 
 def get_error_controller():
     """Lazily import and return the global ErrorController instance."""
@@ -20,6 +20,7 @@ def get_error_controller():
         from root_controllers import ErrorController
         _error_controller_instance = ErrorController()
     return _error_controller_instance
+
 
 def catch_errors_ui(func):
     """
@@ -33,14 +34,14 @@ def catch_errors_ui(func):
         except Exception as e:
             logging.error(f"Error in {func.__name__}: {e}", exc_info=True)
             print(f"Error in {func.__name__}: {e}")
-            
+
             # Use the lazy getter to retrieve the controller.
             get_error_controller().log_error(
                 error_message=str(e),
                 tb=traceback.format_exc(),
                 func_name=func.__name__,
             )
-            
+
             # Check if a QApplication exists.
             app = QApplication.instance()
             if app is not None:
@@ -49,16 +50,17 @@ def catch_errors_ui(func):
                     parent = args[0]
                 else:
                     parent = app.activeWindow()
-                
+
                 if parent is not None:
                     show_error_toast(
-                        parent, 
-                        message="An unexpected error occurred.\nPlease check the logs for more details.", 
+                        parent,
+                        message="An unexpected error occurred.\nPlease check the logs for more details.",
                         pos="top",
                         lines=2
                     )
             raise
     return wrapper
+
 
 def catch_errors(func):
     """
@@ -80,15 +82,16 @@ def catch_errors(func):
             raise
     return wrapper
 
+
 def show_error_toast(
-    parent, 
-    message: str = "An unexpected error occurred.", 
-    pos: Literal["bot", "mid", "top"] = "top", 
+    parent,
+    message: str = "An unexpected error occurred.",
+    pos: Literal["bot", "mid", "top"] = "top",
     duration: int = 3000,
     background_color: str = "red",
     text_color: str = "white",
     lines: int = 1
-    ):
+):
     """
     Display a toast message indicating an error.
 
@@ -113,14 +116,14 @@ def show_error_toast(
     toast.setAlignment(Qt.AlignCenter)
     toast.setAttribute(Qt.WA_TransparentForMouseEvents)
     toast.resize(int(parent.width() * 0.8), 40 * lines)
-    
+
     # Create and configure the drop shadow effect.
     shadow = QGraphicsDropShadowEffect(toast)
     shadow.setBlurRadius(15)
     shadow.setOffset(3, 3)
     shadow.setColor(Qt.black)
     toast.setGraphicsEffect(shadow)
-    
+
     if pos == "bot":
         height_bot = parent.height() - toast.height() - 20
         toast.move((parent.width() - toast.width()) // 2, height_bot)
@@ -131,12 +134,13 @@ def show_error_toast(
         height_top = 20
         toast.move((parent.width() - toast.width()) // 2, height_top)
     toast.show()
-    
+
     QTimer.singleShot(duration, toast.deleteLater)
-    
+
+
 def ask_confirmation(
-    parent, 
-    message: str = "Oletko varma?", 
+    parent,
+    message: str = "Oletko varma?",
     pos: Literal["bot", "mid", "top"] = "mid",
     yes_text: str = "Kyllä",
     no_text: str = "Ei",
@@ -148,29 +152,29 @@ def ask_confirmation(
     container = QWidget(parent)
     container.setStyleSheet("background: transparent;")
     container.setGeometry(0, 0, parent.width(), parent.height())
-    container.show()       
-    container.raise_()     
-    
+    container.show()
+    container.raise_()
+
     confirmation = QWidget(container)
     confirmation.setStyleSheet("""
         background-color: lightgray;
         border-radius: 5px;
     """)
-    
+
     shadow = QGraphicsDropShadowEffect(confirmation)
     shadow.setBlurRadius(15)
     shadow.setOffset(3, 3)
     shadow.setColor(Qt.black)
     confirmation.setGraphicsEffect(shadow)
-    
+
     conf_layout = QVBoxLayout(confirmation)
     conf_layout.setContentsMargins(10, 10, 10, 10)
-    
+
     label = QLabel(message, confirmation)
     label.setStyleSheet("color: black; font-weight: bold;")
     label.setAlignment(Qt.AlignCenter)
     conf_layout.addWidget(label)
-    
+
     button_layout = QHBoxLayout()
     btn_yes = QPushButton(yes_text, confirmation)
     btn_yes.setStyleSheet("background-color: red; color: white;")
@@ -179,9 +183,9 @@ def ask_confirmation(
     button_layout.addWidget(btn_yes)
     button_layout.addWidget(btn_no)
     conf_layout.addLayout(button_layout)
-    
+
     confirmation.resize(int(parent.width() * 0.8), 100)
-    
+
     if pos == "bot":
         y = parent.height() - confirmation.height() - 20
     elif pos == "mid":
@@ -189,8 +193,8 @@ def ask_confirmation(
     else:
         y = 20
     confirmation.move((parent.width() - confirmation.width()) // 2, y)
-    confirmation.show()    
-    
+    confirmation.show()
+
     loop = QEventLoop()
     result = None
 

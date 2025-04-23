@@ -1,9 +1,7 @@
 # File: widgets_product_form_widget.py --------------------------------------------------------------------
 
-import functools
-import logging
 from PySide6.QtWidgets import (
-    QWidget, QFormLayout, QLabel, QLineEdit, QPushButton,
+    QWidget, QFormLayout, QLabel, QPushButton,
     QHBoxLayout, QVBoxLayout, QStackedWidget
 )
 from PySide6.QtCore import Qt, Signal
@@ -190,7 +188,8 @@ class ProductFormWidget(QWidget):
     def _create_unit_selector_layout(self):
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignCenter)
-        units = ["Kappaletavara (€/kpl)", "Painoperusteinen (€/kg)", "Tilavuusperusteinen (€/l)",]
+        units = ["Kappaletavara (€/kpl)", "Painoperusteinen (€/kg)",
+                 "Tilavuusperusteinen (€/l)",]
         for unit in units:
             button = QPushButton(unit)
             button.setFixedWidth(int(self.width() * 0.8))
@@ -211,14 +210,14 @@ class ProductFormWidget(QWidget):
             missing_fields.append("Name")
             show_error_toast(self, "Nimi ei voi olla tyhjä!", pos="top")
             return
-        
+
         if unit == "Valitse yksikkö" or unit == "Kappaletavara (€/kpl)":
             unit = "kpl"
         elif unit == "Painoperusteinen (€/kg)":
             unit = "kg"
         elif unit == "Tilavuusperusteinen (€/l)":
             unit = "l"
-            
+
         if not price_str:
             price_str = "0.0"
         if cat == "Valitse kategoria":
@@ -254,14 +253,14 @@ class ProductFormWidget(QWidget):
             missing_fields.append("Name")
             show_error_toast(self, "Nimi ei voi olla tyhjä!", pos="top")
             return
-        
+
         if unit == "Valitse yksikkö" or unit == "Kappaletavara (€/kpl)":
             unit = "kpl"
         elif unit == "Painoperusteinen (€/kg)":
             unit = "kg"
         elif unit == "Tilavuusperusteinen (€/l)":
             unit = "l"
-            
+
         if not price_str:
             price_str = "0.0"
         if cat == "Valitse kategoria":

@@ -1,13 +1,9 @@
 # File: views_reseptit_page.py --------------------------------------------------------------------
 
-import functools
-import logging
-import sys
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QScrollArea, QStackedWidget, QFrame, QLineEdit, QMessageBox
+    QStackedWidget, QFrame
 )
-from PySide6.QtCore import QTimer
 from root_controllers import ProductController as PC
 from root_controllers import ShoppingListController as SLC
 from root_controllers import RecipeController as RC
@@ -218,12 +214,14 @@ class ReseptitPage(QWidget):
 
     @catch_errors_ui
     def on_recipe_added(self, recipe):
-        show_error_toast(self, "Resepti luotu onnistuneesti.", pos="top", background_color="green", text_color="black")
+        show_error_toast(self, "Resepti luotu onnistuneesti.",
+                         pos="top", background_color="green", text_color="black")
         self.back_to_list()
 
     @catch_errors_ui
     def on_recipe_updated(self, recipe):
-        show_error_toast(self, "Resepti päivitetty onnistuneesti.", pos="top", background_color="green", text_color="black")
+        show_error_toast(self, "Resepti päivitetty onnistuneesti.",
+                         pos="top", background_color="green", text_color="black")
         self.back_to_list()
 
     @catch_errors_ui

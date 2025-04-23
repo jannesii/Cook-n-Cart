@@ -1,11 +1,8 @@
 # File: add_shoplist_widget.py--------------------------------------------------------------------
 
-import functools
-import logging
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QLineEdit, QPushButton, QLabel, QHBoxLayout, QMessageBox
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QPushButton, QLabel, QHBoxLayout, QMessageBox
 from PySide6.QtCore import Signal, Qt
-from widgets_add_products_widget import AddProductsWidget
-from root_controllers import ProductController as PC
+
 from qml import NormalTextField
 
 from error_handler import catch_errors_ui, show_error_toast

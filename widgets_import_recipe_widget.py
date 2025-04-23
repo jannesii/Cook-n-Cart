@@ -1,10 +1,8 @@
 # File: import_recipe_widget.py --------------------------------------------------------------------
 
-import functools
-import logging
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
-    QPushButton, QListWidget, QListWidgetItem, QStackedWidget, QMessageBox
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel,
+    QPushButton, QStackedWidget
 )
 from PySide6.QtCore import Signal, Qt
 from root_controllers import RecipeController, ProductController

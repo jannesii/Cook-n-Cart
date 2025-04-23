@@ -1,21 +1,14 @@
 # File: views_tuotteet_page.py --------------------------------------------------------------------
 
-import sys
-import functools
-import logging
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-    QPushButton, QScrollArea, QStackedWidget,
-    QFrame, QLineEdit, QCompleter, QFormLayout
+    QPushButton, QStackedWidget, QFrame
 )
-from PySide6.QtCore import Qt, QStringListModel
 
 from root_controllers import ProductController as PC
-from root_controllers import ShoppingListController as SLC
-from root_controllers import RecipeController as RC
 from widgets_product_detail_widget import ProductDetailWidget
 from widgets_product_form_widget import ProductFormWidget
-from qml import NormalTextField, MainSearchTextField, ScrollViewWidget
+from qml import MainSearchTextField, ScrollViewWidget
 from error_handler import catch_errors_ui, show_error_toast
 
 TURKOOSI = "#00B0F0"
@@ -139,10 +132,11 @@ class TuotteetPage(QWidget):
             self.page_add_form.finished.connect(self.on_product_added)
         self.stacked.setCurrentWidget(self.page_add_form)
         self.window().hide_buttons()
-        
+
     @catch_errors_ui
     def on_product_added(self, product):
-        show_error_toast(self, "Tuote luotu onnistuneesti.", pos="top", background_color="green", text_color="black")
+        show_error_toast(self, "Tuote luotu onnistuneesti.",
+                         pos="top", background_color="green", text_color="black")
         self.update_products_dict()
         self.populate_product_list()
         self.back_to_list()
@@ -209,4 +203,3 @@ class TuotteetPage(QWidget):
                 widget.deleteLater()
             elif item.layout():
                 self._clear_layout(item.layout())
-

@@ -33,7 +33,7 @@ class RecipeIngredient:
     recipe_id: Optional[int] = field(default=None)
     product_id: int = field(default=0)
     quantity: float = field(default=1.0)
-    unit: str = field(default="")  # New field for weight/unit (e.g., "ml", "g", etc.)
+    unit: str = field(default="")
     created_at: Optional[datetime] = field(default=None)
     updated_at: Optional[datetime] = field(default=None)
 
@@ -55,10 +55,11 @@ class ShoppingListItem:
     shopping_list_id: int
     product_id: int
     quantity: float
-    is_purchased: bool = False  # now has a default value
-    unit: str = ""              # default value
+    is_purchased: bool = False 
+    unit: str = "" 
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+
 
 @dataclass
 class ErrorLog:

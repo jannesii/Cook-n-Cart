@@ -1,12 +1,11 @@
 # File: add_recipe_widget.py --------------------------------------------------------------------
 
-import functools
-import logging
+
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QLineEdit, QTextEdit, QStackedWidget, QCompleter, QMessageBox
+    QStackedWidget
 )
-from PySide6.QtCore import Qt, Signal, QTimer
+from PySide6.QtCore import Signal
 
 from widgets_add_tags_widget import AddTagsWidget
 from widgets_add_products_widget import AddProductsWidget
@@ -96,7 +95,8 @@ class AddRecipeWidget(QWidget):
         # 3) Tags selection: show current tags and a button to edit them.
         self.tags_display_label = QLabel()
         if self.selected_tags:
-            self.tags_display_label.setText(f"Tagit: {', '.join(self.selected_tags)}")
+            self.tags_display_label.setText(
+                f"Tagit: {', '.join(self.selected_tags)}")
         else:
             self.tags_display_label.setText("Ei valittuja tageja")
         self.select_tags_btn = QPushButton("Valitse tageja")
@@ -109,12 +109,14 @@ class AddRecipeWidget(QWidget):
         if self.selected_products:
             product_count = len(self.selected_products)
             if product_count == 1:
-                self.products_display_label.setText(f"{product_count} tuote valittu")
+                self.products_display_label.setText(
+                    f"{product_count} tuote valittu")
             else:
-                self.products_display_label.setText(f"{product_count} tuotetta valittu")
+                self.products_display_label.setText(
+                    f"{product_count} tuotetta valittu")
         else:
             self.products_display_label.setText("Ei valittuja tuotteita")
-            
+
         self.add_products_btn = QPushButton("+ Lisää tuotteita")
         self.add_products_btn.clicked.connect(self._open_products_page)
         layout.addWidget(self.products_display_label)
@@ -168,9 +170,11 @@ class AddRecipeWidget(QWidget):
             self.selected_products = selected_products
             product_count = len(self.selected_products)
             if product_count == 1:
-                self.products_display_label.setText(f"{product_count} tuote valittu")
+                self.products_display_label.setText(
+                    f"{product_count} tuote valittu")
             else:
-                self.products_display_label.setText(f"{product_count} tuotetta valittu")
+                self.products_display_label.setText(
+                    f"{product_count} tuotetta valittu")
         else:
             print("Ei valittuja tuotteita")
             self.selected_products = []
@@ -181,7 +185,8 @@ class AddRecipeWidget(QWidget):
     def on_tags_selected(self, selected_tags):
         if selected_tags:
             self.selected_tags = selected_tags
-            self.tags_display_label.setText(f"Tagit: {', '.join(self.selected_tags)}")
+            self.tags_display_label.setText(
+                f"Tagit: {', '.join(self.selected_tags)}")
         else:
             print("Ei valittuja tageja")
             self.tags_display_label.setText("Ei valittuja tageja")
@@ -204,7 +209,8 @@ class AddRecipeWidget(QWidget):
         else:
             tags_list = []
         self.selected_tags = tags_list
-        self.tags_display_label.setText(f"Tagit: {', '.join(self.selected_tags)}")
+        self.tags_display_label.setText(
+            f"Tagit: {', '.join(self.selected_tags)}")
         # Prepopulate selected products from recipe ingredients.
         self.selected_products = []
         for ingredient in recipe.ingredients:
@@ -213,13 +219,15 @@ class AddRecipeWidget(QWidget):
                 "quantity": ingredient.quantity,
                 "unit": ingredient.unit
             })
-            
+
         if self.selected_products:
             product_count = len(self.selected_products)
             if product_count == 1:
-                self.products_display_label.setText(f"{product_count} tuote valittu")
+                self.products_display_label.setText(
+                    f"{product_count} tuote valittu")
             else:
-                self.products_display_label.setText(f"{product_count} tuotetta valittu")
+                self.products_display_label.setText(
+                    f"{product_count} tuotetta valittu")
         else:
             self.products_display_label.setText("Ei valittuja tuotteita")
 

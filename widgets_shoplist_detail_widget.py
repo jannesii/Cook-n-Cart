@@ -1,13 +1,8 @@
 # File: shoplist_detail_widget.py --------------------------------------------------------------------
 
-import functools
-import logging
-import sys
-import json
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QPushButton, QListWidget,
-    QListWidgetItem, QLabel, QStackedWidget,
-    QGridLayout, QHBoxLayout, QMessageBox
+    QWidget, QVBoxLayout, QPushButton, QLabel, QStackedWidget,
+    QGridLayout, QHBoxLayout
 )
 from PySide6.QtCore import Qt, Signal
 from root_controllers import ProductController as PC
@@ -66,7 +61,7 @@ class ShoplistDetailWidget(QWidget):
         self.shoplist_label = QLabel("Shopping List Details")
         self.set_all_checked_button = QPushButton("Merkitse kaikki ostetuksi")
         self.set_all_checked_button.clicked.connect(self.set_all_checked)
-        
+
         self.top_bar_layout.addWidget(self.shoplist_label)
         self.top_bar_layout.addStretch()
         self.top_bar_layout.addWidget(self.set_all_checked_button)
@@ -105,8 +100,6 @@ class ShoplistDetailWidget(QWidget):
 
         layout.addLayout(button_layout)
         return layout
-    
-
 
     @catch_errors_ui
     def set_shopping_list(self, shopping_list: ShoppingList):
@@ -194,7 +187,7 @@ class ShoplistDetailWidget(QWidget):
             self.shoppinglist.id, total_cost)
         self._update_total_cost_label(total_cost)
         self.parent.populate_shopping_list()
-        
+
     @catch_errors_ui
     def set_all_checked(self):
         self.product_list.set_all_checked()

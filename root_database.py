@@ -1,10 +1,8 @@
 # File: root_database.py --------------------------------------------------------------------
 
 import sqlite3
-from typing import List, Dict
+from typing import List
 import os
-import functools
-import logging
 from error_handler import catch_errors
 
 

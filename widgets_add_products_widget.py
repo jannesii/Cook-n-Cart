@@ -1,22 +1,15 @@
 # File: widgets_add_products_widget.py --------------------------------------------------------------------
 
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QLineEdit, QListWidget, QListWidgetItem, QComboBox, QCheckBox,
-    QStackedWidget, QMessageBox
+    QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
+    QStackedWidget
 )
-from PySide6.QtGui import QDoubleValidator
-from PySide6.QtCore import Signal, Qt, QTimer
+from PySide6.QtCore import Signal
 from time import sleep
 from qml import (
     ProductSelectorWidgetPage1, MainSearchTextField, ProductSelectorWidgetPage2
 )
 from root_controllers import ProductController as PC
-from root_controllers import ShoppingListController as SLC
-from root_controllers import RecipeController as RC
-
-import functools
-import logging
 
 from error_handler import catch_errors_ui, show_error_toast
 
@@ -113,7 +106,7 @@ class AddProductsWidget(QWidget):
         # Initially populate the list.
         self.populate_product_list2(self.scroll_area2, products)
         return layout
-    
+
     @catch_errors_ui
     def handle_back(self):
         """
@@ -145,7 +138,7 @@ class AddProductsWidget(QWidget):
             selected = js_value.toVariant()
             print("selected products in handle_next:", selected)
             self.selected_products = selected
-            
+
             if self.selected_products:
                 self.page2 = QWidget()
                 self.page2.setLayout(self.create_page2_layout(selected))
@@ -173,18 +166,21 @@ class AddProductsWidget(QWidget):
             try:
                 quantity = float(product["qty"])
                 if quantity <= 0:
-                    show_error_toast(self, message="Invalid quantity.\nQuantity must be positive.", lines=2)
+                    show_error_toast(
+                        self, message="Invalid quantity.\nQuantity must be positive.", lines=2)
                     return  # Stop if invalid
             except ValueError:
-                show_error_toast(self, message="Invalid input.\nPlease enter a valid number.", lines=2)
+                show_error_toast(
+                    self, message="Invalid input.\nPlease enter a valid number.", lines=2)
                 return
             new_selection.append({
                 "id": product["id"],
                 "quantity": quantity,
                 "unit": product["unit"],
             })
-            print(f"Product ID: {product['id']}, Quantity: {quantity}, Unit: {product['unit']}")
-            
+            print(
+                f"Product ID: {product['id']}, Quantity: {quantity}, Unit: {product['unit']}")
+
         self.finished.emit(new_selection)
         self.clearMemory()
 
@@ -200,14 +196,14 @@ class AddProductsWidget(QWidget):
             js_value = root_obj.getSelectedTags()
             # Convert the QJSValue to a native Python list.
             selected = js_value.toVariant()
-            
+
             for item in selected:
                 self.selected_products.append({
                     "id": item["id"],
                     "quantity": item["quantity"],
                     "unit": item["unit"]
                 })
-           
+
             root_obj.clearTags()
             # Sort products by name (case-insensitive)
             sorted_products = sorted(
@@ -216,8 +212,9 @@ class AddProductsWidget(QWidget):
             )
             for product in sorted_products:
                 # Check if the product is already selected.
-                is_selected = any(item['id'] == product.id for item in self.selected_products)
-                
+                is_selected = any(
+                    item['id'] == product.id for item in self.selected_products)
+
                 # Only add the product if it matches the filter text,
                 # or if it has already been selected.
                 if filter_text == "" or filter_text in product.name.lower() or is_selected:
@@ -237,9 +234,9 @@ class AddProductsWidget(QWidget):
                         quantity = 1
                         unit = "kpl"
 
-                    root_obj.addTag(product.name, product.id, is_checked, quantity, unit)
+                    root_obj.addTag(product.name, product.id,
+                                    is_checked, quantity, unit)
                     root_obj.reorderSelected()
-
 
     @catch_errors_ui
     def populate_product_list2(self, target, products, filter_text=""):
@@ -252,7 +249,8 @@ class AddProductsWidget(QWidget):
             root_obj.clearTags()
             for p in products:
                 product = self.product_controller.get_product_by_id(p["id"])
-                root_obj.addTag(product.name, p["id"], p["quantity"], p["unit"])
+                root_obj.addTag(
+                    product.name, p["id"], p["quantity"], p["unit"])
 
     @catch_errors_ui
     def filter_products(self, newText):

@@ -1,12 +1,10 @@
 # File: product_detail_widget.py --------------------------------------------------------------------
 
-import functools
-import logging
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QLabel, QPushButton, QHBoxLayout, QStackedWidget, QMessageBox
+    QWidget, QVBoxLayout, QLabel, QPushButton, QHBoxLayout, QStackedWidget
 )
 from PySide6.QtCore import Qt
-from root_controllers import ProductController, ShoppingListController, RecipeController
+from root_controllers import ProductController, ShoppingListController
 from root_models import Product
 from widgets_product_form_widget import ProductFormWidget
 
@@ -110,7 +108,8 @@ class ProductDetailWidget(QWidget):
     @catch_errors_ui
     def _on_product_updated(self, updated_product):
         """Called when the product is updated via the edit widget."""
-        show_error_toast(self, "Tuote päivitetty onnistuneesti.", pos="top", background_color="green", text_color="black")
+        show_error_toast(self, "Tuote päivitetty onnistuneesti.",
+                         pos="top", background_color="green", text_color="black")
         self.set_product(updated_product)
         # Switch back to the detail view.
         self.stacked.setCurrentWidget(self.detail_view)

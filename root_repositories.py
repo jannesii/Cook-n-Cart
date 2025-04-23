@@ -3,8 +3,6 @@
 from root_database import DatabaseManager
 from root_models import Recipe, Product, RecipeIngredient, ShoppingList, ShoppingListItem, ErrorLog
 from typing import List, Dict
-import functools
-import logging
 from error_handler import catch_errors
 
 
@@ -315,11 +313,11 @@ class ShoppingListRepository:
                 VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
                 """
                 self.db.execute_query(
-                    query, (item.shopping_list_id, item.product_id, item.quantity, item.unit, item.is_purchased)
+                    query, (item.shopping_list_id, item.product_id,
+                            item.quantity, item.unit, item.is_purchased)
                 )
             except Exception as e:
                 print(f"Error inserting item: {item}, Error: {e}")
-
 
     @catch_errors
     def update_shopping_list(self, shopping_list_id: int, shopping_list: ShoppingList):

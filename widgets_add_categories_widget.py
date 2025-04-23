@@ -1,14 +1,12 @@
 # File: widgets_add_categories_widget.py --------------------------------------------------------------------
 
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QInputDialog,
-    QStackedWidget, QLabel, QMessageBox
+    QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
+    QStackedWidget, QLabel
 )
-from PySide6.QtCore import Signal, Qt, QTimer
+from PySide6.QtCore import Signal, Qt
 from qml import TagSelectorWidget, MainSearchTextField, NormalTextField
 from root_controllers import ProductController
-import functools
-import logging
 from error_handler import catch_errors_ui, show_error_toast
 
 
@@ -161,7 +159,6 @@ class AddCategoriesWidget(QWidget):
                     root_obj.reorderSelected()
         else:
             print("CategorySelectorWidget root object not found.")
-
 
     @catch_errors_ui
     def filter_products(self, newText):

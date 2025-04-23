@@ -1,12 +1,9 @@
 # File: views_main_window.py --------------------------------------------------------------------
 
-import functools
-import logging
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout,
-    QHBoxLayout, QPushButton, QStackedWidget, QMessageBox
+    QHBoxLayout, QPushButton, QStackedWidget
 )
-from PySide6.QtCore import Qt
 
 from views_ostoslistat_page import OstolistatPage
 from views_reseptit_page import ReseptitPage
@@ -21,7 +18,6 @@ HARMAA = "#808080"
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        
 
         self.setWindowTitle("Cook and Cart")
         self.setMinimumSize(400, 600)
@@ -133,5 +129,3 @@ class MainWindow(QMainWindow):
             self.asetukset_page.deleteLater()
             del self.asetukset_page
             self.asetukset_page = None
-    
-

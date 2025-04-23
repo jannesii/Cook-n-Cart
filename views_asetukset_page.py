@@ -10,7 +10,7 @@ from root_controllers import ProductController as PC
 from root_controllers import ShoppingListController as SLC
 from root_controllers import RecipeController as RC
 from root_controllers import ErrorController
-from error_handler import catch_errors_ui, catch_errors
+from error_handler import catch_errors_ui
 from qml import ScrollableLabel
 
 TURKOOSI = "#00B0F0"

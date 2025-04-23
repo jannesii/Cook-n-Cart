@@ -4,9 +4,6 @@ from PySide6.QtQuickWidgets import QQuickWidget
 from PySide6.QtCore import QUrl, QObject
 from PySide6.QtQml import QQmlComponent
 from PySide6.QtWidgets import QWidget, QVBoxLayout
-from PySide6.QtCore import Qt, Signal, QTimer
-import functools
-import logging
 from error_handler import catch_errors
 
 
@@ -1447,7 +1444,7 @@ class ShoplistWidget(QWidget):
         else:
             print("Root object not found.")
         return []
-    
+
     @catch_errors
     def set_all_checked(self):
         """
