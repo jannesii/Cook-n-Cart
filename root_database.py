@@ -14,7 +14,8 @@ class DatabaseManager:
         if DatabaseManager._instance is not None:
             raise Exception("This class is a singleton!")
         else:
-            # Check if the database file exists; if not, create it (which also creates the directory)
+            # Check if the database file exists; 
+            # if not, create it (which also creates the directory)
             if not os.path.exists(db_path):
                 DatabaseManager.create_database(db_path)
             self.connection = sqlite3.connect(db_path)
