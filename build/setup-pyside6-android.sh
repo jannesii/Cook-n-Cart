@@ -5,7 +5,7 @@
 
 # Update package list and install necessary system packages.
 echo "Updating package list and installing required system packages..."
-sudo apt update && sudo apt install -y python3 default-jdk zip autoconf automake libtool pkg-config python3-venv build-essential zlib1g-dev
+sudo apt update && sudo apt install -y python3 default-jdk zip autoconf automake libtool pkg-config python3-venv build-essential zlib1g-dev lld
 
 # Create a Python virtual environment.
 echo "Creating Python virtual environment..."
